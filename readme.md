@@ -25,7 +25,7 @@
 
 </details>
 
-  <p align="center">
+<p align="center">
   <strong>A simple and open source video streaming client aimed to recreate ALL the features from their respective apps (and more!)</strong>
   </br>
   Pronounced View Tube (<code>/ˈvjuːˌtjuːb/</code>)
