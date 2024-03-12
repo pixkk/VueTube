@@ -2,11 +2,11 @@
     <a href="https://vuetube.app/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
@@ -32,8 +32,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/VueTubeApp/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/VueTubeApp/VueTube"></img></a>
-  <a href="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
+  <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
+  <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
   <a href="https://reddit.com/r/vuetube" alt="Reddit"><img src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?label=r%2FVuetube&logo=reddit&logoColor=white"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
