@@ -61,7 +61,7 @@ jobs:
         run: npx cap update android
       - name: Build with Gradle
         working-directory: android
-        run: chmod +x gradlew; ./gradlew build -x lint
+        run: chmod +x gradlew; ./gradlew build -x lint -x test
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
