@@ -81,8 +81,7 @@ Install
 
 <img src="./resources/Install.svg" alt="VueTube icon" height="100"/>
 
-To install the app, please visit [vuetube.app/install](https://www.vuetube.app/install) or check below all versions
-available:
+To install the app, please check below all versions available:
 
 <details>
   <summary>🖱️ Click to display versions </summary>
@@ -219,7 +218,14 @@ Progress
 
 ### Technologies used
 
-<a href="https://capacitorjs.com/solution/vue"><img src="https://cdn.discordapp.com/attachments/953538236716814356/955694368742834176/Capacitator-Dark.svg" height=40/></a> <a href="https://vuetifyjs.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/973719873467342908/Vuetify-Dark.svg" height=40/></a> <a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/NuxtJS-Dark.svg" height=40/></a> <a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/VueJS-Dark.svg" height=40/></a> <a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> <a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Java-Dark.svg" height=40/></a> <a href="https://gradle.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/955691550560636958/Gradle.svg" height=40/></a> <a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
+<a href="https://capacitorjs.com/solution/vue"><img src="https://avatars.githubusercontent.com/u/3171503" height=40/></a> 
+<a href="https://vuetifyjs.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Vuetify-Dark.svg" height=40/></a> 
+<a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/NuxtJS-Dark.svg" height=40/></a> 
+<a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/VueJS-Dark.svg" height=40/></a> 
+<a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> 
+<a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Java-Dark.svg" height=40/></a> 
+<a href="https://gradle.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Gradle-Dark.svg" height=40/></a> 
+<a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
 
 ### Why are we doing this?
 
