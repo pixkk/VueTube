@@ -4,13 +4,15 @@ const url = {
   YT_URL: "https://www.youtube.com",
   YT_MOBILE: "https://m.youtube.com",
   YT_MUSIC_URL: "https://music.youtube.com",
-  YT_BASE_API: "https://www.youtube.com/youtubei/v1",
+  // YT_BASE_API: "https://www.youtube.com/youtubei/v1",
+  YT_BASE_API: "https://m.youtube.com/youtubei/v1",
   YT_SUGGESTIONS: "https://suggestqueries.google.com/complete",
   VT_GITHUB: "https://api.github.com/repos/Frontesque/VueTube",
 };
 
 const ytApiVal = {
-  VERSION: "16.25",
+  // VERSION: "16.25",
+  VERSION: "19.09",
   CLIENTNAME: "ANDROID",
   VERSION_WEB: "2.20220411.09.00",
   CLIENT_WEB_M: 2,
@@ -43,7 +45,7 @@ module.exports = {
   INNERTUBE_NEW_HEADER: (info) => {
     let headers = {
       accept: "*/*",
-      "user-agent": info.userAgent,
+      "user-agent": "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.196 Mobile Safari/537.36",
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
       "x-goog-authuser": 0,
@@ -59,7 +61,7 @@ module.exports = {
       hl: info.hl,
       deviceMake: info.deviceMake,
       deviceModel: info.deviceModel,
-      userAgent: info.userAgent,
+      userAgent: "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.196 Mobile Safari/537.36",
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
       osName: info.osName,
