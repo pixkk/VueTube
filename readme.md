@@ -2,11 +2,11 @@
     <a href="https://vuetube.app/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
