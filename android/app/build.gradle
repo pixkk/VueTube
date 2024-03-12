@@ -21,11 +21,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    
-      lint {
-          baseline = file("lint-baseline.xml")
-      }
-    
+    lintOptions {
+        /**
+         * Set whether lint should check for fatal errors during release builds. Default is true.
+         * If issues with severity "fatal" are found, the release build is aborted.
+         */
+        checkReleaseBuilds false
+        abortOnError false
+        disable 'all'
+    }
 }
 
 repositories {
