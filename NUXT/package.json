@@ -12,6 +12,7 @@
   "dependencies": {
     "@capacitor/splash-screen": "^1.2.2",
     "@capacitor/status-bar": "^1.0.8",
+    "@nuxtjs/axios": "^5.13.6",
     "core-js": "^3.25.0",
     "nuxt": "^2.15.8",
     "uuid": "^9.0.0",

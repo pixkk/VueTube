@@ -73,13 +73,15 @@
         $route.name == 'settings' ? closeSettings() : $router.push('/settings')
       "
     >
-      <v-icon>{{
-        $route.name == "settings"
-          ? "mdi-close"
-          : $route.name.includes("mods")
-          ? "mdi-arrow-left"
-          : "mdi-cog-outline"
-      }}</v-icon>
+      <v-icon
+        >{{
+          $route.name == "settings"
+            ? "mdi-close"
+            : $route.name.includes("mods")
+            ? "mdi-arrow-left"
+            : "mdi-cog-outline"
+        }}
+      </v-icon>
     </v-btn>
   </v-card>
 </template>
@@ -120,25 +122,30 @@ export default {
     },
     refreshRecommendations() {
       this.$emit("scroll-to-top");
-
-      const continuations =
-        this.$store.state.recommendedVideos[
-          this.$store.state.recommendedVideos.length - 1
-        ].continuations;
-      this.$store.commit("updateRecommendedVideos", []);
-      this.$youtube
-        .recommendContinuation(
-          continuations.find((element) => element.reloadContinuationData)
-            .reloadContinuationData.continuation,
-          "browse"
-        )
-        .then((result) => {
-          console.log(result);
-          if (result) this.$store.commit("updateRecommendedVideos", [result]);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      // var continuations = this.$store.state.recommendedVideos[this.$store.state.recommendedVideos.length - 1].continuations;
+      if (this.$store.state.recommendedVideos.length != 0) {
+        const continuations =
+          this.$store.state.recommendedVideos[
+            this.$store.state.recommendedVideos.length - 1
+          ].continuations;
+        this.$store.commit("updateRecommendedVideos", []);
+        this.$youtube
+          .recommendContinuation(
+            continuations.find((element) => element.reloadContinuationData)
+              .reloadContinuationData.continuation,
+            "browse"
+          )
+          .then((result) => {
+            console.log(result);
+            if (result) this.$store.commit("updateRecommendedVideos", [result]);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+      else {
+        this.$router.push("/");
+      }
     },
   },
 };

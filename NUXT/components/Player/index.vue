@@ -489,14 +489,19 @@ export default {
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
     this.$youtube.getSponsorBlock(this.video.id, (data) => {
       // console.warn("sbreturn", data);
+      data = JSON.parse(JSON.stringify(data));
+      console.warn("sbreturn", data[0]);
       if (Array.isArray(data)) {
         this.blocks = data;
-        data.find((block) => {
-          if (block.category === "music_offtopic") {
-            this.isMusic = true;
-            this.$refs.audio.playbackRate = 1;
-            this.$refs.player.playbackRate = 1;
-          }
+        // console.warn(data);
+        data.forEach((block) => {
+          block.segments.forEach((segments) => {
+            if (segments.category === "music_offtopic") {
+              this.isMusic = true;
+              this.$refs.audio.playbackRate = 1;
+              this.$refs.player.playbackRate = 1;
+            }
+          });
         });
       }
     });
@@ -618,24 +623,24 @@ export default {
     prebuffer(url) {
       this.xhr = new XMLHttpRequest();
       this.xhr.open("GET", url, true);
-      this.xhr.responseType = "blob";
+        this.xhr.responseType = "blob";
 
-      this.xhr.addEventListener(
-        "load",
-        () => {
-          if (this.xhr.status === 200) {
-            console.error(this.xhr);
-            this.blobToDataURL(this.xhr.response, (dataurl) => {
-              console.log(dataurl);
-              this.vidSrc = dataurl;
-              this.buffered = 100;
-            });
-          } else {
-            console.error("errorred pre-fetch", this.xhr.status);
-          }
-        },
-        false
-      );
+        this.xhr.addEventListener(
+          "load",
+          () => {
+            if (this.xhr.status === 200) {
+              console.error(this.xhr);
+              this.blobToDataURL(this.xhr.response, (dataurl) => {
+                console.log(dataurl);
+                this.vidSrc = dataurl;
+                this.buffered = 100;
+              });
+            } else {
+              console.error("errorred pre-fetch", this.xhr.status);
+            }
+          },
+          false
+        );
 
       var prev_pc = 0;
       this.xhr.addEventListener("progress", (event) => {

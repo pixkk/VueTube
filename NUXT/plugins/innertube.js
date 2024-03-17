@@ -115,6 +115,7 @@ class Innertube {
       );
     }
   }
+
   async getNFunction(baseJs) {
     let challenge_name =
       /\.get\("n"\)\)&&\(b=([a-zA-Z0-9$]+)(?:\[(\d+)\])?\([a-zA-Z0-9]\)/.exec(
@@ -134,6 +135,7 @@ class Innertube {
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
+
   async initAsync() {
     const html = await Http.get({
       url: constants.URLS.YT_MOBILE,
@@ -215,6 +217,11 @@ class Innertube {
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
+        //args.browseId = "FEtrending";
+        break;
+      case "trending":
+        // args.browseId = "FEwhat_to_watch";
+        args.browseId = "FEtrending";
         break;
       case "playlist":
       case "channel":
@@ -318,6 +325,7 @@ class Innertube {
         ...{
           playerParams: this.playerParams,
           contentCheckOk: false,
+          racyCheckOk: false,
           mwebCapabilities: {
             mobileClientSupportsLivestream: true,
           },
@@ -410,18 +418,22 @@ class Innertube {
 
   // WARNING: This is tracking the user's activity, but is required for recommendations to properly work
   async apiStats(params, url) {
-    console.log(params);
-    await Http.get({
-      url: url,
-      params: {
-        ...params,
-        ...{
-          ver: 2,
-          c: constants.YT_API_VALUES.CLIENTNAME.toLowerCase(),
-          cbrver: constants.YT_API_VALUES.VERSION,
-          cver: constants.YT_API_VALUES.VERSION,
-        },
+    console.warn(params);
+    params = {
+      ...params,
+      ...{
+        ver: 2,
+        c: constants.YT_API_VALUES.CLIENTNAME.toLowerCase(),
+        cbrver: constants.YT_API_VALUES.VERSION,
+        cver: constants.YT_API_VALUES.VERSION,
       },
+    };
+    const queryParams = new URLSearchParams(params);
+    const urlWithParams = url + "&" + queryParams.toString();
+
+    await Http.get({
+      url: urlWithParams,
+
       headers: this.header,
     });
   }
@@ -441,8 +453,8 @@ class Innertube {
   }
 
   // Simple Wrappers
-  async getRecommendationsAsync() {
-    const rec = await this.browseAsync("recommendations");
+  async getRecommendationsAsync(recommendationsType = "recommendations") {
+    const rec = await this.browseAsync(recommendationsType);
     return rec;
   }
 

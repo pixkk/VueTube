@@ -10,6 +10,7 @@ import rendererUtils from "./renderers";
 import { Buffer } from "buffer";
 import iconv from "iconv-lite";
 import { Toast } from "@capacitor/toast";
+import { createHash } from "crypto";
 
 function getEncoding(contentType) {
   const re = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i;
@@ -42,6 +43,7 @@ const searchModule = {
   },
 
   getReturnYoutubeDislike(id, callback) {
+
     Http.request({
       method: "GET",
       url: `https://returnyoutubedislikeapi.com/votes`,
@@ -55,13 +57,20 @@ const searchModule = {
       });
   },
   getSponsorBlock(id, callback) {
+
+    function sha256(content) {
+      return createHash("sha256").update(content).digest("hex");
+    }
+
+    let hashedVideoId = sha256(id).slice(0, 4);
     Http.request({
       method: "GET",
-      url: `https://sponsor.ajay.app/api/skipSegments`,
-      params: { videoID: id },
+      url: `https://sponsor.ajay.app/api/skipSegments/`+hashedVideoId+"?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22poi%22%2C%22chapter%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
+      // params: { videoID: hashedVideoId },
     })
       .then((res) => {
-        callback(res.data);
+        console.warn(res.data);
+        // callback(res.data);
       })
       .catch((err) => {
         callback(err);
@@ -125,23 +134,86 @@ const innertubeModule = {
   // Front page recommendation
   async recommend() {
     const response = await InnertubeAPI.getRecommendationsAsync();
-
+    let final;
     if (!response.success)
       throw new Error("An error occurred and innertube failed to respond");
+    // console.warn(response.data);
+    let contents = response.data.contents.singleColumnBrowseResultsRenderer
+      .tabs[0].tabRenderer.content.sectionListRenderer?.contents[0]
+      .itemSectionRenderer?.contents[0]?.elementRenderer?.newElement
+      ? null
+      : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+          .tabRenderer.content.sectionListRenderer?.contents;
 
-    const contents =
-      response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-        .tabRenderer.content.sectionListRenderer.contents;
-    const final = contents.map((shelves) => {
-      const video = shelves.shelfRenderer?.content?.horizontalListRenderer;
+    if (contents === null) {
+      contents = response.data.contents.singleColumnBrowseResultsRenderer
+        .tabs[0].tabRenderer.content.richGridRenderer?.contents
+        ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+            .tabRenderer.content.richGridRenderer?.contents
+        : null;
+    }
+    if (contents !== null) {
+      final = contents.map((shelves) => {
+        // if (shelves.shelfRenderer) {
+        const video = shelves.shelfRenderer?.content?.horizontalListRenderer
+          ? shelves.shelfRenderer?.content?.horizontalListRenderer
+          : shelves.richItemRenderer?.content;
+        // }
+        //const video = shelves.itemSectionRenderer?.contents[0].videoWithContextRenderer;
+        // if (video
+        if (video) {
+          return video;
+        } else {
+          return null;
+        }
+      });
+      const continuations =
+        response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+          .tabRenderer.content.sectionListRenderer.continuations;
+      // console.log({ continuations: continuations, contents: final });
+      console.warn({ continuations: continuations, contents: final });
 
-      if (video) return video;
-    });
-    const continuations =
-      response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-        .tabRenderer.content.sectionListRenderer.continuations;
-    console.log({ continuations: continuations, contents: final });
-    return { continuations: continuations, contents: final };
+      return { continuations: continuations, contents: final };
+    } else {
+      // const title = response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].elementRenderer.newElement.type.componentType.model.feedNudgeModel.context
+      const title = response.data.contents.singleColumnBrowseResultsRenderer
+        .tabs[0].tabRenderer.content.sectionListRenderer
+        ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+            .tabRenderer.content.sectionListRenderer.contents[0]
+            .itemSectionRenderer.contents[0].elementRenderer.newElement.type
+            .componentType.model.feedNudgeModel.nudgeData.title.content
+        : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+            .tabRenderer.content.richGridRenderer.contents[1]
+            .richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text;
+      // const title =
+      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text : "null";
+
+      const subtitle = response.data.contents.singleColumnBrowseResultsRenderer
+        .tabs[0].tabRenderer.content.sectionListRenderer
+        ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+            .tabRenderer.content.sectionListRenderer.contents[0]
+            .itemSectionRenderer.contents[0].elementRenderer.newElement.type
+            .componentType.model.feedNudgeModel.nudgeData.subtitle.content
+        : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+            .tabRenderer.content.richGridRenderer.contents[1]
+            .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
+            .text;
+      // const subtitle =
+      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0].text : "null";
+
+      // console.log(response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer);
+      return { title: title, subtitle: subtitle };
+    }
   },
 
   async recommendContinuation(continuation, endpoint) {
@@ -152,8 +224,10 @@ const innertubeModule = {
       const video = shelves.shelfRenderer?.content?.horizontalListRenderer;
       if (video) return video;
     });
-    const continuations =
-      response.data.continuationContents.sectionListContinuation.continuations;
+    const continuations = response.data.continuationContents
+      .sectionListContinuation.continuations
+      ? response.data.continuationContents.sectionListContinuation.continuations
+      : null;
     return { continuations: continuations, contents: final };
   },
 
