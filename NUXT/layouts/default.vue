@@ -45,13 +45,13 @@
             : 'calc(4rem + env(safe-area-inset-top))',
       }"
     >
-      <div v-show="!search">
+      <div v-show="!search" style="height: 100%">
         <!-- class="scrollcontainer" -->
         <!-- style="overflow: hidden; height: calc(100vh - 8rem)" -->
         <!-- element above removes artifacting from things like v-ripple by -->
         <!-- scrollbox below must be a standalone div -->
         <div ref="pgscroll" style="height: 100%">
-          <nuxt />
+          <nuxt style="height: 100%"/>
         </div>
       </div>
 
@@ -289,8 +289,9 @@ html,
 body {
   background: var(--v-background-base);
   -webkit-overflow-scrolling: touch !important;
-  overflow-y: scroll !important;
+  //overflow-y: scroll !important;
   overflow-x: hidden !important;
+
 }
 
 p,
