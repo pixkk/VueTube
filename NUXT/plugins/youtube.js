@@ -70,7 +70,13 @@ const searchModule = {
     })
       .then((res) => {
         console.warn(res.data);
-        // callback(res.data);
+        res.data.forEach((item) => {
+          // console.warn("WE HERE - " + JSON.stringify(item));
+          if (item.videoID == id) {
+            callback(item);
+            return;
+          }
+        });
       })
       .catch((err) => {
         callback(err);

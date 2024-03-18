@@ -298,7 +298,7 @@
       :fullscreen="isFullscreen"
       :controls="controls"
       :seeking="seeking"
-      :blocks="blocks"
+      :blocks="sponsorBlocks"
     />
 
     <seekbar
@@ -403,21 +403,45 @@ export default {
       progress: 0,
       buffered: 0,
       watched: 0,
-      blocks: [],
       vidSrc: "",
       audSrc: "",
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
       isMusic: false,
+      sponsorBlocks: [],
       vid: null,
     };
   },
   mounted() {
+
+    if (this.sponsorBlocks.length <= 0) {
+      this.$youtube.getSponsorBlock(this.video.id, (data) => {
+        this.sponsorBlocks = data;
+      });
+    }
     console.log("sources", this.sources);
     console.log("recommends", this.recommends);
     console.log("video", this.video);
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
+    // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
+    this.$youtube.getSponsorBlock(this.video.id, (data) => {
+      // console.warn("sbreturn", data);
+ //     console.warn("sbreturn", data);
+      if (Array.isArray(data)) {
+        this.sponsorBlocks = data;
+        // console.warn(data);
+        data.segments.forEach((block) => {
+          // block.segments.forEach((segments) => {
+          if (block.category === "music_offtopic") {
+            this.isMusic = true;
+            this.$refs.audio.playbackRate = 1;
+            this.$refs.player.playbackRate = 1;
+          }
+          // });
+        });
+      }
+    });
 
     /**
      * Video quality selection which device can play normally
@@ -486,26 +510,6 @@ export default {
       }
     });
 
-    // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
-    this.$youtube.getSponsorBlock(this.video.id, (data) => {
-      // console.warn("sbreturn", data);
-      data = JSON.parse(JSON.stringify(data));
-      console.warn("sbreturn", data[0]);
-      if (Array.isArray(data)) {
-        this.blocks = data;
-        // console.warn(data);
-        data.forEach((block) => {
-          block.segments.forEach((segments) => {
-            if (segments.category === "music_offtopic") {
-              this.isMusic = true;
-              this.$refs.audio.playbackRate = 1;
-              this.$refs.player.playbackRate = 1;
-            }
-          });
-        });
-      }
-    });
-
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
   },
   created() {
@@ -561,19 +565,22 @@ export default {
     timeUpdateEvent() {
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
-      // console.log("sb check", this.blocks);
+      // console.log("sb check", this.sponsorBlocks);
       // iterate over data.segments array
       // for sponsorblock
-      if (this.blocks.length > 0)
-        this.blocks.forEach((sponsor) => {
-          let vidTime = this.vid.currentTime;
-
-          if (vidTime >= sponsor.segment[0] && vidTime <= sponsor.segment[1]) {
+      // if (this.sponsorBlocks.length > 0) {
+        let vidTime = this.vid.currentTime;
+        // this.sponsorBlocks = data;
+        // console.warn(data);
+        this.sponsorBlocks.segments.forEach((block) => {
+          // block.segments.forEach((segments) => {
+          if (vidTime >= block.segment[0] && vidTime <= block.segment[1]) {
             console.log("Skipping the sponsor");
-            this.$youtube.showToast("Skipped sponsor");
-            this.$refs.player.currentTime = sponsor.segment[1] + 1;
+            this.$youtube.showToast("Skipped "+ block.category + " sponsor");
+            this.$refs.player.currentTime = block.segment[1];
             this.$refs.audio.currentTime = this.$refs.player.currentTime;
           }
+          // });
         });
     },
     progressEvent() {
@@ -623,24 +630,24 @@ export default {
     prebuffer(url) {
       this.xhr = new XMLHttpRequest();
       this.xhr.open("GET", url, true);
-        this.xhr.responseType = "blob";
+      this.xhr.responseType = "blob";
 
-        this.xhr.addEventListener(
-          "load",
-          () => {
-            if (this.xhr.status === 200) {
-              console.error(this.xhr);
-              this.blobToDataURL(this.xhr.response, (dataurl) => {
-                console.log(dataurl);
-                this.vidSrc = dataurl;
-                this.buffered = 100;
-              });
-            } else {
-              console.error("errorred pre-fetch", this.xhr.status);
-            }
-          },
-          false
-        );
+      this.xhr.addEventListener(
+        "load",
+        () => {
+          if (this.xhr.status === 200) {
+            console.error(this.xhr);
+            this.blobToDataURL(this.xhr.response, (dataurl) => {
+              console.log(dataurl);
+              this.vidSrc = dataurl;
+              this.buffered = 100;
+            });
+          } else {
+            console.error("errorred pre-fetch", this.xhr.status);
+          }
+        },
+        false
+      );
 
       var prev_pc = 0;
       this.xhr.addEventListener("progress", (event) => {

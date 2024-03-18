@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-progress-linear
-      v-for="block in blocks"
+      v-for="block in blocks.segments"
       :key="block.UUID"
       :buffer-value="(block.segment[1] / duration) * 100"
       :value="(block.segment[0] / duration) * 100"
@@ -57,6 +57,7 @@ export default {
       outro: "blue",
       music_offtopic: "orange",
       filter: "purple",
+      preview: "lightblue",
     },
   }),
 };
