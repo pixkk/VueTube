@@ -77,13 +77,8 @@
       >
         <b>Changelog</b>
       </div>
-      <p
-        style="white-space: pre-line"
-        class="background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
-      >
-        {{ latestVersion.body.trim() }}
-      </p>
+      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="new showdown.Converter().makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
+      </div>
 
       <v-progress-linear
         v-if="downloading"
@@ -119,6 +114,7 @@
 
 <script>
 import { Device } from "@capacitor/device";
+import showdown from "showdown";
 
 export default {
   layout: "empty",
@@ -134,6 +130,11 @@ export default {
       },
       downloading: false,
     };
+  },
+  computed: {
+    showdown() {
+      return showdown;
+    },
   },
   async mounted() {
     //---   Setup Lang Pack   ---//
