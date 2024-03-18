@@ -67,8 +67,10 @@ module.exports = {
     let client = {
       gl: info.gl,
       hl: info.hl,
-      deviceMake: info.deviceMake,
-      deviceModel: info.deviceModel,
+      deviceMake: "Generic",
+      // deviceMake: info.deviceMake,
+      // deviceModel: info.deviceModel,
+      deviceModel: "Android 10.0",
       userAgent: info.userAgent,
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
