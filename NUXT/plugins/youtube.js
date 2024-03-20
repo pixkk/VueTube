@@ -28,6 +28,11 @@ const searchModule = {
         text
       )}&client=youtube&ds=yt`,
       responseType: "arraybuffer",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
     })
       .then((res) => {
         const contentType = res.headers["Content-Type"];
@@ -43,7 +48,6 @@ const searchModule = {
   },
 
   getReturnYoutubeDislike(id, callback) {
-
     Http.request({
       method: "GET",
       url: `https://returnyoutubedislikeapi.com/votes`,
@@ -57,7 +61,6 @@ const searchModule = {
       });
   },
   getSponsorBlock(id, callback) {
-
     function sha256(content) {
       return createHash("sha256").update(content).digest("hex");
     }
@@ -65,7 +68,10 @@ const searchModule = {
     let hashedVideoId = sha256(id).slice(0, 4);
     Http.request({
       method: "GET",
-      url: `https://sponsor.ajay.app/api/skipSegments/`+hashedVideoId+"?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22poi%22%2C%22chapter%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
+      url:
+        `https://sponsor.ajay.app/api/skipSegments/` +
+        hashedVideoId +
+        "?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22poi%22%2C%22chapter%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
       // params: { videoID: hashedVideoId },
     })
       .then((res) => {
@@ -73,8 +79,8 @@ const searchModule = {
         res.data.forEach((item) => {
           // console.warn("WE HERE - " + JSON.stringify(item));
           if (item.videoID == id) {
+            // console.warn("IT IS IT - " + JSON.stringify(item));
             callback(item);
-            return;
           }
         });
       })

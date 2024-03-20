@@ -293,7 +293,7 @@
     />
 
     <sponsorblock
-      v-if="$refs.player && blocks.length > 0"
+      v-if="$refs.player && sponsorBlocks.videoID"
       :duration="$refs.player.duration"
       :fullscreen="isFullscreen"
       :controls="controls"
@@ -414,10 +414,27 @@ export default {
   },
   mounted() {
 
-    if (this.sponsorBlocks.length <= 0) {
+    console.log("SPSR BLCK" + this.sponsorBlocks);
+    if (
+      this.sponsorBlocks.length <= 0 &&
+      this.$store.state.sponsorBlockIntegration === true
+    ) {
       this.$youtube.getSponsorBlock(this.video.id, (data) => {
-        this.sponsorBlocks = data;
+        console.warn("sbreturn", data.segments);
+        // if (Array.isArray(data)) {
+          this.sponsorBlocks = data;
+          data.segments.forEach((block) => {
+            if (block.category === "music_offtopic") {
+              this.isMusic = true;
+              this.$refs.audio.playbackRate = 1;
+              this.$refs.player.playbackRate = 1;
+            }
+          });
+        // }
       });
+    }
+    else {
+      // this.sponsorBlocks = [];
     }
     console.log("sources", this.sources);
     console.log("recommends", this.recommends);
@@ -425,23 +442,7 @@ export default {
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
-    this.$youtube.getSponsorBlock(this.video.id, (data) => {
-      // console.warn("sbreturn", data);
- //     console.warn("sbreturn", data);
-      if (Array.isArray(data)) {
-        this.sponsorBlocks = data;
-        // console.warn(data);
-        data.segments.forEach((block) => {
-          // block.segments.forEach((segments) => {
-          if (block.category === "music_offtopic") {
-            this.isMusic = true;
-            this.$refs.audio.playbackRate = 1;
-            this.$refs.player.playbackRate = 1;
-          }
-          // });
-        });
-      }
-    });
+
 
     /**
      * Video quality selection which device can play normally
@@ -485,6 +486,18 @@ export default {
     console.warn(displayInfo);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
+      // console.log(this.sources[i].mimeType.toLowerCase());
+      // console.log('video/webm; codecs="vp9"'.indexOf("vp9"));
+      if (
+        this.sources[i].mimeType.toLowerCase().indexOf(
+          this.$store.state.player.preferedCodec.toLowerCase()
+        ) >= 0
+      ) {
+        this.sources.splice(i, 1);
+      }
+    }
+    for (let i = this.sources.length; i > 0; i--) {
+      if (i === this.sources.length) continue;
       else {
         // if quality height <= to the smaller side of the display,
         // write the index of the source to a variable indexOfPreferredQuality.
@@ -499,6 +512,15 @@ export default {
         }
       }
     }
+    for (let i = this.sources.length; i > 0; i--) {
+      if (i === this.sources.length) continue;
+      else {
+        if (this.sources[i].mimeType.indexOf("audio") > -1) {
+          // this.sources[i].remove();
+          this.sources.splice(i, 1);
+        }
+      }
+    }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
@@ -506,7 +528,6 @@ export default {
     this.sources.forEach((source) => {
       if (source.mimeType.indexOf("audio") > -1) {
         this.audSrc = source.url;
-        return;
       }
     });
 

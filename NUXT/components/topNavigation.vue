@@ -70,7 +70,7 @@
       class="ml-4 mr-2 my-auto fill-height rounded-xl"
       :style="$route.name == 'settings' ? 'transform: rotate(180deg)' : ''"
       @click="
-        $route.name == 'settings' ? closeSettings() : $router.push('/settings')
+        $route.name == 'settings' ? closeSettings() : $route.name.includes('mods') ? $router.go(-1) : $router.push('/settings')
       "
     >
       <v-icon

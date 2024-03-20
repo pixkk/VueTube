@@ -92,6 +92,7 @@ import { mapState } from "vuex";
 import constants from "~/plugins/constants";
 import { linkParser } from "~/plugins/utils";
 import backType from "~/plugins/classes/backType";
+import {includes} from "core-js/internals/array-includes";
 
 export default {
   data: () => ({
@@ -113,8 +114,15 @@ export default {
     }),
     page: function () {
       const splitPath = this.$route.path.split("/");
+      // console.log(splitPath);
       let pageName = splitPath[splitPath.length - 1];
       pageName = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+      switch (true) {
+        case this.$route.path.includes("mods/sponsorblock"):
+          pageName = "SponsorBlock";
+          break;
+      }
+ //     console.log(pageName);
       return pageName || "Home";
     },
   },

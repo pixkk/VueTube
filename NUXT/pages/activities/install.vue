@@ -50,10 +50,9 @@
         dense
       />
       <v-checkbox
-        v-model="sponsorBlock"
+        v-model="sponsorBlockIntegration"
         :label="lang.enablespb"
         style="width: 80%"
-        disabled
         dense
       />
     </center>
@@ -89,7 +88,7 @@ export default {
       stage: 0,
 
       ryd: true,
-      sponsorBlock: true,
+      // sponsorBlockIntegration: true,
       apis: ["youtube.com", "twitch.tv", "odysee.com"],
     };
   },
@@ -100,6 +99,14 @@ export default {
       },
       set(value) {
         this.$store.commit("setTelemetryPreference", value);
+      },
+    },
+    sponsorBlockIntegration: {
+      get() {
+        return this.$store.state.sponsorBlockIntegration;
+      },
+      set(value) {
+        this.$store.commit("setSponsorBlockIntegration", value);
       },
     },
   },
