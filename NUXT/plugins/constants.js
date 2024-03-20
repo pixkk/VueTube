@@ -7,7 +7,7 @@ const url = {
   // YT_BASE_API: "https://www.youtube.com/youtubei/v1",
   YT_BASE_API: "https://m.youtube.com/youtubei/v1",
   YT_SUGGESTIONS: "https://suggestqueries.google.com/complete",
-  VT_GITHUB: "https://api.github.com/repos/Frontesque/VueTube",
+  VT_GITHUB: "https://api.github.com/repos/pixkk/VueTube",
 };
 
 const ytApiVal = {
@@ -53,7 +53,8 @@ module.exports = {
   INNERTUBE_NEW_HEADER: (info) => {
     let headers = {
       accept: "*/*",
-      "user-agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+      "user-agent":
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
       "x-goog-authuser": 0,
@@ -85,29 +86,12 @@ module.exports = {
     };
     return client;
   },
-  INNERTUBE_CLIENT_2: (info) => {
-    let client = {
-      gl: info.gl,
-      hl: info.hl,
-      acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-      browserName: "Chrome Mobile",
-      browserVersion: "114.0.5735.196",
-      deviceMake: info.deviceMake,
-      deviceModel: info.deviceModel,
-      userAgent: info.userAgent,
-      clientName: ytApiVal.CLIENTNAME,
-      // clientVersion: ytApiVal.VERSION,
-      clientVersion: "2.20240312.06.00",
-      osName: info.osName,
-      osVersion: info.osVersion,
-      platform: "MOBILE",
-      playerType: "UNIPLAYER",
-      originalUrl: info.originalUrl,
-      configInfo: info.configInfo,
-      remoteHost: info.remoteHost,
-      visitorData: info.visitorData,
+  INNERTUBE_REQUEST: () => {
+    let request = {
+      useSsl: true,
+      internalExperimentFlags: [],
     };
-    return client;
+    return request;
   },
   INNERTUBE_VIDEO: (info) => {
     let client = {
