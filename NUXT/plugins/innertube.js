@@ -225,6 +225,14 @@ class Innertube {
         break;
       case "playlist":
       case "channel":
+        data.context.client = {
+          ...data.context.client,
+          clientFormFactor: "SMALL_FORM_FACTOR",
+        };
+        data.context = {
+          ...data.context,
+          request: constants.INNERTUBE_REQUEST(),
+        };
         if (args && args.browseId) {
           break;
         } else {

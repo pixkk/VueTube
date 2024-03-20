@@ -40,32 +40,32 @@ export const actions = {
         // console.warn(channel);
         state.loading = false;
         state.banner =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelBanner?.image.sources[0].url;
+          channel.header.channelMobileHeaderRenderer.contents[0].elementRenderer.newElement.type.componentType.model.channelBannerModel?.data.image.sources[2].url;
         state.avatar =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.avatarData.avatar?.image.sources[0].url;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.avatarData.avatar?.image.sources[0].url;
         state.title =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.title;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.title;
         state.subscribe =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.subscribeButton.subscribeButtonContent.buttonText;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.subscribeButtonViewModel.subscribeButtonViewModel.subscribeButtonContent.buttonText;
         state.subscribeAlt =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.subscribeButton.subscribeButtonContent.accessibilityText;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.subscribeButtonViewModel.subscribeButtonViewModel.subscribeButtonContent.accessibilityText;
         state.descriptionPreview =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.descriptionPreview.description;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.descriptionPreview.description;
         state.subscribers =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.metadata.subscriberCountText;
+          channel.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.metadata.subscriberCountText;
         state.videosCount =
-          channel.header.channelMobileHeaderRenderer.channelHeader.elementRenderer.newElement.type.componentType.model.channelHeaderModel.channelProfile.metadata.videosCountText;
+          channel.header.header.channelMobileHeaderRenderer.contents[1].elementRenderer.newElement.type.componentType.model.channelProfileModel.data.metadata.videosCountText;
         const featuredSection =
           channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.find(
             (i) => {
               return Boolean(
-                i?.shelfRenderer?.content?.horizontalListRenderer?.items[0]
-                  .gridChannelRenderer
+                i?.shelfRenderer?.content?.verticalListRenderer?.items[0]
+                  .elementRenderer
               );
             }
           );
-        state.featuredChannels =
-          featuredSection.shelfRenderer.content.horizontalListRenderer.items;
+        // state.featuredChannels =
+        //   featuredSection.shelfRenderer.content.horizontalListRenderer.items;
         console.log(
           channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer
             .content.sectionListRenderer.contents[0].shelfRenderer.content
