@@ -4,6 +4,7 @@ export const state = () => ({
   speedAutosave: null,
   preload: null,
   preloadUpTo: 100,
+  preferedCodec: null,
   // quality: null,
   // qualityAutoSwitch: null,
   // shortFullscreen: null,
@@ -26,6 +27,7 @@ export const mutations = {
       state.preload = JSON.parse(localStorage.getItem("preload")) === true; // defaults to false
       state.preloadUpTo =
         JSON.parse(localStorage.getItem("preloadUpTo")) || 100; // defaults to 100(percent)
+      state.preferedCodec = localStorage.getItem("preferedCodec"); // defaults to null
     }
   },
   setLoop(state, payload) {
@@ -47,5 +49,12 @@ export const mutations = {
   setPreloadUpTo(state, payload) {
     state.preloadUpTo = payload;
     localStorage.setItem("preloadUpTo", payload);
+  },
+  setPreferedCodec(state, payload) {
+    state.preferedCodec = payload;
+    localStorage.setItem("preferedCodec", payload);
+  },
+  getPreferedCodec() {
+    localStorage.getItem("preferedCodec");
   },
 };

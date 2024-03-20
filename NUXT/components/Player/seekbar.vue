@@ -87,7 +87,7 @@ export default {
     vidWrs: "",
   }),
   mounted() {
-    this.vidWrs = this.sources[1].url;
+    this.vidWrs = this.sources[0].url;
   },
   methods: {
     seek(e) {
