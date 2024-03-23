@@ -64,7 +64,7 @@ jobs:
         run: xcodebuild
           -workspace App/App.xcworkspace
           -scheme App
-          -sdk iphoneos
+          -sdk iphonesimulator
           -archivePath App/build/App.xarchive
           -destination 'generic/platform=iOS'
           clean build archive
