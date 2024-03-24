@@ -57,9 +57,6 @@ jobs:
       - name: Install app dependencies
         run: npm install
 
-      - name: Build project app
-        run: npm run build
-
       - name: Capacitor update
         run: npx cap update
 
