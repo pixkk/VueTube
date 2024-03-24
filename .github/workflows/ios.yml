@@ -7,7 +7,7 @@ on:
       - dev
 
 env:
-  NODE_VERSION: 16
+  NODE_VERSION: 19
 
 jobs:
   build:
@@ -38,8 +38,12 @@ jobs:
     runs-on: macos-latest
     needs: [build]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 14.3.1
       - name: Download artifacts
         uses: actions/download-artifact@v2
         with:
@@ -49,32 +53,31 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - name: Install dependencies
-        run: npm i
-      - name: Copy web assets to native platform
-        run: npx cap copy ios
-      - name: Update native platform
-        run: npx cap update ios
-      - name: Add empty `GoogleService-Info.plist`
+
+      - name: Install app dependencies
+        run: npm install
+
+      - name: Build project app
+        run: npm run build
+
+      - name: Capacitor update
+        run: npx cap update
+
+      - name: Capacitor copy
+        run: npx cap copy
+
+      - name: Add `GoogleService-Info.plist`
         run: echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
         env:
           GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
-      - name: Build and archive with xcodebuild
-        working-directory: ios
-        run: xcodebuild
-          -workspace App/App.xcworkspace
-          -scheme App
-          -sdk iphonesimulator
-          -archivePath App/build/App.xarchive
-          -destination 'generic/platform=iOS'
-          clean build archive
-          CODE_SIGN_IDENTITY=""
-          CODE_SIGNING_REQUIRED=NO
-          CODE_SIGNING_ALLOWED="NO"
-          CODE_SIGN_ENTITLEMENTS=""
-      - name: Make IPA
-        run: mkdir Payload && mv ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphoneos/App.app/ Payload && zip -r Payload.zip Payload && mv Payload.zip VueTube.ipa
-    
+          
+      - name: Build project
+        run: xcodebuild -workspace './ios/App/App/App.xcworkspace' -scheme App -destination generic/platform=iOS -archivePath App.xcarchive archive
+
+      - name: 🍻 Assemble IPA
+        run: xcodebuild archive -archivePath App.xcarchive -exportArchive -exportOptionsPlist ./GoogleService-Info.plist -exportPath output -allowProvisioningUpdates
+
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
