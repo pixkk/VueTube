@@ -69,7 +69,7 @@ jobs:
           GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
           
       - name: Build project
-        run: xcodebuild -workspace './ios/App/App.xcworkspace' -scheme App -destination generic/platform=iOS -archivePath App.xcarchive archive
+        run: xcodebuild -workspace './ios/App/App.xcworkspace' -scheme App -destination generic/platform=iOS -archivePath App.xcarchive archive -allowProvisioningUpdates
 
       - name: 🍻 Assemble IPA
         run: xcodebuild archive -archivePath App.xcarchive -exportArchive -exportOptionsPlist ./GoogleService-Info.plist -exportPath output -allowProvisioningUpdates
