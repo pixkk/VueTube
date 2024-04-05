@@ -1,9 +1,9 @@
 module.exports = {
-  name: "Hungarian",
+  name: "Magyar",
 
   global: {
     home: "Kezdőlap",
-    subscriptions: "Feliratkozások",
+    subscriptions: "Subscriptions",
     library: "Könyvtár",
     restart: "Újraindítás",
     later: "Később",
@@ -14,7 +14,7 @@ module.exports = {
 
   pages: {
     index: "",
-    home: "Home",
+    home: "Kezdőlap",
     library: "Könyvtár",
     search: "Keresés",
     settings: "Beállítások",
@@ -28,7 +28,7 @@ module.exports = {
     startup: "Elindításkor",
     theme: "Téma",
     tweaks: "Tweakek",
-    updates: "Frissítés"
+    updates: "Frissítés",
   },
 
   index: {
@@ -55,7 +55,9 @@ module.exports = {
       language: "Nyelv",
       backup: "Backup",
       backupinfo: "Backuppold vagy Restorold a beállításaidat",
-      restore: "Visszaállítás"
+      restore: "Visszaállítás",
+      personalizedrecommendations: "Személyre szabott ajánlások",
+      personalizedrecommendationsinfo: "Kapsz személyre szabott ajánlásokat cserébe a megtekintési idő telemetriájának küldéséért.",
     },
     theme: {
       normal: "Normál",
@@ -68,11 +70,22 @@ module.exports = {
     },
     tweaks: {
       fullscreen: "Teljes képernyő",
-      navbarblur: "Navbar Elhomályosítása",
-      roundedcorners: "Lekerekített Sarkok",
-      roundthumbnails: "Lekerekített Thumbnailek",
-      roundwatchpagecomponents: "Lekerekített videó gombok",
-      radius: "Rádiusz",
+      navbarblur: "Navigációs sáv elhomályosítása",
+      roundedcorners: "Lekerekített sarkok",
+      roundthumbnails: "Lekerekített bélyegképek",
+      roundwatchpagecomponents: "Lekerekített videóoldal-komponensek",
+      radius: "Sugár",
+      launchscreen: "Indító képernyő",
+      centeredlayout: "Középre rendezett elrendezés",
+      fullscreenlayout: "Teljes képernyős elrendezés",
+      themedicon: "Témához igazított ikon",
+      bottomnavigation: "Alsó navigáció",
+      shift: "Elmozdítás",
+      showlabels: "Címkék megjelenítése",
+      mdi: "MDI",
+      materialsymbols: "Material Szimbólumok",
+      fluentuiicons: "FluentUI Ikonok",
+      ibmcarbonicons: "IBM Carbon Ikonok",
     },
     startup: {
       defaultpage: "Alapértelmezett oldal",
