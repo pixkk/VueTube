@@ -1,9 +1,9 @@
 module.exports = {
-  name: "Magyar",
+  name: "Hungarian",
 
   global: {
     home: "Kezdőlap",
-    subscriptions: "Subscriptions",
+    subscriptions: "Feliratkozások",
     library: "Könyvtár",
     restart: "Újraindítás",
     later: "Később",
