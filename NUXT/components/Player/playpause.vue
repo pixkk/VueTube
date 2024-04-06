@@ -20,7 +20,6 @@ export default {
   props: {
     video: {},
     buffering: {
-      type: Boolean,
       required: false,
     },
   },

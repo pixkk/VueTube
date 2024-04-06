@@ -430,7 +430,7 @@ export default {
         icon: "mdi-volume-off",
       },
     ],
-    preferedCodecValue: "",
+    preferedCodecValue: "avc and av01",
     tabs: [
       {
         label: "avc and av01",
@@ -496,7 +496,9 @@ export default {
   },
   mounted() {
     this.preferedCodecValue = localStorage.getItem("preferedCodec");
-    const vpTab = this.tabs.find((tab) => tab.label === this.preferedCodecValue);
+    const vpTab = this.tabs.find(
+      (tab) => tab.label === this.preferedCodecValue
+    );
     if (vpTab) {
       this.selectedTab = vpTab.id;
     }

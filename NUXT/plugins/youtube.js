@@ -71,7 +71,8 @@ const searchModule = {
       url:
         `https://sponsor.ajay.app/api/skipSegments/` +
         hashedVideoId +
-        "?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22poi%22%2C%22chapter%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
+        // "?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22poi%22%2C%22chapter%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
+        "?categories=%5B%22sponsor%22%2C%22poi_highlight%22%2C%22exclusive_access%22%2C%22chapter%22%2C%22selfpromo%22%2C%22interaction%22%2C%22intro%22%2C%22outro%22%2C%22preview%22%2C%22filler%22%2C%22music_offtopic%22%5D&actionTypes=%5B%22skip%22%2C%22mute%22%2C%22full%22%5D&userAgent=mnjggcdmjocbbbhaepdhchncahnbgone",
       // params: { videoID: hashedVideoId },
     })
       .then((res) => {

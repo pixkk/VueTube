@@ -29,7 +29,7 @@
 export default {
   props: {
     blocks: {
-      type: Array,
+      // type: Array,
       required: true,
     },
     duration: {

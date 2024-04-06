@@ -407,6 +407,7 @@ export default {
       audSrc: "",
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
+      videoEnded: false,
       isMusic: false,
       sponsorBlocks: [],
       vid: null,
@@ -581,6 +582,7 @@ export default {
         this.$refs.player.addEventListener("progress", this.progressEvent);
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
+        this.$refs.player.addEventListener("ended", this.endedEvent);
       }
     },
     timeUpdateEvent() {
@@ -595,7 +597,7 @@ export default {
         // console.warn(data);
         this.sponsorBlocks.segments.forEach((block) => {
           // block.segments.forEach((segments) => {
-          if (vidTime >= block.segment[0] && vidTime <= block.segment[1]) {
+          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded == false) {
             console.log("Skipping the sponsor");
             this.$youtube.showToast("Skipped "+ block.category + " sponsor");
             this.$refs.player.currentTime = block.segment[1];
@@ -603,6 +605,9 @@ export default {
           }
           // });
         });
+    },
+    endedEvent() {
+      this.videoEnded = true;
     },
     progressEvent() {
       if (this.bufferingDetected) {
@@ -630,6 +635,7 @@ export default {
       }
     },
     playingEvent() {
+      this.videoEnded = false;
       if (this.bufferingDetected != false) {
         clearTimeout(this.bufferingDetected);
         this.$refs.audio.currentTime = this.vid.currentTime;
