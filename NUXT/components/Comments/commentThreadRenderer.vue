@@ -45,7 +45,7 @@
         >
           <div class="author-name--wrapper">
             <span class="author-name mr-1" v-emoji>
-              {{ commentRenderer.authorText.simpleText }}
+              {{ commentRenderer.authorText.simpleText ? commentRenderer.authorText.simpleText : commentRenderer.authorText.runs[0].text }}
             </span>
           </div>
           <template
@@ -70,7 +70,7 @@
           commentRenderer.expandButton.buttonRenderer.text.runs[0].text
         "
         :collapse-text="
-          commentRenderer.collapseButton.buttonRenderer.text.runs[0].text
+          commentRenderer.collapseButton?.buttonRenderer?.text.runs[0].text
         "
       >
         <yt-text-formatter
@@ -86,7 +86,7 @@
             <span
               v-if="commentRenderer.voteCount"
               class="like-count caption"
-              v-text="commentRenderer.voteCount.simpleText"
+              v-text="commentRenderer.voteCount.simpleText ? commentRenderer.voteCount.simpleText : commentRenderer.voteCount.runs[0].text"
             ></span>
             <v-icon class="ml-2" small>mdi-thumb-down-outline</v-icon>
           </div>
