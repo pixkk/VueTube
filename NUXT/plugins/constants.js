@@ -18,15 +18,6 @@ const ytApiVal = {
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
-const ytApiVal2 = {
-  // VERSION: "16.25",
-  VERSION: "19.09",
-  CLIENTNAME: "MWEB",
-  VERSION_WEB: "2.20240312.06.00",
-  CLIENT_WEB_M: 2,
-  CLIENT_WEB_D: 1,
-};
-
 const filesystem = {
   plugins: "plugins/",
 };
@@ -75,6 +66,28 @@ module.exports = {
       userAgent: info.userAgent,
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
+      osName: info.osName,
+      osVersion: info.osVersion,
+      platform: "MOBILE",
+      playerType: "UNIPLAYER",
+      originalUrl: info.originalUrl,
+      configInfo: info.configInfo,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+    return client;
+  },
+  INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
+    let client = {
+      gl: info.gl,
+      hl: info.hl,
+      deviceMake: "Generic",
+      // deviceMake: info.deviceMake,
+      // deviceModel: info.deviceModel,
+      deviceModel: "Android 10.0",
+      userAgent: info.userAgent,
+      clientName: "MWEB",
+      clientVersion: ytApiVal.VERSION_WEB,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",

@@ -4,7 +4,24 @@ export const state = () => ({
   recommendedVideos: [],
   watchTelemetry: null,
   sponsorBlockIntegration: true,
+  sponsorBlockSegmentsSettingsValue: "",
+  channelData: {},
+  channel: {},
 });
+
+function updateObject(testObject, value) {
+  var retrievedObject = JSON.parse(localStorage.getItem(sponsorBlockSegmentsSettingsValue));
+
+  if (retrievedObject) {
+    retrievedObject[testObject] = value;
+    return retrievedObject;
+  } else {
+    var newObject = {};
+    newObject[testObject] = value;
+    return newObject;
+  }
+}
+
 
 export const mutations = {
   initTelemetryPreference(state) {
@@ -27,7 +44,29 @@ export const mutations = {
     state.sponsorBlockIntegration = payload;
     localStorage.setItem("sponsorBlockIntegration", payload);
   },
+  updateSponsorBlockSegmentsSettingsValue(state, payload) {
+    // let sbssv = JSON.parse(
+    //   localStorage.getItem("sponsorBlockSegmentsSettingsValue")
+    // );
+    console.log(payload);
+    let typeAndValue = payload.split("||");
+    console.log(typeAndValue);
+    let type = typeAndValue[0];
+    let value = typeAndValue[1];
+    let settings = updateObject(type, value);
+    state.sponsorBlockSegmentsSettingsValue = settings;
+    localStorage.setItem("sponsorBlockIntegrationSegmentsSettings", settings);
+  },
   updateRecommendedVideos(state, payload) {
     Vue.set(state, "recommendedVideos", payload);
   },
+  SET_CHANNEL_DATA(state, payload) {
+    Vue.set(state, "channelData", payload);
+  },
+  updateChannelData(state, payload) {
+    state.channel.totalData.contents = state.channel.totalData.contents.concat(payload.contents);
+    state.channel.totalData.continuations = state.channel.totalData.continuations.concat(payload.continuations);
+  },
+
+
 };

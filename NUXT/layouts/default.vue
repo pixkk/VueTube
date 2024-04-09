@@ -51,7 +51,7 @@
         <!-- element above removes artifacting from things like v-ripple by -->
         <!-- scrollbox below must be a standalone div -->
         <div ref="pgscroll" style="height: 100%">
-          <nuxt style="height: 100%"/>
+          <nuxt style=""/>
         </div>
       </div>
 
@@ -150,7 +150,7 @@ export default {
 
     // ---   Import Twemoji   ---///
     const plugin = document.createElement("script");
-    plugin.setAttribute("src", "//twemoji.maxcdn.com/v/latest/twemoji.min.js");
+    plugin.setAttribute("src", "//unpkg.com/twemoji@latest/dist/twemoji.min.js");
     plugin.setAttribute("crossorigin", "anonymous");
     document.head.appendChild(plugin);
   },

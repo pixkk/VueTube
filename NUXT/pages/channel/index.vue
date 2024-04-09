@@ -1,10 +1,11 @@
 <template>
   <div class="d-flex flex-column align-center">
     <v-img
-      height="120"
       :src="$store.state.channel.banner"
-      class="background"
+      class=""
       :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+      contain
+      position="top center"
     ></v-img>
     <v-avatar
       size="60"
@@ -41,5 +42,25 @@
         mdi-chevron-right
       </v-icon>
     </v-card>
+    <div>
+      <compact-video-renderer
+        v-for="videoExample in $store.state.channel.videoExample"
+        :video="
+        videoExample.elementRenderer.newElement.type.componentType.model
+          .videoWithContextModel
+          ? videoExample.elementRenderer.newElement.type.componentType.model
+              .videoWithContextModel.videoWithContextData
+          : videoExample.elementRenderer.newElement.type.componentType.model
+              .gridVideoModel.videoData
+      "
+      />
+    </div>
   </div>
+
 </template>
+<script>
+import CompactVideoRenderer from "../../components/CompactRenderers/compactVideoRenderer.vue";
+export default {
+  components: { CompactVideoRenderer },
+};
+</script>

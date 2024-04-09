@@ -225,6 +225,11 @@ class Innertube {
         break;
       case "playlist":
       case "channel":
+        data = {
+          context: {
+            client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+          },
+        };
         data.context.client = {
           ...data.context.client,
           clientFormFactor: "SMALL_FORM_FACTOR",
@@ -266,8 +271,11 @@ class Innertube {
 
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
     let data = {
-      context: { ...this.context, ...contextAdditional },
+      context: { ...contextAdditional },
       continuation: continuation,
+    };
+    data.context.client = {
+      ...constants.INNERTUBE_VIDEO(this.context.client),
     };
     let url;
     switch (type.toLowerCase()) {
@@ -319,6 +327,9 @@ class Innertube {
             client: {
               clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
               clientVersion: constants.YT_API_VALUES.VERSION_WEB,
+              gl: this.context.client.gl,
+              hl: this.context.client.hl,
+              remoteHost: this.context.client.remoteHost,
             },
           },
         },
@@ -404,8 +415,48 @@ class Innertube {
 
   async getEndPoint(url) {
     let data = { context: this.context, url: url };
-    const response = await Http.post({
-      url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+    // data = {
+    //   ...data,
+    //   context: {
+    //     client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+    //   },
+    // };
+    // data.context.client = {
+    //   ...data.context.client,
+    //   clientFormFactor: "SMALL_FORM_FACTOR",
+    // };
+    data.context = {
+      ...data.context,
+      request: constants.INNERTUBE_REQUEST(),
+    };
+    let response = await Http.get({
+      // url: `${url}/navigation/resolve_url?key=${this.key}`,
+      url: `${url}`,
+      // headers: { "Content-Type": "application/json" },
+    }).catch((error) => error);
+    const html = response.data; // Assuming data property holds the HTML content
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
+
+    let browseId = metaTags[0].content;
+
+    data = {
+      ...data,
+      browseId: browseId,
+      context: {
+        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+      },
+    };
+    data.context.client = {
+      ...data.context.client,
+      clientFormFactor: "SMALL_FORM_FACTOR",
+    };
+    response = await Http.post({
+      // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+      url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
       data: data,
       headers: { "Content-Type": "application/json" },
     }).catch((error) => error);
@@ -465,16 +516,20 @@ class Innertube {
     const rec = await this.browseAsync(recommendationsType);
     return rec;
   }
+  async getChannelVideosAsync(recommendationsType = "recommendations") {
+    const rec = await this.browseAsync(recommendationsType);
+    return rec;
+  }
 
   async getChannelAsync(url) {
     const channelEndpoint = await this.getEndPoint(url);
     if (
       channelEndpoint.success &&
-      channelEndpoint.data.endpoint?.browseEndpoint
+      channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
     ) {
       return await this.browseAsync(
         "channel",
-        channelEndpoint.data.endpoint?.browseEndpoint
+        channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
       );
     } else {
       throw new ReferenceError("Cannot find channel");

@@ -123,7 +123,11 @@ const innertubeModule = {
   },
 
   getThumbnail(id, resolution, backupThumbnail) {
-    if (resolution == "max") {
+
+    if (backupThumbnail[backupThumbnail.length - 1]) {
+      return backupThumbnail[backupThumbnail.length - 1].url;
+    }
+    else if (resolution == "max") {
       const url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
       let img = new Image();
       img.src = url;
@@ -131,8 +135,6 @@ const innertubeModule = {
         if (img.height !== 120) return url;
       };
     }
-    if (backupThumbnail[backupThumbnail.length - 1])
-      return backupThumbnail[backupThumbnail.length - 1].url;
     else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
@@ -276,6 +278,112 @@ const innertubeModule = {
       return { title: title, subtitle: subtitle };
     }
   },
+  async channelVideos(response) {
+    // const response = await InnertubeAPI.getRecommendationsAsync();
+    let final;
+    // if (!response.success)
+    //   throw new Error("An error occurred and innertube failed to respond");
+    console.warn(response);
+    let contents = response.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.richGridRenderer.contents;
+
+    if (contents !== null) {
+      final = contents;
+      const continuations =
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0]
+          .tabRenderer.content.sectionListRenderer.continuations;
+      // console.log({ continuations: continuations, contents: final });
+      console.warn({ continuations: continuations, contents: final });
+
+      return { continuations: continuations, contents: final };
+    } else {
+      // const title = response.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].elementRenderer.newElement.type.componentType.model.feedNudgeModel.context
+      let title;
+      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+        (tab) => {
+          if (tab.itemSectionRenderer) {
+            if (
+              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                .type.componentType.model.feedNudgeModel
+            ) {
+              console.warn(tab.itemSectionRenderer);
+              title =
+                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                  .type.componentType.model.feedNudgeModel.nudgeData.title
+                  .content;
+            }
+          } else {
+            title =
+              tab.tabRenderer.content.richGridRenderer.contents[1]
+                .richSectionRenderer.content.feedNudgeRenderer.title.runs[0]
+                .text;
+          }
+        }
+      );
+
+      let subtitle;
+
+      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+        (tab) => {
+          if (tab.itemSectionRenderer) {
+            if (
+              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                .type.componentType.model.feedNudgeModel
+            ) {
+              console.warn(tab.itemSectionRenderer);
+              subtitle =
+                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                  .type.componentType.model.feedNudgeModel.nudgeData.subtitle
+                  .content;
+            }
+          } else {
+            subtitle =
+              tab.tabRenderer.content.richGridRenderer.contents[1]
+                .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
+                .text;
+          }
+        }
+      );
+
+      // title = response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.sectionListRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //       .tabRenderer.content.sectionListRenderer.contents[0]
+      //       .itemSectionRenderer.contents[0].elementRenderer.newElement.type
+      //       .componentType.model.feedNudgeModel.nudgeData.title.content
+      //   : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //       .tabRenderer.content.richGridRenderer.contents[1]
+      //       .richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text;
+
+      // const title =
+      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text : "null";
+
+      // const subtitle = response.data.contents.singleColumnBrowseResultsRenderer
+      //   .tabs[0].tabRenderer.content.sectionListRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //       .tabRenderer.content.sectionListRenderer.contents[0]
+      //       .itemSectionRenderer.contents[0].elementRenderer.newElement.type
+      //       .componentType.model.feedNudgeModel.nudgeData.subtitle.content
+      //   : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //       .tabRenderer.content.richGridRenderer.contents[1]
+      //       .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
+      //       .text;
+      // const subtitle =
+      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer
+      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0].text : "null";
+
+      // console.log(response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
+      //   .tabRenderer.content.richGridRenderer);
+      return { title: title, subtitle: subtitle };
+    }
+  },
 
   async recommendContinuation(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint);
@@ -291,6 +399,17 @@ const innertubeModule = {
       : null;
     return { continuations: continuations, contents: final };
   },
+  async recommendContinuationForChannel(continuation, endpoint) {
+    const response = await this.getContinuation(continuation, endpoint, "web");
+    const contents =
+      response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems;
+    const final = contents.map((shelves) => {
+      const video = shelves;
+      if (video) return video;
+    });
+    const continuations = response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems[response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems.length - 1];
+    return { continuations: continuations, contents: final };
+  },
 
   async getContinuation(continuation, endpoint, mode = "android") {
     let contextAdditional = {};
@@ -299,7 +418,7 @@ const innertubeModule = {
         ...contextAdditional,
         ...{
           client: {
-            clientName: constants.YT_API_VALUES.CLIENT_WEB_D,
+            clientName: "MWEB",
             clientVersion: constants.YT_API_VALUES.VERSION_WEB,
           },
         },
