@@ -13,8 +13,13 @@ import { Toast } from "@capacitor/toast";
 import { createHash } from "crypto";
 
 function getEncoding(contentType) {
-  const re = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i;
-  const content = re.exec(contentType);
+  console.warn(contentType);
+  let re = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i;
+  let content = re.exec(contentType);
+  if (!content) {
+    re = /charset=([A-Za-z0-9-]+)/gm;
+    content = re.exec(contentType);
+  }
   console.log(content);
   return content[1].toLowerCase();
 }
@@ -35,12 +40,18 @@ const searchModule = {
       },
     })
       .then((res) => {
-        const contentType = res.headers["Content-Type"];
-        // make a new buffer object from res.data
-        const buffer = Buffer.from(res.data, "base64");
-        // convert res.data from iso-8859-1 to utf-8
-        const data = iconv.decode(buffer, getEncoding(contentType));
-        callback(data);
+          const contentType = res.headers["Content-Type"];
+          // make a new buffer object from res.data
+          try {
+
+              const buffer = Buffer.from(res.data, "base64");
+              // convert res.data from iso-8859-1 to utf-8
+              const data = iconv.decode(buffer, getEncoding(contentType));
+              callback(data);
+          }
+          catch (e) {
+              callback(res.data);
+          }
       })
       .catch((err) => {
         callback(err);
@@ -123,19 +134,16 @@ const innertubeModule = {
   },
 
   getThumbnail(id, resolution, backupThumbnail) {
-
     if (backupThumbnail[backupThumbnail.length - 1]) {
       return backupThumbnail[backupThumbnail.length - 1].url;
-    }
-    else if (resolution == "max") {
+    } else if (resolution == "max") {
       const url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
       let img = new Image();
       img.src = url;
       img.onload = function () {
         if (img.height !== 120) return url;
       };
-    }
-    else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    } else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
   async getChannel(url) {
@@ -284,13 +292,15 @@ const innertubeModule = {
     // if (!response.success)
     //   throw new Error("An error occurred and innertube failed to respond");
     console.warn(response);
-    let contents = response.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.content.richGridRenderer.contents;
+    let contents =
+      response.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer
+        .content.richGridRenderer.contents;
 
     if (contents !== null) {
       final = contents;
       const continuations =
-        response.contents.singleColumnBrowseResultsRenderer.tabs[0]
-          .tabRenderer.content.sectionListRenderer.continuations;
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer
+          .content.sectionListRenderer.continuations;
       // console.log({ continuations: continuations, contents: final });
       console.warn({ continuations: continuations, contents: final });
 
@@ -402,12 +412,18 @@ const innertubeModule = {
   async recommendContinuationForChannel(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint, "web");
     const contents =
-      response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems;
+      response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+        .continuationItems;
     const final = contents.map((shelves) => {
       const video = shelves;
       if (video) return video;
     });
-    const continuations = response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems[response.data.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems.length - 1];
+    const continuations =
+      response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+        .continuationItems[
+        response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+          .continuationItems.length - 1
+      ];
     return { continuations: continuations, contents: final };
   },
 

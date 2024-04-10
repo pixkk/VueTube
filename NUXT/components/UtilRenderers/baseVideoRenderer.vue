@@ -40,13 +40,14 @@
       }"
     >
       <a
+          v-if="channelIcon"
         class="avatar-link pl-2 pt-2"
         @click.prevent="
           $store.dispatch('channel/fetchChannel', channelUrl),
             $router.push('/channel')
         "
       >
-        <v-img class="avatar-thumbnail" :src="channelIcon" />
+        <v-img v-if="channelIcon" class="avatar-thumbnail" :src="channelIcon" />
       </a>
       <v-card-text class="video-info pt-2" v-emoji>
         <span

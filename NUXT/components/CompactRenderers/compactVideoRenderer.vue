@@ -7,7 +7,7 @@
     :channelUrl="
       this.$rendererUtils.getNavigationEndpoints(canonicalBaseUrl)
     "
-    :channelIcon="video?.videoData ? video.videoData.avatar.image.sources[0].url : null"
+    :channelIcon="channelIcon"
     :titles="video?.videoData ? video.videoData.metadata.title : video?.title?.runs"
     :bottomText="parseBottom(video)"
   >
@@ -24,6 +24,10 @@ export default {
   },
 
   computed: {
+    channelIcon() {
+      // console.log(this.video);
+      return this.video?.videoData ? this.video.videoData.avatar.image.sources[0].url : this.video?.channelThumbnail?.thumbnails[0]?.url;
+    },
     thumbnailOverlayText() {
       return this.video?.videoData
         ? this.video.videoData.thumbnail?.timestampText
@@ -36,8 +40,8 @@ export default {
       return this.video?.videoData ? this.video.videoData.thumbnail?.image.sources : this.video?.thumbnail?.thumbnails;
     },
     canonicalBaseUrl() {
-      // console.log(this.video);
-      return this.video?.videoData ? this.video.videoData.avatar.endpoint.innertubeCommand.canonicalBaseUrl : "https://youtube.com/watch?v=" + this.video?.videoId;
+      // console.log(this.video?.longBylineText?.runs[0]?.navigationEndpoint.browseEndpoint.canonicalBaseUrl);
+      return this.video?.videoData ? this.video.videoData.avatar.endpoint.innertubeCommand : this.video?.longBylineText?.runs[0]?.navigationEndpoint.browseEndpoint;
     },
     vidIdValue() {
       return this.video?.videoData ? this.video.videoData.dragAndDropUrl.split("?v=")[1] : this.video?.videoId;

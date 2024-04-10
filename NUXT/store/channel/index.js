@@ -114,7 +114,7 @@ export const actions = {
         //     .horizontalListRenderer.items : channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer
         //     .content.sectionListRenderer.contents[0].shelfRenderer.content
         //     .verticalListRenderer.items,
-        videoExample: null,
+       // videoExample: channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents,
         totalData: videoList,
       };
       commit("setChannelData", channelData);

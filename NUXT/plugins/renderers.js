@@ -10,10 +10,16 @@ class rendererUtils {
       else return new URL(base.urlEndpoint.url).pathname;
     } else if (base.browseEndpoint) {
       return base.browseEndpoint.canonicalBaseUrl;
+    } else if (base.canonicalBaseUrl) {
+      return base.canonicalBaseUrl;
     } else if (base.watchEndpoint) {
       return `/watch?v=${base.watchEndpoint.videoId}`;
     } else if (base.navigationEndpoint) {
-      return base.navigationEndpoint.browseEndpoint.canonicalBaseUrl; //for now
+      if (base.navigationEndpoint.browseEndpoint) {
+        // console.warn(base.navigationEndpoint.browseEndpoint);
+        return base.navigationEndpoint.browseEndpoint.canonicalBaseUrl; //for now
+      }
+      return;
     } else if (base.searchEndpoint) {
       return `/search?q=${encodeURI(base.searchEndpoint.query)}`;
     }
