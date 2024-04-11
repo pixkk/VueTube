@@ -44,8 +44,15 @@
           "
         >
           <div class="author-name--wrapper">
-            <span class="author-name mr-1" v-emoji>
-              {{ commentRenderer.authorText.simpleText ? commentRenderer.authorText.simpleText : commentRenderer.authorText.runs[0].text }}
+            <span class="author-name mr-1" v-emoji v-if="commentRenderer.authorText?.simpleText">
+              {{ commentRenderer.authorText.simpleText }}
+            </span>
+            <span class="author-name mr-1" v-emoji v-if="commentRenderer.authorText?.runs">
+              {{ commentRenderer.authorText?.runs[0]?.text }}
+            </span>
+            <span class="author-name mr-1" v-emoji v-else>
+            <!--  {{  commentRenderer.authorText }}-->
+              @{{ commentRenderer.authorEndpoint.browseEndpoint.browseId}}
             </span>
           </div>
           <template
