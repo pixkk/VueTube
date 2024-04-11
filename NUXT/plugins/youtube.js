@@ -13,7 +13,7 @@ import { Toast } from "@capacitor/toast";
 import { createHash } from "crypto";
 
 function getEncoding(contentType) {
-  console.warn(contentType);
+  // console.warn(contentType);
   let re = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i;
   let content = re.exec(contentType);
   if (!content) {
@@ -87,7 +87,7 @@ const searchModule = {
       // params: { videoID: hashedVideoId },
     })
       .then((res) => {
-        console.warn(res.data);
+        // console.warn(res.data);
         res.data.forEach((item) => {
           // console.warn("WE HERE - " + JSON.stringify(item));
           if (item.videoID == id) {
@@ -208,7 +208,7 @@ const innertubeModule = {
               tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                 .type.componentType.model.feedNudgeModel
             ) {
-              console.warn(tab.itemSectionRenderer);
+              // console.warn(tab.itemSectionRenderer);
               title =
                 tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                   .type.componentType.model.feedNudgeModel.nudgeData.title
@@ -232,7 +232,7 @@ const innertubeModule = {
               tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                 .type.componentType.model.feedNudgeModel
             ) {
-              console.warn(tab.itemSectionRenderer);
+              // console.warn(tab.itemSectionRenderer);
               subtitle =
                 tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                   .type.componentType.model.feedNudgeModel.nudgeData.subtitle
@@ -291,7 +291,7 @@ const innertubeModule = {
     let final;
     // if (!response.success)
     //   throw new Error("An error occurred and innertube failed to respond");
-    console.warn(response);
+    // console.warn(response);
     let contents =
       response.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer
         .content.richGridRenderer.contents;
@@ -302,7 +302,7 @@ const innertubeModule = {
         response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer
           .content.sectionListRenderer.continuations;
       // console.log({ continuations: continuations, contents: final });
-      console.warn({ continuations: continuations, contents: final });
+      // console.warn({ continuations: continuations, contents: final });
 
       return { continuations: continuations, contents: final };
     } else {
@@ -316,7 +316,7 @@ const innertubeModule = {
               tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                 .type.componentType.model.feedNudgeModel
             ) {
-              console.warn(tab.itemSectionRenderer);
+              // console.warn(tab.itemSectionRenderer);
               title =
                 tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                   .type.componentType.model.feedNudgeModel.nudgeData.title
@@ -340,7 +340,7 @@ const innertubeModule = {
               tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                 .type.componentType.model.feedNudgeModel
             ) {
-              console.warn(tab.itemSectionRenderer);
+              // console.warn(tab.itemSectionRenderer);
               subtitle =
                 tab.itemSectionRenderer.contents[0].elementRenderer.newElement
                   .type.componentType.model.feedNudgeModel.nudgeData.subtitle

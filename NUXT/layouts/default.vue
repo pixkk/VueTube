@@ -192,7 +192,7 @@ export default {
               .toString()
               .replace(/^.*?\(/, "")
               .replace(/\)$/, ""); //Format Response
-            console.warn(data);
+            // console.warn(data);
             this.response = JSON.parse(data)[1];
           }
           // this.response = res;
