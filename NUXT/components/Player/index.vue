@@ -424,7 +424,7 @@ export default {
         console.warn("sbreturn", data.segments);
         // if (Array.isArray(data)) {
           this.sponsorBlocks = data;
-          data.segments.forEach((block) => {
+          data.segments?.forEach((block) => {
             if (block.category === "music_offtopic") {
               this.isMusic = true;
               this.$refs.audio.playbackRate = 1;
@@ -437,9 +437,9 @@ export default {
     else {
       // this.sponsorBlocks = [];
     }
-    console.log("sources", this.sources);
-    console.log("recommends", this.recommends);
-    console.log("video", this.video);
+    // console.log("sources", this.sources);
+    // console.log("recommends", this.recommends);
+    // console.log("video", this.video);
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
@@ -484,7 +484,7 @@ export default {
     // TODO: this.$store.state.player.quality, check if exists and select the closest one
     let displayInfo = getPreferredQuality();
     let indexOfPreferredQuality = 0;
-    console.warn(displayInfo);
+    // console.warn(displayInfo);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       // console.log(this.sources[i].mimeType.toLowerCase());
@@ -595,7 +595,7 @@ export default {
         let vidTime = this.vid.currentTime;
         // this.sponsorBlocks = data;
         // console.warn(data);
-        this.sponsorBlocks.segments.forEach((block) => {
+        this.sponsorBlocks?.segments?.forEach((block) => {
           // block.segments.forEach((segments) => {
           if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded == false) {
             console.log("Skipping the sponsor");
@@ -720,7 +720,7 @@ export default {
           : setTimeout(() => {
               if (!this.skipping) {
                 this.controls = setTimeout(() => {
-                  if (!this.seeking && !this.$refs.player.paused)
+                  if (!this.seeking && !this.$refs?.player?.paused)
                     this.controls = false;
                 }, 2345);
               }
