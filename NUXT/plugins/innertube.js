@@ -432,8 +432,11 @@ class Innertube {
     let response = await Http.get({
       // url: `${url}/navigation/resolve_url?key=${this.key}`,
       url: `${url}`,
-      // headers: { "Content-Type": "application/json" },
-    }).catch((error) => error);
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    }).catch((error) => {
+
+      // console.warn(browseId);
+    });
     const html = response.data; // Assuming data property holds the HTML content
 
     const parser = new DOMParser();
@@ -441,8 +444,25 @@ class Innertube {
 
     const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
 
-    let browseId = metaTags[0].content;
+    let browseId;
+    if (metaTags.length > 0) {
+      browseId = metaTags[0].content;
+    }
+    else {
+      let match;
+      let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
+      // console.warn(html);
+      // console.warn(regex.exec(html));
+      while ((match = regex.exec(html)) !== null) {
+        // console.warn(match);
+        browseId = match[1];
+      }
 
+      // console.warn(browseId);
+      // var n = url.lastIndexOf("/");
+      // browseId = url.substring(n + 1);
+
+    }
     data = {
       ...data,
       browseId: browseId,

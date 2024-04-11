@@ -52,6 +52,7 @@ export function getChannelProfileData() {
 
 export const actions = {
   async fetchChannel({ commit }, channelUrl) {
+    console.log(channelUrl);
     let channelRequest;
     if (
       channelUrl.includes("/c/") ||
@@ -59,24 +60,25 @@ export const actions = {
       channelUrl.includes("/channel/") ||
       channelUrl.includes("/@")
     ) {
-      channelRequest = `https://youtube.com/${channelUrl}`;
+      channelRequest = `https://m.youtube.com/${channelUrl}`;
     } else {
-      channelRequest = `https://youtube.com/channel/${channelUrl}`;
+      channelRequest = `https://m.youtube.com/channel/${channelUrl}`;
     }
     commit("setLoading", true);
     let channel = await this.$youtube.getChannel(channelRequest);
     console.log(channel);
     let videoList = await this.$youtube.channelVideos(channel);
+    console.log(videoList);
     try {
       const channelData = {
         avatar:
-          channel.header.c4TabbedHeaderRenderer.avatar.thumbnails[
-            channel.header.c4TabbedHeaderRenderer.avatar.thumbnails.length - 1
-          ].url || null,
+          channel.header.c4TabbedHeaderRenderer.avatar?.thumbnails[
+            channel.header.c4TabbedHeaderRenderer.avatar?.thumbnails.length - 1
+          ].url || "",
         banner:
-          channel.header.c4TabbedHeaderRenderer.banner.thumbnails[
+          channel.header.c4TabbedHeaderRenderer.banner?.thumbnails[
             channel.header.c4TabbedHeaderRenderer.banner.thumbnails.length - 1
-          ].url || null,
+          ].url || "",
         title: channel.header.c4TabbedHeaderRenderer.title || null,
         subscribe:
           channel.header.c4TabbedHeaderRenderer.subscribeButton.buttonRenderer
@@ -91,10 +93,10 @@ export const actions = {
           channel.header.c4TabbedHeaderRenderer.subscriberCountText.runs[0]
             .text || null,
         videosCount:
-          channel.header.c4TabbedHeaderRenderer.videosCountText.runs[0].text +
+          channel.header.c4TabbedHeaderRenderer.videosCountText?.runs[0]?.text +
             " " +
-            channel.header.c4TabbedHeaderRenderer.videosCountText.runs[1]
-              .text || null,
+            channel.header.c4TabbedHeaderRenderer.videosCountText?.runs[1]
+              ?.text || null,
         featuredChannels: null, // You can set this value as per your data structure
         // videoExample:
         //   channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer

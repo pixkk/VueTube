@@ -59,8 +59,8 @@ export default {
       this.loading = true;
       const continuationCode =
         recommends.contents[recommends.contents.length - 1]
-          .continuationItemRenderer.continuationEndpoint.continuationCommand
-          .token;
+          ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand
+          ?.token;
       if (continuationCode) {
         this.$youtube
           .recommendContinuationForChannel(continuationCode, "browse")
