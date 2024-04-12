@@ -208,6 +208,8 @@ class Innertube {
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
+
+    console.log(args);
     let data = {
       context: {
         client: constants.INNERTUBE_CLIENT(this.context.client),
@@ -254,6 +256,7 @@ class Innertube {
       data: data,
       headers: { "Content-Type": "application/json" },
     }).catch((error) => error);
+    console.log(response);
 
     if (response instanceof Error)
       return {
@@ -541,16 +544,25 @@ class Innertube {
     return rec;
   }
 
-  async getChannelAsync(url) {
+  async getChannelAsync(url, tab="main") {
     const channelEndpoint = await this.getEndPoint(url);
     if (
       channelEndpoint.success &&
       channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
     ) {
-      return await this.browseAsync(
-        "channel",
-        channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
-      );
+      switch (tab) {
+        case "main":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
+          );
+        case "community":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
+          );
+      }
+
     } else {
       throw new ReferenceError("Cannot find channel");
     }

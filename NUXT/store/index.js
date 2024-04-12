@@ -67,6 +67,10 @@ export const mutations = {
     state.channel.totalData.contents = state.channel.totalData.contents.concat(payload.contents);
     state.channel.totalData.continuations = state.channel.totalData.continuations.concat(payload.continuations);
   },
+  updateCommunityData(state, payload) {
+    state.channel.community.contents = state.channel.community.contents.concat(payload.contents);
+    state.channel.community.continuations = state.channel.community.continuations.concat(payload.continuations);
+  },
 
 
 };

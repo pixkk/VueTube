@@ -20,7 +20,7 @@ function getEncoding(contentType) {
     re = /charset=([A-Za-z0-9-]+)/gm;
     content = re.exec(contentType);
   }
-  console.log(content);
+  // console.log(content);
   return content[1].toLowerCase();
 }
 
@@ -146,11 +146,15 @@ const innertubeModule = {
     } else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
-  async getChannel(url) {
+  async getChannel(url, tab="main") {
     try {
-      const response = await InnertubeAPI.getChannelAsync(url);
+      const response = await InnertubeAPI.getChannelAsync(url, tab);
+
+      console.log(response.data);
       return response.data;
-    } catch (error) {}
+    } catch (error) {
+      console.error(error)
+    }
   },
 
   // It just works™
@@ -247,42 +251,6 @@ const innertubeModule = {
         }
       );
 
-      // title = response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.sectionListRenderer
-      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //       .tabRenderer.content.sectionListRenderer.contents[0]
-      //       .itemSectionRenderer.contents[0].elementRenderer.newElement.type
-      //       .componentType.model.feedNudgeModel.nudgeData.title.content
-      //   : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //       .tabRenderer.content.richGridRenderer.contents[1]
-      //       .richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text;
-
-      // const title =
-      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.richGridRenderer
-      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.richGridRenderer
-      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.title.runs[0].text : "null";
-
-      // const subtitle = response.data.contents.singleColumnBrowseResultsRenderer
-      //   .tabs[0].tabRenderer.content.sectionListRenderer
-      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //       .tabRenderer.content.sectionListRenderer.contents[0]
-      //       .itemSectionRenderer.contents[0].elementRenderer.newElement.type
-      //       .componentType.model.feedNudgeModel.nudgeData.subtitle.content
-      //   : response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //       .tabRenderer.content.richGridRenderer.contents[1]
-      //       .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
-      //       .text;
-      // const subtitle =
-      // response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.richGridRenderer
-      //   ? response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.richGridRenderer
-      //     .contents[1].richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0].text : "null";
-
-      // console.log(response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
-      //   .tabRenderer.content.richGridRenderer);
       return { title: title, subtitle: subtitle };
     }
   },
@@ -411,19 +379,38 @@ const innertubeModule = {
   },
   async recommendContinuationForChannel(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint, "web");
-    const contents =
-      response.data.onResponseReceivedActions[0].appendContinuationItemsAction
-        .continuationItems;
-    const final = contents.map((shelves) => {
-      const video = shelves;
-      if (video) return video;
-    });
-    const continuations =
-      response.data.onResponseReceivedActions[0].appendContinuationItemsAction
-        .continuationItems[
-        response.data.onResponseReceivedActions[0].appendContinuationItemsAction
-          .continuationItems.length - 1
-      ];
+    let final;
+    let continuations;
+    if (response.data.onResponseReceivedActions) {
+      const contents =
+          response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+              .continuationItems;
+      final = contents.map((shelves) => {
+        const video = shelves;
+        if (video) return video;
+      });
+      continuations =
+          response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+              .continuationItems[
+          response.data.onResponseReceivedActions[0].appendContinuationItemsAction
+              .continuationItems.length - 1
+              ];
+    }
+    else if(response.data.onResponseReceivedEndpoints) {
+      const contents =
+          response.data.onResponseReceivedEndpoints[0].appendContinuationItemsAction
+              .continuationItems;
+      final = contents.map((shelves) => {
+        const video = shelves;
+        if (video) return video;
+      });
+      continuations =
+          response.data.onResponseReceivedEndpoints[0].appendContinuationItemsAction
+              .continuationItems[
+          response.data.onResponseReceivedEndpoints[0].appendContinuationItemsAction
+              .continuationItems.length - 1
+              ];
+    }
     return { continuations: continuations, contents: final };
   },
 

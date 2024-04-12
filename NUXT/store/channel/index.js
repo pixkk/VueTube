@@ -38,6 +38,7 @@ export const mutations = {
     state.videoList = channelData.videoList;
     // state.channelData = channelData;
     state.totalData = channelData.totalData;
+    state.community = channelData.community;
   },
   updateChannelData(state, payload) {
     state.channel.totalData.contents = state.channel.totalData.contents.concat(payload.contents);
@@ -65,8 +66,10 @@ export const actions = {
       channelRequest = `https://m.youtube.com/channel/${channelUrl}`;
     }
     commit("setLoading", true);
-    let channel = await this.$youtube.getChannel(channelRequest);
+    let channel = await this.$youtube.getChannel(channelRequest, "main");
+    let community = await this.$youtube.getChannel(channelRequest, "community");
     console.log(channel);
+    console.log(community);
     let videoList = await this.$youtube.channelVideos(channel);
     console.log(videoList);
     try {
@@ -118,6 +121,9 @@ export const actions = {
         //     .verticalListRenderer.items,
        // videoExample: channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents,
         totalData: videoList,
+        // community section is second from the end of the list
+        community: community.contents.singleColumnBrowseResultsRenderer.tabs[community.contents.singleColumnBrowseResultsRenderer.tabs.length - 2].tabRenderer
+          .content.sectionListRenderer,
       };
       commit("setChannelData", channelData);
       commit("setLoading", false);
