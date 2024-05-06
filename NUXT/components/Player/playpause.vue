@@ -4,7 +4,7 @@
     text
     large
     color="white"
-    :loading="buffering"
+    :loading="Boolean(buffering)"
     @click="
       (paused = !video.paused), video.paused ? $emit('play') : $emit('pause')
     "
@@ -20,7 +20,6 @@ export default {
   props: {
     video: {},
     buffering: {
-      type: Boolean,
       required: false,
     },
   },

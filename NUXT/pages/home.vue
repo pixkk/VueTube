@@ -4,15 +4,23 @@
   * This is to allow use of "recommended" videos on other pages such as /watch
   * -Front
   * -->
-
   <div>
-    <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="recommends.length == 0" :count="10" />
-    <div v-for="(section, index) in recommends" :key="index">
-      <horizontal-list-renderer :render="section.contents[0]" />
+    <div v-if="title.length > 0" class="title text-center" style="height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+      <div style="width: 90%;">
+        <h4>{{ title !== undefined ? title : "Try search some videos!" }}</h4>
+        <h6>{{ subtitle }}</h6>
+      </div>
     </div>
-    <vid-load-renderer v-if="loading" :count="1" />
-    <observer @intersect="paginate" v-else-if="recommends.length > 0" />
+    <div v-if="title.length <= 0">
+      <!--   Video Loading Animation   -->
+      <vid-load-renderer v-if="recommends.length == 0" :count="10" />
+      <div v-for="(section, index) in recommends" :key="index">
+<!--        {{section.contents[0]}}-->
+        <horizontal-list-renderer :render="section.contents[0]" />
+      </div>
+      <vid-load-renderer v-if="loading" :count="1" />
+      <observer @intersect="paginate" v-else-if="recommends.length > 0" />
+    </div>
   </div>
 </template>
 
@@ -24,6 +32,8 @@ export default {
   components: { horizontalListRenderer, VidLoadRenderer, Observer },
   data: () => ({
     loading: false,
+    title: "",
+    subtitle: "",
   }),
 
   computed: {
@@ -66,7 +76,16 @@ export default {
       this.$youtube
         .recommend()
         .then((result) => {
-          if (result) this.recommends = [result];
+          if (result) {
+            if (result.title) {
+              this.title = result.title;
+              this.subtitle = result.subtitle;
+            }
+            else {
+              this.recommends = [result];
+            }
+
+          }
         })
         .catch((error) => {
           console.error(error);

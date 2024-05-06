@@ -4,19 +4,21 @@ const url = {
   YT_URL: "https://www.youtube.com",
   YT_MOBILE: "https://m.youtube.com",
   YT_MUSIC_URL: "https://music.youtube.com",
-  YT_BASE_API: "https://www.youtube.com/youtubei/v1",
-  YT_SUGGESTIONS: "https://suggestqueries.google.com/complete",
-  VT_GITHUB: "https://api.github.com/repos/Frontesque/VueTube",
+  // YT_BASE_API: "https://www.youtube.com/youtubei/v1",
+  YT_BASE_API: "https://m.youtube.com/youtubei/v1",
+  // YT_SUGGESTIONS: "https://suggestqueries.google.com/complete",
+  YT_SUGGESTIONS: "https://suggestqueries-clients6.youtube.com/complete",
+  VT_GITHUB: "https://api.github.com/repos/pixkk/VueTube",
 };
 
 const ytApiVal = {
-  VERSION: "16.25",
+  // VERSION: "16.25",
+  VERSION: "19.09",
   CLIENTNAME: "ANDROID",
-  VERSION_WEB: "2.20220411.09.00",
+  VERSION_WEB: "2.20240312.06.00",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
-
 const filesystem = {
   plugins: "plugins/",
 };
@@ -43,7 +45,8 @@ module.exports = {
   INNERTUBE_NEW_HEADER: (info) => {
     let headers = {
       accept: "*/*",
-      "user-agent": info.userAgent,
+      "user-agent":
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
       "x-goog-authuser": 0,
@@ -57,20 +60,52 @@ module.exports = {
     let client = {
       gl: info.gl,
       hl: info.hl,
-      deviceMake: info.deviceMake,
-      deviceModel: info.deviceModel,
+      deviceMake: "Generic",
+      // deviceMake: info.deviceMake,
+      // deviceModel: info.deviceModel,
+      deviceModel: "Android 10.0",
       userAgent: info.userAgent,
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
+      playerType: "UNIPLAYER",
       originalUrl: info.originalUrl,
       configInfo: info.configInfo,
       remoteHost: info.remoteHost,
       visitorData: info.visitorData,
     };
     return client;
+  },
+  INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
+    let client = {
+      gl: info.gl,
+      hl: info.hl,
+      deviceMake: "Generic",
+      // deviceMake: info.deviceMake,
+      // deviceModel: info.deviceModel,
+      deviceModel: "Android 10.0",
+      userAgent: info.userAgent,
+      clientName: "MWEB",
+      clientVersion: ytApiVal.VERSION_WEB,
+      osName: info.osName,
+      osVersion: info.osVersion,
+      platform: "MOBILE",
+      playerType: "UNIPLAYER",
+      originalUrl: info.originalUrl,
+      configInfo: info.configInfo,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+    return client;
+  },
+  INNERTUBE_REQUEST: () => {
+    let request = {
+      useSsl: true,
+      internalExperimentFlags: [],
+    };
+    return request;
   },
   INNERTUBE_VIDEO: (info) => {
     let client = {

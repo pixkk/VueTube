@@ -1,17 +1,17 @@
 <template>
   <base-video-renderer
     :vidId="video.videoId"
-    :thumbnails="video.thumbnail.thumbnails"
+    :thumbnails="thumbnailSources"
     :thumbnailOverlayStyle="thumbnailOverlayStyle"
     :thumbnailOverlayText="thumbnailOverlayText"
     :channelUrl="
       $rendererUtils.getNavigationEndpoints(
-        video.shortBylineText.runs[0].navigationEndpoint
+        video?.shortBylineText?.runs[0]?.navigationEndpoint
       )
     "
     :channelIcon="
-      video.channelThumbnail.channelThumbnailWithLinkRenderer.thumbnail
-        .thumbnails[0].url
+      video?.channelThumbnail?.channelThumbnailWithLinkRenderer?.thumbnail
+        ?.thumbnails[0]?.url
     "
     :titles="video.headline.runs"
     :bottomText="parseBottom(video)"
@@ -44,6 +44,11 @@ export default {
         }
       });
       return "DEFAULT";
+    },
+
+    thumbnailSources() {
+      // console.log(this.video);
+      return this.video?.thumbnail?.thumbnails;
     },
   },
 

@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="https://vuetube.app/">
+    <a href="https://pixkk.com/">
     <picture>
       <source 
         srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
@@ -12,11 +12,12 @@
        />
     </picture>
   </a>
-  </br>
+  </p>
+
   <details>
   <summary>Show Readme credits</summary>
 
-<sub>VueTube Logo by <a href="https://github.com/afnzmn">@afnzmn</a></sub> </br>
+<sub>VueTube Logo by <a href="https://github.com/afnzmn">@afnzmn</a></sub> <br/>
 <sub>English Readme contributors: <a href="https://github.com/404-Program-not-found">@404-Program-not-found</a>
 , <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>
 , <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>
@@ -25,15 +26,15 @@
 
 </details>
 
-  <p align="center">
+<p align="center">
   <strong>A simple and open source video streaming client aimed to recreate ALL the features from their respective apps (and more!)</strong>
-  </br>
+  <br/>
   Pronounced View Tube (<code>/ˈvjuːˌtjuːb/</code>)
 </p>
 
 <p align="center">
-  <a href="https://github.com/VueTubeApp/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/VueTubeApp/VueTube"></img></a>
-  <a href="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
+  <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
+  <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
   <a href="https://reddit.com/r/vuetube" alt="Reddit"><img src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?label=r%2FVuetube&logo=reddit&logoColor=white"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
@@ -81,12 +82,9 @@ Install
 
 <img src="./resources/Install.svg" alt="VueTube icon" height="100"/>
 
-To install the app, please visit [vuetube.app/install](https://www.vuetube.app/install) or check below all versions
-available:
+To install the app, please check below all versions available:
 
-<details>
-  <summary>🖱️ Click to display versions </summary>
-<br />
+
 
 <h3 align="left">
 <sub>
@@ -97,7 +95,7 @@ available:
 Android
 </h3>
 
-| <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/android.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.5><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/android.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                                  | Less bugs than unstable while having more features than stable.                                                              | Not available yet.                                                                              |
 
@@ -110,13 +108,12 @@ Android
 iOS
 </h3>
 
-| <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/iOS.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.3><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/iOS.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.3><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
 (Apple does not officially support sideloading, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices)
 
-</details>
 
 <h2 align="left">
 <sub>
@@ -149,15 +146,15 @@ You can suggest your own feature by opening a feature request issue in this repo
 Screenshots
 </h2>
 
-[View them on our website](https://www.vuetube.app/info/screenshots) or click below to display them.
+[View them on our website](https://www.pixkk.com/info/screenshots) or click below to display them.
 
 <details>
   <summary> 🖱️ Click to display screenshots </summary>
 <br />
 
-<img src="https://vuetube.app/wtch.png" width="400">
-<img src="https://vuetube.app/stng.png" width="400">
-<img src="https://vuetube.app/srch.png" width="400">
+<img src="https://pixkk.com/wtch.png" width="400">
+<img src="https://pixkk.com/stng.png" width="400">
+<img src="https://pixkk.com/srch.png" width="400">
 
 </details>
 
@@ -173,7 +170,7 @@ Community
 We use several different platforms to connect with our community. You can actively participate in the development of
 VueTube or simply keep up to date with all the news joining these groups:
 
-- Discord server (https://vuetube.app/discord)
+- Discord server (https://pixkk.com/discord)
 - Telegram group (https://t.me/vuetube)
 - Reddit page (https://www.reddit.com/r/vuetube)
 
@@ -219,7 +216,14 @@ Progress
 
 ### Technologies used
 
-<a href="https://capacitorjs.com/solution/vue"><img src="https://cdn.discordapp.com/attachments/953538236716814356/955694368742834176/Capacitator-Dark.svg" height=40/></a> <a href="https://vuetifyjs.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/973719873467342908/Vuetify-Dark.svg" height=40/></a> <a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/NuxtJS-Dark.svg" height=40/></a> <a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/VueJS-Dark.svg" height=40/></a> <a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> <a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Java-Dark.svg" height=40/></a> <a href="https://gradle.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/955691550560636958/Gradle.svg" height=40/></a> <a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
+<a href="https://capacitorjs.com/solution/vue"><img src="https://avatars.githubusercontent.com/u/3171503" height=40/></a> 
+<a href="https://vuetifyjs.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Vuetify-Dark.svg" height=40/></a> 
+<a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/NuxtJS-Dark.svg" height=40/></a> 
+<a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/VueJS-Dark.svg" height=40/></a> 
+<a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> 
+<a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Java-Dark.svg" height=40/></a> 
+<a href="https://gradle.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Gradle-Dark.svg" height=40/></a> 
+<a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
 
 ### Why are we doing this?
 
@@ -230,11 +234,11 @@ users and contributors all around the world. You can join us and contribute to t
 ### Want to contribute?
 
 Thank you for being interested on contributing! Please read our website on how to do
-so: [vuetube.app/contributing](https://www.vuetube.app/contributing).
+so: [pixkk.com/contributing](https://www.pixkk.com/contributing).
 
 If you want to translate the app, [click here](/NUXT/plugins/languages) and read the instructions. If GitHub is hard or
 uncomfortable to you, you can also send the fields translated in a text file on
-our [Discord](https://vuetube.app/discord) and we will implement them. Don't worry!
+our [Discord](https://pixkk.com/discord) and we will implement them. Don't worry!
 
 <h2 align="left">
 <sub>

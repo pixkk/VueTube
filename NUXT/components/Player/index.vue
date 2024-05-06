@@ -293,12 +293,12 @@
     />
 
     <sponsorblock
-      v-if="$refs.player && blocks.length > 0"
+      v-if="$refs.player && sponsorBlocks.videoID"
       :duration="$refs.player.duration"
       :fullscreen="isFullscreen"
       :controls="controls"
       :seeking="seeking"
-      :blocks="blocks"
+      :blocks="sponsorBlocks"
     />
 
     <seekbar
@@ -403,21 +403,47 @@ export default {
       progress: 0,
       buffered: 0,
       watched: 0,
-      blocks: [],
       vidSrc: "",
       audSrc: "",
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
+      videoEnded: false,
       isMusic: false,
+      sponsorBlocks: [],
       vid: null,
     };
   },
   mounted() {
-    console.log("sources", this.sources);
-    console.log("recommends", this.recommends);
-    console.log("video", this.video);
+
+    console.log("SPSR BLCK" + this.sponsorBlocks);
+    if (
+      this.sponsorBlocks.length <= 0 &&
+      this.$store.state.sponsorBlockIntegration === true
+    ) {
+      this.$youtube.getSponsorBlock(this.video.id, (data) => {
+        console.warn("sbreturn", data.segments);
+        // if (Array.isArray(data)) {
+          this.sponsorBlocks = data;
+          data.segments?.forEach((block) => {
+            if (block.category === "music_offtopic") {
+              this.isMusic = true;
+              this.$refs.audio.playbackRate = 1;
+              this.$refs.player.playbackRate = 1;
+            }
+          });
+        // }
+      });
+    }
+    else {
+      // this.sponsorBlocks = [];
+    }
+    // console.log("sources", this.sources);
+    // console.log("recommends", this.recommends);
+    // console.log("video", this.video);
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
+    // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
+
 
     /**
      * Video quality selection which device can play normally
@@ -458,7 +484,19 @@ export default {
     // TODO: this.$store.state.player.quality, check if exists and select the closest one
     let displayInfo = getPreferredQuality();
     let indexOfPreferredQuality = 0;
-    console.warn(displayInfo);
+    // console.warn(displayInfo);
+    for (let i = this.sources.length; i > 0; i--) {
+      if (i === this.sources.length) continue;
+      // console.log(this.sources[i].mimeType.toLowerCase());
+      // console.log('video/webm; codecs="vp9"'.indexOf("vp9"));
+      if (
+        this.sources[i].mimeType.toLowerCase().indexOf(
+          this.$store.state.player.preferedCodec.toLowerCase()
+        ) >= 0
+      ) {
+        this.sources.splice(i, 1);
+      }
+    }
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       else {
@@ -475,6 +513,15 @@ export default {
         }
       }
     }
+    for (let i = this.sources.length; i > 0; i--) {
+      if (i === this.sources.length) continue;
+      else {
+        if (this.sources[i].mimeType.indexOf("audio") > -1) {
+          // this.sources[i].remove();
+          this.sources.splice(i, 1);
+        }
+      }
+    }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
@@ -482,22 +529,6 @@ export default {
     this.sources.forEach((source) => {
       if (source.mimeType.indexOf("audio") > -1) {
         this.audSrc = source.url;
-        return;
-      }
-    });
-
-    // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
-    this.$youtube.getSponsorBlock(this.video.id, (data) => {
-      // console.warn("sbreturn", data);
-      if (Array.isArray(data)) {
-        this.blocks = data;
-        data.find((block) => {
-          if (block.category === "music_offtopic") {
-            this.isMusic = true;
-            this.$refs.audio.playbackRate = 1;
-            this.$refs.player.playbackRate = 1;
-          }
-        });
       }
     });
 
@@ -551,25 +582,32 @@ export default {
         this.$refs.player.addEventListener("progress", this.progressEvent);
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
+        this.$refs.player.addEventListener("ended", this.endedEvent);
       }
     },
     timeUpdateEvent() {
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
-      // console.log("sb check", this.blocks);
+      // console.log("sb check", this.sponsorBlocks);
       // iterate over data.segments array
       // for sponsorblock
-      if (this.blocks.length > 0)
-        this.blocks.forEach((sponsor) => {
-          let vidTime = this.vid.currentTime;
-
-          if (vidTime >= sponsor.segment[0] && vidTime <= sponsor.segment[1]) {
+      // if (this.sponsorBlocks.length > 0) {
+        let vidTime = this.vid.currentTime;
+        // this.sponsorBlocks = data;
+        // console.warn(data);
+        this.sponsorBlocks?.segments?.forEach((block) => {
+          // block.segments.forEach((segments) => {
+          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded == false) {
             console.log("Skipping the sponsor");
-            this.$youtube.showToast("Skipped sponsor");
-            this.$refs.player.currentTime = sponsor.segment[1] + 1;
+            this.$youtube.showToast("Skipped "+ block.category + " sponsor");
+            this.$refs.player.currentTime = block.segment[1];
             this.$refs.audio.currentTime = this.$refs.player.currentTime;
           }
+          // });
         });
+    },
+    endedEvent() {
+      this.videoEnded = true;
     },
     progressEvent() {
       if (this.bufferingDetected) {
@@ -597,6 +635,7 @@ export default {
       }
     },
     playingEvent() {
+      this.videoEnded = false;
       if (this.bufferingDetected != false) {
         clearTimeout(this.bufferingDetected);
         this.$refs.audio.currentTime = this.vid.currentTime;
@@ -681,7 +720,7 @@ export default {
           : setTimeout(() => {
               if (!this.skipping) {
                 this.controls = setTimeout(() => {
-                  if (!this.seeking && !this.$refs.player.paused)
+                  if (!this.seeking && !this.$refs?.player?.paused)
                     this.controls = false;
                 }, 2345);
               }

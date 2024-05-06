@@ -57,7 +57,7 @@ export default {
             return true;
           }
         });
-        console.log(arrayWithReplaceParts);
+        // console.log(arrayWithReplaceParts);
         for (let i = 0; i < arrayWithReplaceParts.length; i++) {
           for (let j = i + 1; j < arrayWithReplaceParts.length; j++) {
             if (

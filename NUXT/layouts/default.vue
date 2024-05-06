@@ -45,13 +45,13 @@
             : 'calc(4rem + env(safe-area-inset-top))',
       }"
     >
-      <div v-show="!search">
+      <div v-show="!search" style="height: 100%">
         <!-- class="scrollcontainer" -->
         <!-- style="overflow: hidden; height: calc(100vh - 8rem)" -->
         <!-- element above removes artifacting from things like v-ripple by -->
         <!-- scrollbox below must be a standalone div -->
         <div ref="pgscroll" style="height: 100%">
-          <nuxt />
+          <nuxt style="" />
         </div>
       </div>
 
@@ -89,9 +89,20 @@
 <script>
 import { App as CapacitorApp } from "@capacitor/app";
 import { mapState } from "vuex";
-import constants from "~/plugins/constants";
 import { linkParser } from "~/plugins/utils";
 import backType from "~/plugins/classes/backType";
+
+function fromBinary(str) {
+  // Going backwards: from bytestream, to percent-encoding, to original string.
+  return decodeURIComponent(
+    atob(str)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join("")
+  );
+}
 
 export default {
   data: () => ({
@@ -113,8 +124,15 @@ export default {
     }),
     page: function () {
       const splitPath = this.$route.path.split("/");
+      // console.log(splitPath);
       let pageName = splitPath[splitPath.length - 1];
       pageName = pageName.charAt(0).toUpperCase() + pageName.slice(1);
+      switch (true) {
+        case this.$route.path.includes("mods/sponsorblock"):
+          pageName = "SponsorBlock";
+          break;
+      }
+      //     console.log(pageName);
       return pageName || "Home";
     },
   },
@@ -142,7 +160,10 @@ export default {
 
     // ---   Import Twemoji   ---///
     const plugin = document.createElement("script");
-    plugin.setAttribute("src", "//twemoji.maxcdn.com/v/latest/twemoji.min.js");
+    plugin.setAttribute(
+      "src",
+      "//unpkg.com/twemoji@latest/dist/twemoji.min.js"
+    );
     plugin.setAttribute("crossorigin", "anonymous");
     document.head.appendChild(plugin);
   },
@@ -162,8 +183,19 @@ export default {
       if (!isLink) {
         //---   Auto Suggest   ---//
         this.$youtube.autoComplete(text, (res) => {
-          const data = res.replace(/^.*?\(/, "").replace(/\)$/, ""); //Format Response
-          this.response = JSON.parse(data)[1];
+          console.log(res);
+          try {
+            const data = res.replace(/^.*?\(/, "").replace(/\)$/, ""); //Format Response
+            this.response = JSON.parse(data)[1];
+          } catch (e) {
+            const data = Buffer.from(fromBinary(res), "utf-8")
+              .toString()
+              .replace(/^.*?\(/, "")
+              .replace(/\)$/, ""); //Format Response
+            // console.warn(data);
+            this.response = JSON.parse(data)[1];
+          }
+          // this.response = res;
           console.log(this.response);
         });
       } else {
@@ -289,7 +321,7 @@ html,
 body {
   background: var(--v-background-base);
   -webkit-overflow-scrolling: touch !important;
-  overflow-y: scroll !important;
+  //overflow-y: scroll !important;
   overflow-x: hidden !important;
 }
 

@@ -115,6 +115,7 @@ class Innertube {
       );
     }
   }
+
   async getNFunction(baseJs) {
     let challenge_name =
       /\.get\("n"\)\)&&\(b=([a-zA-Z0-9$]+)(?:\[(\d+)\])?\([a-zA-Z0-9]\)/.exec(
@@ -134,6 +135,7 @@ class Innertube {
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
+
   async initAsync() {
     const html = await Http.get({
       url: constants.URLS.YT_MOBILE,
@@ -206,6 +208,8 @@ class Innertube {
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
+
+    console.log(args);
     let data = {
       context: {
         client: constants.INNERTUBE_CLIENT(this.context.client),
@@ -215,9 +219,27 @@ class Innertube {
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
+        //args.browseId = "FEtrending";
+        break;
+      case "trending":
+        // args.browseId = "FEwhat_to_watch";
+        args.browseId = "FEtrending";
         break;
       case "playlist":
       case "channel":
+        data = {
+          context: {
+            client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+          },
+        };
+        data.context.client = {
+          ...data.context.client,
+          clientFormFactor: "SMALL_FORM_FACTOR",
+        };
+        data.context = {
+          ...data.context,
+          request: constants.INNERTUBE_REQUEST(),
+        };
         if (args && args.browseId) {
           break;
         } else {
@@ -234,6 +256,7 @@ class Innertube {
       data: data,
       headers: { "Content-Type": "application/json" },
     }).catch((error) => error);
+    console.log(response);
 
     if (response instanceof Error)
       return {
@@ -251,8 +274,11 @@ class Innertube {
 
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
     let data = {
-      context: { ...this.context, ...contextAdditional },
+      context: { ...contextAdditional },
       continuation: continuation,
+    };
+    data.context.client = {
+      ...constants.INNERTUBE_VIDEO(this.context.client),
     };
     let url;
     switch (type.toLowerCase()) {
@@ -304,6 +330,9 @@ class Innertube {
             client: {
               clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
               clientVersion: constants.YT_API_VALUES.VERSION_WEB,
+              gl: this.context.client.gl,
+              hl: this.context.client.hl,
+              remoteHost: this.context.client.remoteHost,
             },
           },
         },
@@ -318,6 +347,7 @@ class Innertube {
         ...{
           playerParams: this.playerParams,
           contentCheckOk: false,
+          racyCheckOk: false,
           mwebCapabilities: {
             mobileClientSupportsLivestream: true,
           },
@@ -388,8 +418,68 @@ class Innertube {
 
   async getEndPoint(url) {
     let data = { context: this.context, url: url };
-    const response = await Http.post({
-      url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+    // data = {
+    //   ...data,
+    //   context: {
+    //     client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+    //   },
+    // };
+    // data.context.client = {
+    //   ...data.context.client,
+    //   clientFormFactor: "SMALL_FORM_FACTOR",
+    // };
+    data.context = {
+      ...data.context,
+      request: constants.INNERTUBE_REQUEST(),
+    };
+    let response = await Http.get({
+      // url: `${url}/navigation/resolve_url?key=${this.key}`,
+      url: `${url}`,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    }).catch((error) => {
+
+      // console.warn(browseId);
+    });
+    const html = response.data; // Assuming data property holds the HTML content
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
+
+    let browseId;
+    if (metaTags.length > 0) {
+      browseId = metaTags[0].content;
+    }
+    else {
+      let match;
+      let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
+      // console.warn(html);
+      // console.warn(regex.exec(html));
+      while ((match = regex.exec(html)) !== null) {
+        // console.warn(match);
+        browseId = match[1];
+      }
+
+      // console.warn(browseId);
+      // var n = url.lastIndexOf("/");
+      // browseId = url.substring(n + 1);
+
+    }
+    data = {
+      ...data,
+      browseId: browseId,
+      context: {
+        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+      },
+    };
+    data.context.client = {
+      ...data.context.client,
+      clientFormFactor: "SMALL_FORM_FACTOR",
+    };
+    response = await Http.post({
+      // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+      url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
       data: data,
       headers: { "Content-Type": "application/json" },
     }).catch((error) => error);
@@ -410,18 +500,22 @@ class Innertube {
 
   // WARNING: This is tracking the user's activity, but is required for recommendations to properly work
   async apiStats(params, url) {
-    console.log(params);
-    await Http.get({
-      url: url,
-      params: {
-        ...params,
-        ...{
-          ver: 2,
-          c: constants.YT_API_VALUES.CLIENTNAME.toLowerCase(),
-          cbrver: constants.YT_API_VALUES.VERSION,
-          cver: constants.YT_API_VALUES.VERSION,
-        },
+    console.warn(params);
+    params = {
+      ...params,
+      ...{
+        ver: 2,
+        c: constants.YT_API_VALUES.CLIENTNAME.toLowerCase(),
+        cbrver: constants.YT_API_VALUES.VERSION,
+        cver: constants.YT_API_VALUES.VERSION,
       },
+    };
+    const queryParams = new URLSearchParams(params);
+    const urlWithParams = url + "&" + queryParams.toString();
+
+    await Http.get({
+      url: urlWithParams,
+
       headers: this.header,
     });
   }
@@ -441,21 +535,34 @@ class Innertube {
   }
 
   // Simple Wrappers
-  async getRecommendationsAsync() {
-    const rec = await this.browseAsync("recommendations");
+  async getRecommendationsAsync(recommendationsType = "recommendations") {
+    const rec = await this.browseAsync(recommendationsType);
+    return rec;
+  }
+  async getChannelVideosAsync(recommendationsType = "recommendations") {
+    const rec = await this.browseAsync(recommendationsType);
     return rec;
   }
 
-  async getChannelAsync(url) {
+  async getChannelAsync(url, tab="main") {
     const channelEndpoint = await this.getEndPoint(url);
     if (
       channelEndpoint.success &&
-      channelEndpoint.data.endpoint?.browseEndpoint
+      channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
     ) {
-      return await this.browseAsync(
-        "channel",
-        channelEndpoint.data.endpoint?.browseEndpoint
-      );
+      switch (tab) {
+        case "main":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
+          );
+        case "community":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
+          );
+      }
+
     } else {
       throw new ReferenceError("Cannot find channel");
     }

@@ -40,22 +40,21 @@
       }"
     >
       <a
+          v-if="channelIcon"
         class="avatar-link pl-2 pt-2"
         @click.prevent="
           $store.dispatch('channel/fetchChannel', channelUrl),
             $router.push('/channel')
         "
       >
-        <v-img class="avatar-thumbnail" :src="channelIcon" />
+        <v-img v-if="channelIcon" class="avatar-thumbnail" :src="channelIcon" />
       </a>
       <v-card-text class="video-info pt-2" v-emoji>
         <span
-          v-for="title in titles"
-          :key="title.text"
           style="margin-top: 0.5em"
           class="font-weight-medium vid-title"
         >
-          {{ title.text }}
+          {{ titles[0] ? titles[0].text : titles }}
         </span>
 
         <div
@@ -80,15 +79,15 @@ export default {
       required: true,
     },
     channelUrl: {
-      type: String,
+      // type: String,
       required: true,
     },
     channelIcon: {
-      type: String,
+      // type: String,
       required: true,
     },
     titles: {
-      type: Array,
+      // type: Array,
       required: true,
     },
     bottomText: {

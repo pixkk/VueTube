@@ -153,9 +153,9 @@
                 ? '1rem'
                 : '0',
           }"
-          @click="$store.dispatch('channel/fetchChannel', video.channelUrl)"
         >
-          <div id="details">
+          <div id="details"
+               @click="$store.dispatch('channel/fetchChannel', video.channelUrl)">
             <div class="avatar-link mr-3">
               <v-img class="avatar-thumbnail" :src="video.channelImg" />
             </div>
@@ -187,6 +187,7 @@
         <div class="scroll-y ma-4 pt-1">
           <slim-video-description-renderer
             :render="video.renderedData.description"
+            :additionalInfo="video.metadata"
           />
         </div>
       </div>
