@@ -18,7 +18,6 @@
   
 <sub>Logo oleh <a href="https://github.com/afnzmn">@afnzmn</a></sub></br>
 <sub>Penyumbang-penyumbang Readme Bahasa Melayu: <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
-, <a href="https://github.com/404-Program-not-found">@404-Program-not-found</a>
 </details>
 
 <p align="center">
@@ -86,7 +85,7 @@ Android
 
 | <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/android.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.5><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=/resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                            | Kurang pepijat daripada tidak stabil sementara mempunyai lebih banyak ciri daripada stabil                                   | Belum tersedia lagi                                                                             |
+| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                            | Kurang pepijat daripada versi _unstable_ sementara mempunyai lebih banyak ciri daripada versi _stable_                                   | Belum tersedia lagi                                                                             |
 
 <h3 align="left">
 <sub>
@@ -99,7 +98,7 @@ iOS
 
 | <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/iOS.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.3><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=/resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                        | Kurang pepijat daripada tidak stabil sementara mempunyai lebih banyak ciri daripada stabil                                                                                     | Belum tersedia lagi                                                                             |
+| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                        | Kurang pepijat daripada versi _unstable_ sementara mempunyai lebih banyak ciri daripada versi _stable_                                                                                     | Belum tersedia lagi                                                                             |
 
 (Apple tidak menyokong _sideloading_, iaitu pemasangan aplikasi dengan hanya menggunakan fail tanpa ia dimuat naik ke Apple App Store. Ia adalah perlu untuk menggunakan kaedah lanjutan untuk memasang VueTube pada peranti iPhone / iPad)
 
@@ -111,17 +110,17 @@ iOS
       height="30"
       width="30">
 </sub>
-Pelan
+Perancangan
 </h2>
 
 <img src="/resources/readme-ms/Plans.ms.svg" alt="VueTube icon" height="100"/>
 
-- 🔍 **Carian lanjutan:** Susun hasil mengikut tarikh, tempoh, suka atau apa-apa faktor lain.
+- 🔍 **Carian lanjutan:** Susun hasil mengikut tarikh, tempoh, sukaan atau apa-apa faktor lain.
 - 🗞️ **Sejarah tontonan tempatan:** Dapatkan semula video tontonan terakhir anda tanpa log masuk.
 - ✂️ **YouTube Shorts:** Video pendek yang berdurasi dari 15 hingga 60 saat.
 - 🧑 **Log masuk dengan akaun Google anda:** Log masuk untuk mendapatkan pengalaman penuh dengan mengundi dan komen pada video dan melanggan saluran.
-- 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain. [Maklumat lanjut](https://support.google.com/youtube/answer/7552722?co=GENIE.Platform=Android&hl=en#zippy=%2Cturn-on-picture-in-picture%2Cwho-can-use-picture-in-picture) (dalam Bahasa Inggeris)
-- 🧩 **Pemalam (Plugin):** Pasang pemalam pihak ketiga yang dibuat oleh komuniti dengan ciri-ciri yang berguna!
+- 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain. [Maklumat lanjut dalam Bahasa Inggeris](https://support.google.com/youtube/answer/7552722?co=GENIE.Platform=Android&hl=en#zippy=%2Cturn-on-picture-in-picture%2Cwho-can-use-picture-in-picture)
+- 🧩 **Plugin:** Pasang _plugin_ pihak ketiga yang dibuat oleh komuniti dengan ciri-ciri yang berguna!
 - Dan lebih lagi!
 
 Anda boleh mencadangkan fungsi baru dengan membuka isu fungsi baru dalam repositori ini.
@@ -156,10 +155,10 @@ Tangkapan skrin
 Komuniti
 </h2>
 
-Kami menggunakan beberapa platform yang berbeza untuk berhubung dengan komuniti kami. Anda boleh menyertai secara aktif dalam pembangunan VueTube atau mengikuti perkembangan terkini VueTube dengan menyertai kumpulan-kumpulan berikut:
+Kami menggunakan beberapa platform yang berbeza untuk berhubung dengan komuniti kami. Anda boleh menyertai secara aktif dalam pembangunan VueTube atau mengikuti perkembangan terkini VueTube dengan menyertai grup berikut:
 
-- Pelayan Discord (_Discord server_) (https://vuetube.app/discord)
-- Kumpulan Telegram (https://t.me/vuetube)
+- Discord _server_ (https://vuetube.app/discord)
+- Grup Telegram (https://t.me/vuetube)
 - Halaman Reddit (subreddit) (https://www.reddit.com/r/vuetube)
 
 <h2 align="left">
@@ -242,7 +241,7 @@ Penghargaan
 
 - Emoji oleh pasukan [Twemoji](https://twemoji.twitter.com/), Dilesenkan di bawah [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 - Logo VueTube oleh [@afnzmn](https://github.com/afnzmn)
-- Data kiraan tidak suka YouTube awam disediakan oleh [Return YouTube Dislike](https://returnyoutubedislike.com)
+- Data kiraan _dislike_ YouTube awam disediakan oleh [Return YouTube Dislike](https://returnyoutubedislike.com)
 - Ajay & Komuniti kerana menyediakan [API SponsorBlock](https://sponsor.ajay.app), Dilesenkan di bawah [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 <h2 align="left">
@@ -269,7 +268,7 @@ VueTube adalah dan sentiasa akan percuma dan sumber terbuka, tetapi anda boleh m
 Penafian
 </h2>
 
-Projek VueTube dan kandungannya tidak bergabung dengan, dibiayai, diberi izin, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh didapati di [www.youtube.com](https://www.youtube.com).
+Projek VueTube dan kandungannya tidak bergabung dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh didapati di [www.youtube.com](https://www.youtube.com).
 
 Sebarang tanda dagangan, tanda perkhidmatan, nama dagangan atau hak harta intelek lain yang digunakan dalam projek VueTube dimiliki oleh pemilik masing-masing.
 
@@ -297,7 +296,7 @@ Repo-repo VueTube yang lain
 
 [![VueTube HTTP](https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http)](https://github.com/VueTubeApp/vuetube-http)
 
-**VueTube HTTP** ialah sejenis pemalam (_plugin_) untuk permintaan HTTP _native_, muat naik/turun fail, dan pengurusan kuki. Ia adalah sejenis _fork_ daripada [projek HTTP asal](https://github.com/capacitor-community/http) daripada Capacitor Community dengan sedikit penambahan daripada kumpulan VueTube.
+**VueTube HTTP** ialah sejenis _plugin_ untuk permintaan HTTP _native_, muat naik/turun fail, dan pengurusan kuki. Ia adalah sejenis _fork_ daripada [projek HTTP asal](https://github.com/capacitor-community/http) daripada Capacitor Community dengan sedikit penambahan daripada kumpulan VueTube.
 
 </details>
 
