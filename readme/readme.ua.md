@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="https://vuetube.app/">
+    <a href="https://pixkk.com/">
     <picture>
       <source 
         srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
@@ -16,7 +16,7 @@
   <details>
   <summary>Show Readme credits</summary>
   
-   <sub>VueTube Logo by <a href="https://github.com/afnzmn">@afnzmn</a></sub> </br>
+   <sub>Логотип VueTube від<a href="https://github.com/afnzmn">@afnzmn</a></sub> </br>
   <sub>English Readme contributors: <a href="https://github.com/404-Program-not-found">@404-Program-not-found</a>, <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>, <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>, <a href="https://github.com/tired6488">@tired6488</a>, <a href="https://github.com/DARKDRAGON532">@DARKDRAGON532</a>, <a href="https://github.com/PickleNik">@PickleNik</a> and <a href="https://github.com/Zyborg777">@Zyborg777</a></sub>
 </details>
 
@@ -35,7 +35,7 @@
   <a href="https://twitter.com/VueTubeApp" alt="Twitter"><img src="https://img.shields.io/twitter/follow/VueTubeApp?label=Follow&style=flat&logo=twitter"></img></a>
 </p>
 
-**Read this page in other languages**: [English,](../readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська,](/readme/readme.ua.md) [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
+**Читати дану сторінку іншими мовами**: [English,](../readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська,](/readme/readme.ua.md) [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
 
 <h2 align="left">
 <sub>
@@ -70,8 +70,6 @@
 
 Щоб інсталювати програму, перейдіть на сторінку [vuetube.app/install](https://www.vuetube.app/install) або перегляньте нижче доступні версії:
 
-<details>
-  <summary>🖱️ Клацніть, щоб показати доступні версії </summary>
 <br />
 
 <h3 align="left">
@@ -102,7 +100,6 @@ iOS
 
 (Apple офіційно не підтримує sideloading, тобто установку додатків лише з файлом без їх завантаження в офіційний магазин компанії. Для встановлення VueTube на пристроях iPhone / iPad необхідно використовувати розширені методи)
 
-</details>
 
 <h2 align="left">
 <sub>
