@@ -226,6 +226,21 @@ class Innertube {
         args.browseId = "FEtrending";
         break;
       case "playlist":
+      case "fullInfo":
+        data = {
+          context: {
+            client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+          },
+        };
+        data.context.client = {
+          ...data.context.client,
+          clientFormFactor: "SMALL_FORM_FACTOR",
+        };
+        data.context = {
+          ...data.context,
+          request: constants.INNERTUBE_REQUEST(),
+        };
+        break;
       case "channel":
         data = {
           context: {
@@ -557,6 +572,11 @@ class Innertube {
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
           );
         case "community":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
+          );
+        case "fullInfo":
           return await this.browseAsync(
             "channel",
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
