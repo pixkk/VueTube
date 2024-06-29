@@ -60,7 +60,7 @@ export default {
     },
   },
   mounted() {
-    console.log("Compact videoRenderer received: " + JSON.stringify(this.video));
+    // console.log("Compact videoRenderer received: " + JSON.stringify(this.video));
   },
 };
 </script>
