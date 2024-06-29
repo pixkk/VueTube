@@ -47,12 +47,12 @@
 
     </div>
     <div v-emoji class="px-4">
-      <Voting v-if="backstageAttachment.backstageAttachment.pollRenderer" :question="``" :answers="getAnswers">
+      <Voting v-if="backstageAttachment?.backstageAttachment?.pollRenderer" :question="``" :answers="getAnswers">
 
       </Voting>
     </div>
     <v-img
-        v-if="backstageAttachment.backstageAttachment.backstageImageRenderer"
+        v-if="backstageAttachment?.backstageAttachment?.backstageImageRenderer"
       contain
       class="background my-4"
       :class="$vuetify.theme.dark ? 'lighten-2' : 'darken-2'"
