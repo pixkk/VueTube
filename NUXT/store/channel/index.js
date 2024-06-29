@@ -8,6 +8,7 @@ export const state = () => {
     subscribe: null,
     subscribeAlt: null,
     descriptionPreview: null,
+    fullChannelInfo: null,
     subscribers: null,
     videosCount: null,
     featuredChannels: null,
@@ -31,6 +32,7 @@ export const mutations = {
     state.subscribe = channelData.subscribe;
     state.subscribeAlt = channelData.subscribeAlt;
     state.descriptionPreview = channelData.descriptionPreview;
+    state.fullChannelInfo = channelData.fullChannelInfo;
     state.subscribers = channelData.subscribers;
     state.videosCount = channelData.videosCount;
     state.featuredChannels = channelData.featuredChannels;
@@ -68,38 +70,44 @@ export const actions = {
     commit("setLoading", true);
     let channel = await this.$youtube.getChannel(channelRequest, "main");
     let community = await this.$youtube.getChannel(channelRequest, "community");
+    let fullInfo = await this.$youtube.getChannel(channelRequest, "fullInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution.attributionViewModel.suffix.commandRuns[0].onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
+    let fullChannelInfo = fullInfo.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems[0].aboutChannelRenderer.metadata.aboutChannelViewModel;
+    console.log(fullChannelInfo);
     console.log(channel);
-    console.log(community);
+    console.log("community" + community);
     let videoList = await this.$youtube.channelVideos(channel);
     console.log(videoList);
     try {
       const channelData = {
         avatar:
-          channel.header.c4TabbedHeaderRenderer.avatar?.thumbnails[
-            channel.header.c4TabbedHeaderRenderer.avatar?.thumbnails.length - 1
-          ].url || "",
+          channel.header.c4TabbedHeaderRenderer?.avatar?.thumbnails[
+            channel.header.c4TabbedHeaderRenderer?.avatar?.thumbnails.length - 1
+          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.image.decoratedAvatarViewModel.avatar.avatarViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.image.decoratedAvatarViewModel.avatar.avatarViewModel.image.sources.length -1].url || "",
         banner:
-          channel.header.c4TabbedHeaderRenderer.banner?.thumbnails[
-            channel.header.c4TabbedHeaderRenderer.banner.thumbnails.length - 1
-          ].url || "",
-        title: channel.header.c4TabbedHeaderRenderer.title || null,
+          channel.header.c4TabbedHeaderRenderer?.banner?.thumbnails[
+            channel.header.c4TabbedHeaderRenderer?.banner.thumbnails.length - 1
+          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources.length - 1].url || "",
+        title: channel.header.c4TabbedHeaderRenderer?.title || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.title.dynamicTextViewModel.text.content,
         subscribe:
-          channel.header.c4TabbedHeaderRenderer.subscribeButton.buttonRenderer
-            .text.runs[0].text || null,
+          channel.header.c4TabbedHeaderRenderer?.subscribeButton.buttonRenderer
+            .text.runs[0].text || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.actions.flexibleActionsViewModel.actionsRows[0].actions[0].buttonViewModel.title || "null",
         subscribeAlt:
-          channel.header.c4TabbedHeaderRenderer.subscriberCountText.runs[0]
-            .text || null,
+          channel.header.c4TabbedHeaderRenderer?.subscriberCountText.runs[0]
+            .text || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.actions.flexibleActionsViewModel.actionsRows[0].actions[0].buttonViewModel.accessibilityText || "null",
         descriptionPreview:
-          channel.header.c4TabbedHeaderRenderer.tagline.channelTaglineRenderer
-            .content || null,
+          channel.header.c4TabbedHeaderRenderer?.tagline.channelTaglineRenderer
+            .content || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.description.content || "null",
+        fullChannelInfo:
+          channel.header.c4TabbedHeaderRenderer?.tagline.channelTaglineRenderer
+            .content || fullChannelInfo,
         subscribers:
-          channel.header.c4TabbedHeaderRenderer.subscriberCountText.runs[0]
-            .text || null,
-        videosCount:
-          channel.header.c4TabbedHeaderRenderer.videosCountText?.runs[0]?.text +
-            " " +
-            channel.header.c4TabbedHeaderRenderer.videosCountText?.runs[1]
-              ?.text || null,
+          channel.header.c4TabbedHeaderRenderer?.subscriberCountText.runs[0]
+            .text || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.metadata.contentMetadataViewModel.metadataRows[1].metadataParts[0].text.content || "null",
+        videosCount: channel.header.c4TabbedHeaderRenderer ? (channel.header.c4TabbedHeaderRenderer?.videosCountText?.runs[0]?.text +
+          " " +
+          channel.header.c4TabbedHeaderRenderer?.videosCountText?.runs[1]
+            ?.text) : (channel.header.pageHeaderRenderer.content.pageHeaderViewModel.metadata.contentMetadataViewModel.metadataRows[1].metadataParts[1].text.content )
+           || "null",
         featuredChannels: null, // You can set this value as per your data structure
         // videoExample:
         //   channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer

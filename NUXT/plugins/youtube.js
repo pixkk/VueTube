@@ -146,14 +146,21 @@ const innertubeModule = {
     } else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
-  async getChannel(url, tab="main") {
-    try {
-      const response = await InnertubeAPI.getChannelAsync(url, tab);
-
-      console.log(response.data);
+  async getChannel(url, tab="main", continuation = null) {
+    if (tab === "fullInfo") {
+      const response = await InnertubeAPI.browseAsync("fullInfo", { continuation: continuation });
+      // console.log(response.data);
       return response.data;
-    } catch (error) {
-      console.error(error)
+    }
+    else {
+      try {
+        const response = await InnertubeAPI.getChannelAsync(url, tab);
+
+        // console.log(response.data);
+        return response.data;
+      } catch (error) {
+        console.error(error)
+      }
     }
   },
 
