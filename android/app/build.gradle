@@ -7,7 +7,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "0.5.4"
+        versionName "0.5.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -30,7 +30,9 @@ android {
         abortOnError false
         disable 'all'
     }
-
+    packagingOptions {
+        resources.excludes.add("META-INF/*")
+    }
 
 }
 
@@ -49,6 +51,9 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    implementation 'org.apache.httpcomponents:httpclient:4.5.10'
+    implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 apply from: 'capacitor.build.gradle'
