@@ -1,5 +1,5 @@
 <template>
-  <div v-if="render.attributedDescriptionBodyText.content" class="description">
+  <div v-if="render.attributedDescriptionBodyText?.content" class="description">
     <yt-text-formatter :text-runs="render.attributedDescriptionBodyText">
     </yt-text-formatter>
   </div>

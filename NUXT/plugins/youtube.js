@@ -163,7 +163,9 @@ const innertubeModule = {
       }
     }
   },
-
+  async getChannelHtml(channel_url) {
+    return await InnertubeAPI.getChannelHtml(channel_url);
+  },
   // It just works™
   // Front page recommendation
   async recommend() {
