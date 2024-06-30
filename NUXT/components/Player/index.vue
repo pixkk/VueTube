@@ -562,8 +562,9 @@ export default {
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
       if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
-        this.vid.play();
         this.aud.play();
+        this.vid.play();
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.bufferingDetected = false;
 
         if (!this.isMusic) {
@@ -580,12 +581,48 @@ export default {
         // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
         this.$refs.player.addEventListener("progress", this.progressEvent);
+        this.$refs.player.addEventListener("seeking", this.seekingEvent);
+        this.$refs.player.addEventListener("seeked", this.seekedEvent);
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
         this.$refs.player.addEventListener("ended", this.endedEvent);
       }
+      else {
+        this.vid.pause();
+        this.aud.pause();
+      }
     },
+    seekingEvent() {
+      // if (this.seeking) {
+        console.log("seeking");
+      this.bufferingDetected = true;
+        this.$refs.player.pause();
+        this.$refs.audio.pause();
+      // }
+    },
+    seekedEvent() {
+      // if (!this.seeking) {
+        console.log("seeked");
+      setTimeout(() => {
+
+        this.$refs.player.play();
+        this.$refs.audio.play();
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
+        this.bufferingDetected = false;
+      }, 1000);
+      // }
+    },
+
+
     timeUpdateEvent() {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 100 / 1000) {
+
+        setTimeout(() => {
+          this.bufferingDetected = true;
+          this.$refs.audio.currentTime = this.$refs.player.currentTime;
+          this.bufferingDetected = false;
+        }, 1000);
+      }
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
       // console.log("sb check", this.sponsorBlocks);
@@ -597,11 +634,11 @@ export default {
         // console.warn(data);
         this.sponsorBlocks?.segments?.forEach((block) => {
           // block.segments.forEach((segments) => {
-          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded == false) {
+          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded === false) {
             console.log("Skipping the sponsor");
             this.$youtube.showToast("Skipped "+ block.category + " sponsor");
             this.$refs.player.currentTime = block.segment[1];
-            this.$refs.audio.currentTime = this.$refs.player.currentTime;
+            // this.$refs.audio.currentTime = this.$refs.player.currentTime;
           }
           // });
         });
@@ -625,7 +662,7 @@ export default {
     },
     waitingEvent() {
       // buffering detection & sync
-      let threshold = 250; //ms after which user perceives buffering
+      let threshold = 1000; //ms after which user perceives buffering
       if (!this.$refs.player.paused) {
         this.bufferingDetected = setTimeout(() => {
           this.bufferingDetected = true;

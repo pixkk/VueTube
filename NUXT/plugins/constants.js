@@ -15,6 +15,7 @@ const ytApiVal = {
   // VERSION: "16.25",
   VERSION: "19.09",
   CLIENTNAME: "ANDROID",
+  // VERSION_WEB: "2.20240312.06.00",
   VERSION_WEB: "2.20240312.06.00",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
@@ -52,7 +53,7 @@ module.exports = {
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
       "x-youtube-client-name": "2",
-      "x-youtube-client-version": "2.20230502.01.00",
+      "x-youtube-client-version": "2.20240628.01.00",
     };
     return headers;
   },
@@ -60,10 +61,10 @@ module.exports = {
     let client = {
       gl: info.gl,
       hl: info.hl,
-      deviceMake: "Generic",
+      deviceMake: "Google",
       // deviceMake: info.deviceMake,
       // deviceModel: info.deviceModel,
-      deviceModel: "Android 10.0",
+      deviceModel: "Nexus 5",
       userAgent: info.userAgent,
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
@@ -115,7 +116,7 @@ module.exports = {
       deviceModel: info.deviceModel,
       userAgent: info.userAgent,
       clientName: "MWEB",
-      clientVersion: "2.20230502.01.00",
+      clientVersion: "2.20240628.01.00",
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",

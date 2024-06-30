@@ -183,7 +183,7 @@ export default {
       if (!isLink) {
         //---   Auto Suggest   ---//
         this.$youtube.autoComplete(text, (res) => {
-          console.log(res);
+          // console.log(res);
           try {
             const data = res.replace(/^.*?\(/, "").replace(/\)$/, ""); //Format Response
             this.response = JSON.parse(data)[1];
@@ -196,7 +196,7 @@ export default {
             this.response = JSON.parse(data)[1];
           }
           // this.response = res;
-          console.log(this.response);
+          // console.log(this.response);
         });
       } else {
         //---   User Pastes Link, Direct Them To Video   ---//
