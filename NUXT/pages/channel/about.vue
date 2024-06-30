@@ -1,12 +1,12 @@
 <template>
   <div class="px-6 py-3">
-    <p v-html="$store.state.channel.fullChannelInfo ? $store.state.channel.fullChannelInfo.description.replaceAll('\n', '<br/>') :$store.state.channel.descriptionPreview "></p>
+    <p v-html="$store.state.channel.fullChannelInfo.description ? $store.state.channel.fullChannelInfo.description.replaceAll('\n', '<br/>') :$store.state.channel.descriptionPreview "></p>
     <br />
     <br />
-    <h3 class="my-2">{{$store.state.channel.fullChannelInfo.customLinksLabel.content}}</h3>
+    <h3 class="my-2" v-if="$store.state.channel.fullChannelInfo.customLinksLabel">{{$store.state.channel.fullChannelInfo.customLinksLabel.content}}</h3>
     <div v-ripple class="py-2 d-flex flex-column">
       <!--      <span class="ml-4 primary&#45;&#45;text">Social Media</span>-->
-      <div v-for="link in $store.state.channel.fullChannelInfo.links" class="mb-1">
+      <div v-for="link in $store.state.channel.fullChannelInfo.links" class="mb-1" v-if="$store.state.channel.fullChannelInfo.links">
 
         <a
           @click.stop.prevent="

@@ -287,6 +287,45 @@ class Innertube {
     };
   }
 
+  async getChannelHtml(channel_url){
+
+    let data = {
+      context: {
+        client: constants.INNERTUBE_CLIENT(this.context.client),
+      },
+    };
+    data = {
+      context: {
+        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+      },
+    };
+    data.context.client = {
+      ...data.context.client,
+      clientFormFactor: "SMALL_FORM_FACTOR",
+    };
+    data.context = {
+      ...data.context,
+      request: constants.INNERTUBE_REQUEST(),
+    };
+
+    const response = await Http.get({
+      url: `${channel_url}`,
+    }).catch((error) => error);
+    console.log(response);
+
+    if (response instanceof Error)
+      return {
+        success: false,
+        status_code: response.status,
+        message: response.message,
+      };
+
+    return {
+      success: true,
+      status_code: response.status,
+      data: response.data,
+    };
+  }
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
     let data = {
       context: { ...contextAdditional },
@@ -653,6 +692,19 @@ class Innertube {
           }
         }
 
+
+        function generateCPN() {
+          const CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+          let cpn = '';
+          for (let i = 0; i < 16; i++) {
+            cpn += CPN_ALPHABET[Math.floor(Math.random() * 64)];
+          }
+          return cpn;
+        }
+
+        const cpn = generateCPN();
+        // console.log(cpn);
+
         var searchParams = new URLSearchParams(source.url);
 
         //Iterate the search parameters.
@@ -662,6 +714,11 @@ class Innertube {
         // For some reasons, searchParams.delete not removes &n in music videos
         source["url"] = source["url"].replace(/&n=[^&]*/g, "");
         source["url"] = source["url"] + "&n=" + this.nfunction(n);
+        // source["url"] = source["url"] + "&alr=yes";
+        source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
+        // source["url"] = source["url"] + "&ump=1";
+        // source["url"] = source["url"] + "&srfvp=1";
+        source["url"] = source["url"] + "&cpn=" + generateCPN();
       });
     const vidData = {
       id: details.videoId,
@@ -705,8 +762,8 @@ class Innertube {
               "video-description-ep-identifier"
           )
           .engagementPanelSectionListRenderer.content.structuredDescriptionContentRenderer.items.find(
-            (item) => item.expandableVideoDescriptionBodyRenderer
-          ).expandableVideoDescriptionBodyRenderer,
+            (item) => item?.expandableVideoDescriptionBodyRenderer
+          )?.expandableVideoDescriptionBodyRenderer || null,
         recommendations: recommendations,
         recommendationsContinuation:
           recommendations.contents[recommendations.contents.length - 1]

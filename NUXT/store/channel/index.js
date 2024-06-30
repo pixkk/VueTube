@@ -1,3 +1,6 @@
+import {getBetweenStrings} from "@/plugins/utils";
+import constants from "@/plugins/constants";
+
 export const state = () => {
   return {
     loading: null,
@@ -69,8 +72,21 @@ export const actions = {
     }
     commit("setLoading", true);
     let channel = await this.$youtube.getChannel(channelRequest, "main");
+    const html = await this.$youtube.getChannelHtml(channelRequest);
+    // Get url of base.js file
+    function decodeEscapedString(str) {
+      return str.replace(/\\x([0-9A-Fa-f]{2})/g, function(match, p1) {
+        return String.fromCharCode(parseInt(p1, 16));
+      }).replaceAll("\\\"", "\"");
+    }
+
+    let unescaped = decodeEscapedString(getBetweenStrings(html.data, 'var ytInitialData = \'', '\';'));
+
+
+    const fullInfoSecond = JSON.parse(unescaped);
+
     let community = await this.$youtube.getChannel(channelRequest, "community");
-    let fullInfo = await this.$youtube.getChannel(channelRequest, "fullInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution.attributionViewModel.suffix.commandRuns[0].onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
+    let fullInfo = await this.$youtube.getChannel(channelRequest, "fullInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution.attributionViewModel.suffix.commandRuns[0].onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token : fullInfoSecond.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
     let fullChannelInfo = fullInfo.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems[0].aboutChannelRenderer.metadata.aboutChannelViewModel;
     console.log(fullChannelInfo);
     console.log(channel);
@@ -86,7 +102,7 @@ export const actions = {
         banner:
           channel.header.c4TabbedHeaderRenderer?.banner?.thumbnails[
             channel.header.c4TabbedHeaderRenderer?.banner.thumbnails.length - 1
-          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources.length - 1].url || "",
+          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel?.image.decoratedAvatarViewModel.avatar.avatarViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.image.decoratedAvatarViewModel.avatar.avatarViewModel.image.sources.length - 1].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources.length - 1].url || "",
         title: channel.header.c4TabbedHeaderRenderer?.title || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.title.dynamicTextViewModel.text.content,
         subscribe:
           channel.header.c4TabbedHeaderRenderer?.subscribeButton.buttonRenderer
