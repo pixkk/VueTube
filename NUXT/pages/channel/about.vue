@@ -10,7 +10,7 @@
 
         <a
           @click.stop.prevent="
-            openExternal(link.channelExternalLinkViewModel.link.content)
+            openExternal('https://' + link.channelExternalLinkViewModel.link.content)
           "
         >
 <!--          <v-icon x-large class="actionIcon">mdi-github</v-icon>-->
