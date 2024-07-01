@@ -92,7 +92,7 @@ jobs:
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 14.2.0
+          xcode-version: latest-stable
       - name: Add empty `GoogleService-Info.plist`
         run: echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
         env:
