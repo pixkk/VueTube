@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: 16
-
+  GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
 jobs:
   build:
     name: Build web assets
@@ -94,7 +94,7 @@ jobs:
         with:
           xcode-version: latest-stable
       - name: Add `GoogleService-Info.plist`
-        run: echo ${{secrets.GOOGLE_SERVICE_INFO_PLIST}} > ios/App/App/GoogleService-Info.plist
+        run: echo "${{ env.GOOGLE_SERVICE_INFO_PLIST }}" > ios/App/App/GoogleService-Info.plist
       - name: Build and archive with xcodebuild
         working-directory: ios
         run: xcodebuild
