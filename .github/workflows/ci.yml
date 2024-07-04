@@ -93,10 +93,8 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      - name: Add empty `GoogleService-Info.plist`
-        run: echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
-        env:
-          GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
+      - name: Add `GoogleService-Info.plist`
+        run: echo ${{secrets.GOOGLE_SERVICE_INFO_PLIST}} > ios/App/App/GoogleService-Info.plist
       - name: Build and archive with xcodebuild
         working-directory: ios
         run: xcodebuild
