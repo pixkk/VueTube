@@ -527,7 +527,7 @@ export default {
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
 
     this.sources.forEach((source) => {
-      if (source.mimeType.indexOf("audio") > -1) {
+      if (source.mimeType.indexOf("audio") > -1 && !this.audSrc) {
         this.audSrc = source.url;
       }
     });
@@ -658,7 +658,12 @@ export default {
         this.$refs.player.readyState >= 3
       )
         this.$refs.audio.play();
-      this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
+      try {
+
+        this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
+      }catch (e) {
+
+      }
     },
     waitingEvent() {
       // buffering detection & sync
