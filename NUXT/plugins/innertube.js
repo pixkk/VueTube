@@ -120,16 +120,47 @@ class Innertube {
     let challenge_name =
       /\.get\("n"\)\)&&\(b=([a-zA-Z0-9$]+)(?:\[(\d+)\])?\([a-zA-Z0-9]\)/.exec(
         baseJs.data
-      )[1];
-    //.get("n"))&&(b=fG[0](b),a.set("n",b),fG.length||kq(""))}}
-    // fG;
-    challenge_name = new RegExp(
-      `var ${challenge_name.replace("$", "\\$")}\\s*=\\s*\\[(.+?)\\]\\s*[,;]`
-    ).exec(baseJs.data)[1];
-    challenge_name = new RegExp(
-      `${challenge_name}\\s*=\\s*function\\s*\\(([\\w$]+)\\)\\s*{(.+?}\\s*return\\ [\\w$]+.join\\(""\\))};`,
-      "s"
-    ).exec(baseJs.data)[2];
+      );
+    if (challenge_name) {
+      challenge_name = challenge_name[1];
+      //.get("n"))&&(b=fG[0](b),a.set("n",b),fG.length||kq(""))}}
+      // fG;
+      challenge_name = new RegExp(
+        `var ${challenge_name.replace("$", "\\$")}\\s*=\\s*\\[(.+?)\\]\\s*[,;]`
+      ).exec(baseJs.data)[1];
+
+      if (challenge_name) {
+        challenge_name = new RegExp(
+          `${challenge_name}\\s*=\\s*function\\s*\\(([\\w$]+)\\)\\s*{(.+?}\\s*return\\ [\\w$]+.join\\(""\\))};`,
+          "s"
+        ).exec(baseJs.data)[2];
+      }
+    }else {
+      challenge_name = /[A-Za-z]=String\.fromCharCode\(110\),[A-Za-z]=[A-Za-z]\.get\([A-Za-z]\)\)&&\([A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\),[A-Za-z]\.set\([A-Za-z],[A-Za-z]\)/i.exec(baseJs.data);
+
+      challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(challenge_name[0]);
+
+      challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
+
+
+      challenge_name = new RegExp(
+        `var ${challenge_name}=\\[[A-Za-z0-9]+\\];`).exec(baseJs.data)[0];
+
+      challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
+
+
+      challenge_name = new RegExp(
+        `${challenge_name}=function\\(a\\){([\\s\\S]*)[A-Za-z],\\"\\"\\)};`).exec(baseJs.data);
+
+      challenge_name = challenge_name[0];
+      var startIndex = challenge_name.indexOf('{');
+
+        let trimmedCode = challenge_name.slice(startIndex).substring(1);
+        var endIndex = trimmedCode.lastIndexOf('}');
+          trimmedCode = trimmedCode.slice(0, endIndex);
+          challenge_name = trimmedCode;
+    }
+
     const fullCode =
       "var getN=function(a){" + challenge_name + "}; return getN;";
     let getN = new Function(fullCode);
@@ -709,16 +740,20 @@ class Innertube {
 
         //Iterate the search parameters.
         let n = searchParams.get("n");
+        //let clen = searchParams.get("clen");
         searchParams.delete("n");
 
         // For some reasons, searchParams.delete not removes &n in music videos
         source["url"] = source["url"].replace(/&n=[^&]*/g, "");
-        source["url"] = source["url"] + "&n=" + this.nfunction(n);
+              source["url"] = source["url"] + "&n=" + this.nfunction(n);
         // source["url"] = source["url"] + "&alr=yes";
         source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
         source["url"] = source["url"] + "&cpn=" + generateCPN();
+        if (searchParams.get("mime").indexOf("audio") < 0) {
+          source["url"] = source["url"] + "&range=0-";
+        }
       });
     const vidData = {
       id: details.videoId,
