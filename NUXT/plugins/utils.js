@@ -55,6 +55,7 @@ function parseEmoji(body) {
     return twemoji.parse(body, {
       folder: "svg",
       ext: ".svg",
+      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
     });
 }
 
