@@ -1,3 +1,7 @@
+
+>[!WARNING]  
+>**01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)**
+
 <p align="center">
     <a href="https://pixkk.com/">
     <picture>
