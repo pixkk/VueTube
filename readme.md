@@ -1,3 +1,7 @@
+
+>[!WARNING]  
+>**01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)**
+
 <p align="center">
     <a href="https://pixkk.com/">
     <picture>
@@ -249,8 +253,8 @@ our [Discord](https://pixkk.com/discord) and we will implement them. Don't worry
 GitHub contributors
 </h2>
 
-<a href="https://github.com/VueTubeApp/VueTube/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=VueTubeApp/VueTube" />
+<a href="https://github.com/pixkk/VueTube/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=pixkk/VueTube" />
 </a>
 
 <sub>Dashboard made automatically with [contrib.rocks](https://contrib.rocks). </sub>
