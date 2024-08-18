@@ -615,7 +615,7 @@ export default {
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 100 / 1000) {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
 
         setTimeout(() => {
           this.bufferingDetected = true;
