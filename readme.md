@@ -1,6 +1,8 @@
 
->[!WARNING]  
->**01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)**
+>[!TIP] 
+>01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)
+>
+>**18.08.2024 - Problem resolved**
 
 <p align="center">
     <a href="https://pixkk.com/">
@@ -39,10 +41,11 @@
 <p align="center">
   <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
   <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
-  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?label=r%2FVuetube&logo=reddit&logoColor=white"></img></a>
+  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/Vuetube"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
-  <a href="https://twitter.com/VueTubeApp" alt="Twitter"><img src="https://img.shields.io/twitter/follow/VueTubeApp?label=Follow&style=flat&logo=twitter"></img></a>
+  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
+    
 </p>
 
 **Read this page in other languages**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
@@ -174,7 +177,7 @@ Community
 We use several different platforms to connect with our community. You can actively participate in the development of
 VueTube or simply keep up to date with all the news joining these groups:
 
-- Discord server (https://pixkk.com/discord)
+- Discord server (https://discord.gg/7P8KJrdd5W)
 - Telegram group (https://t.me/vuetube)
 - Reddit page (https://www.reddit.com/r/vuetube)
 
@@ -187,23 +190,20 @@ VueTube or simply keep up to date with all the news joining these groups:
 Progress
 </h2>
 
-<details>
-  <summary> 🖱️ Click to display progress </summary>
-
- <br>
+<br>
 
 |                   **General**                    |              **Player**               | [**Extractor**](https://github.com/VueTubeApp/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
-|                🟢 Comments (100%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
+|                🟡 Comments (90%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
 |              🟢 Description (100%)               | 🟢 Tap to show / hide controls (100%) |                       🟢 Home page (100%)                        |
 |               🟢 Home Page (100%)                |      🟠 Seekbar / Scrubber (80%)      |                         🟢 Search (100%)                         |
 |            🟢 RYD Integration (100%)             |          🟠 Fullscreen (80%)          |                    🟠 Video Information (60%)                    |
-|                 🟢 Themes (100%)                 |      🟠 Resolution Picker (50%)       |                         🔴 Channels (0%)                         |
+|                 🟢 Themes (100%)                 |      🟡 Resolution Picker (95%)       |                         🔴 Channels (0%)                         |
 |               🟢 Watch Page (100%)               |          🔴 Miniplayer (0%)           |                         🔴 Comments (0%)                         |
-|        🟠 Sponsorblock Integration (95%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
+|        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
 |               🟠 Auto Update (50%)               |      🔴 Picture in Picture (0%)       |                     🔴 Trending content (0%)                     |
-|              🟠 Channel Page (50%)               |           🔴 Captions (0%)            |                       🔴 Interactions (0%)                       |
-|             🟠 Community Posts (10%)             |             🔴 Cards (0%)             |                        🔴 Playlists (0%)                         |
+|              🟡 Channel Page (60%)               |           🔴 Captions (0%)            |                       🔴 Interactions (0%)                       |
+|             🟡 Community Posts (90%)             |             🔴 Cards (0%)             |                        🔴 Playlists (0%)                         |
 |         🟠 Customizable Shorts UI (10%)          |                                       |                      🔴 Notifications (0%)                       |
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 Customizable UI (30%)             |                                       |                                                                  |
@@ -216,7 +216,6 @@ Progress
 |            🔴 Subscriptions Page (0%)            |                                       |                                                                  |
 |          🔴 Other Platform Support (0%)          |                                       |                                                                  |
 
-</details>
 
 ### Technologies used
 
