@@ -138,19 +138,27 @@ class Innertube {
     }else {
       challenge_name = /[A-Za-z]=String\.fromCharCode\(110\),[A-Za-z]=[A-Za-z]\.get\([A-Za-z]\)\)&&\([A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\),[A-Za-z]\.set\([A-Za-z],[A-Za-z]\)/i.exec(baseJs.data);
 
-      challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(challenge_name[0]);
+      if (challenge_name === null) {
+
+        challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(baseJs.data);
+      }
+      else {
+        challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(challenge_name[0]);
+      }
 
       challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
 
 
       challenge_name = new RegExp(
-        `var ${challenge_name}=\\[[A-Za-z0-9]+\\];`).exec(baseJs.data)[0];
+        `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
 
       challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
 
+      challenge_name = challenge_name.replace("$", "\\$");
+      // challenge_name = new RegExp(
+      //   `${challenge_name}=function\\(a\\){[\\s\\S]*,.*?join\\(""\\)\\};`).exec(baseJs.data);
+      challenge_name = new RegExp(`${challenge_name}=function\\(a\\){[\\s\\S]*?return.*?\\.join\\(""\\)}`, 'g').exec(baseJs.data);
 
-      challenge_name = new RegExp(
-        `${challenge_name}=function\\(a\\){([\\s\\S]*)[A-Za-z],\\"\\"\\)};`).exec(baseJs.data);
 
       challenge_name = challenge_name[0];
       var startIndex = challenge_name.indexOf('{');
