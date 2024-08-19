@@ -77,7 +77,7 @@
       >
         <b>Changelog</b>
       </div>
-      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="new showdown.Converter().makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
+      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
       </div>
 
       <v-progress-linear
@@ -123,6 +123,7 @@ export default {
       installedVersion: process.env.version,
       installedChannel: process.env.channel,
       latestVersion: "",
+      mkdwn: null,
       lang: {},
       status: "checking",
       update: {
@@ -139,6 +140,8 @@ export default {
   async mounted() {
     //---   Setup Lang Pack   ---//
     this.lang = this.$lang("mods").updates;
+    this.mkdwn = new showdown.Converter();
+    this.mkdwn.setOption('tables', true);
 
     this.getLatest();
   },
