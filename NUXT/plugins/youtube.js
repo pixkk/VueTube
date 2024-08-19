@@ -3,14 +3,14 @@
 // contribute to the library here: https://github.com/VueTubeApp/Vuetube-Extractor
 
 //---   Modules/Imports   ---//
-import { Http } from "@capacitor-community/http";
+import {Http} from "@capacitor-community/http";
 import Innertube from "./innertube";
 import constants from "./constants";
 import rendererUtils from "./renderers";
-import { Buffer } from "buffer";
+import {Buffer} from "buffer";
 import iconv from "iconv-lite";
-import { Toast } from "@capacitor/toast";
-import { createHash } from "crypto";
+import {Toast} from "@capacitor/toast";
+import {createHash} from "crypto";
 
 function getEncoding(contentType) {
   // console.warn(contentType);
@@ -134,16 +134,12 @@ const innertubeModule = {
   },
 
   getThumbnail(id, resolution, backupThumbnail) {
-    if (backupThumbnail[backupThumbnail.length - 1]) {
-      return backupThumbnail[backupThumbnail.length - 1].url;
-    } else if (resolution == "max") {
-      const url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-      let img = new Image();
-      img.src = url;
-      img.onload = function () {
-        if (img.height !== 120) return url;
-      };
-    } else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    // 19.08.2024 - backupThumbnail temporary unused
+    if (resolution === "max") {
+      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    } else {
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
   },
 
   async getChannel(url, tab="main", continuation = null) {
