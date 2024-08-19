@@ -26,8 +26,7 @@
       <template v-else-if="text.emoji && text.emoji.isCustomEmoji">
         <img
           :src="
-            text.emoji.image.thumbnails[text.emoji.image.thumbnails.length - 1]
-              .url
+            text.emoji.image?.thumbnails[text.emoji.image.thumbnails?.length - 1]?.url
           "
           :alt="text.text"
           :key="index"
