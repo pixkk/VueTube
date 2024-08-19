@@ -6,8 +6,8 @@
   * -->
   <div>
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="channelData.contents.length == 0" :count="10" />
-    <div v-for="(section, index) in channelData.contents" :key="index">
+    <vid-load-renderer v-if="channelData.contents && channelData.contents.length == 0" :count="10" />
+    <div v-if="channelData.contents" v-for="(section, index) in channelData.contents" :key="index">
       <compact-video-renderer
         v-if="section.richItemRenderer?.content?.compactVideoRenderer?.videoId"
         :video="section.richItemRenderer?.content?.compactVideoRenderer"
@@ -21,7 +21,7 @@
     </div>
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="channelData.contents.length > 0"
+      v-else-if="channelData.contents && channelData.contents.length > 0"
       @intersect="paginate"
     />
   </div>
