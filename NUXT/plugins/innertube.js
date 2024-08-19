@@ -265,7 +265,7 @@ class Innertube {
         args.browseId = "FEtrending";
         break;
       case "playlist":
-      case "fullInfo":
+      case "aboutChannelInfo":
         data = {
           context: {
             client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
@@ -509,80 +509,105 @@ class Innertube {
     };
   }
 
-  async getEndPoint(url) {
-    let data = { context: this.context, url: url };
-    // data = {
-    //   ...data,
-    //   context: {
-    //     client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-    //   },
-    // };
-    // data.context.client = {
-    //   ...data.context.client,
-    //   clientFormFactor: "SMALL_FORM_FACTOR",
-    // };
-    data.context = {
-      ...data.context,
-      request: constants.INNERTUBE_REQUEST(),
-    };
-    let response = await Http.get({
-      // url: `${url}/navigation/resolve_url?key=${this.key}`,
-      url: `${url}`,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    }).catch((error) => {
+  async getEndPoint(url, skipCheck = false) {
+    let data;
+    let response;
+    if (!skipCheck) {
+      data = { context: this.context, url: url };
 
-      // console.warn(browseId);
-    });
-    const html = response.data; // Assuming data property holds the HTML content
+      response = await Http.get({
+        // url: `${url}/navigation/resolve_url?key=${this.key}`,
+        url: `${url}`,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      }).catch((error) => {
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
+        // console.warn(browseId);
+      });
+      const html = response.data; // Assuming data property holds the HTML content
 
-    const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
 
-    let browseId;
-    if (metaTags.length > 0) {
-      browseId = metaTags[0].content;
+      const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
+
+      let browseId;
+      if (metaTags.length > 0) {
+        browseId = metaTags[0].content;
+      }
+      else {
+        let match;
+        let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
+        // console.warn(html);
+        // console.warn(regex.exec(html));
+        while ((match = regex.exec(html)) !== null) {
+          // console.warn(match);
+          browseId = match[1];
+        }
+
+      }
+      data.context = {
+        ...data.context,
+        request: constants.INNERTUBE_REQUEST(),
+      };
+      data = {
+        ...data,
+        browseId: browseId,
+        context: {
+          client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+        },
+      };
+      data.context.client = {
+        ...data.context.client,
+        clientFormFactor: "SMALL_FORM_FACTOR",
+      };
+      response = await Http.post({
+        // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+        url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
+        data: data,
+        headers: { "Content-Type": "application/json" },
+      }).catch((error) => error);
+
+      if (response instanceof Error)
+        return {
+          success: false,
+          status_code: response.status,
+          message: response.message,
+        };
     }
     else {
-      let match;
-      let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
-      // console.warn(html);
-      // console.warn(regex.exec(html));
-      while ((match = regex.exec(html)) !== null) {
-        // console.warn(match);
-        browseId = match[1];
-      }
-
-      // console.warn(browseId);
-      // var n = url.lastIndexOf("/");
-      // browseId = url.substring(n + 1);
-
-    }
-    data = {
-      ...data,
-      browseId: browseId,
-      context: {
-        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-      },
-    };
-    data.context.client = {
-      ...data.context.client,
-      clientFormFactor: "SMALL_FORM_FACTOR",
-    };
-    response = await Http.post({
-      // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
-      url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
-      data: data,
-      headers: { "Content-Type": "application/json" },
-    }).catch((error) => error);
-
-    if (response instanceof Error)
-      return {
-        success: false,
-        status_code: response.status,
-        message: response.message,
+      data = { context: this.context, browseId: url };
+      data.context = {
+        ...data.context,
+        request: constants.INNERTUBE_REQUEST(),
       };
+      data = {
+        ...data,
+        browseId: url,
+        context: {
+          client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+        },
+      };
+      data.context.client = {
+        ...data.context.client,
+        clientFormFactor: "SMALL_FORM_FACTOR",
+      };
+      console.warn("DATA" , data);
+      response = await Http.post({
+        // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+        url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
+        data: data,
+        headers: { "Content-Type": "application/json" },
+      }).catch((error) => error);
+
+      if (response instanceof Error)
+        return {
+          success: false,
+          status_code: response.status,
+          message: response.message,
+        };
+    }
+
+
 
     return {
       success: true,
@@ -616,15 +641,11 @@ class Innertube {
   // Static methods
 
   static getThumbnail(id, resolution) {
-    if (resolution == "max") {
-      const url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-      let img = new Image();
-      img.src = url;
-      img.onload = function () {
-        if (img.height !== 120) return url;
-      };
+    if (resolution === "max") {
+      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    } else {
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
     }
-    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   }
 
   // Simple Wrappers
@@ -638,7 +659,7 @@ class Innertube {
   }
 
   async getChannelAsync(url, tab="main") {
-    const channelEndpoint = await this.getEndPoint(url);
+    const channelEndpoint = await this.getEndPoint(url, true);
     if (
       channelEndpoint.success &&
       channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
@@ -650,11 +671,20 @@ class Innertube {
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
           );
         case "community":
+          if (channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length <= 2) {
+            console.warn("Community null")
+            return null;
+          }
           return await this.browseAsync(
             "channel",
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
           );
-        case "fullInfo":
+        case "videos":
+          return await this.browseAsync(
+            "channel",
+            channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
+          );
+        case "aboutChannelInfo":
           return await this.browseAsync(
             "channel",
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
