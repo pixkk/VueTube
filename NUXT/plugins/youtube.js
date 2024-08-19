@@ -147,9 +147,8 @@ const innertubeModule = {
   },
 
   async getChannel(url, tab="main", continuation = null) {
-    if (tab === "fullInfo") {
-      const response = await InnertubeAPI.browseAsync("fullInfo", { continuation: continuation });
-      // console.log(response.data);
+    if (tab === "aboutChannelInfo") {
+      const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
       return response.data;
     }
     else {
@@ -286,51 +285,51 @@ const innertubeModule = {
       // const title = response.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].elementRenderer.newElement.type.componentType.model.feedNudgeModel.context
       let title;
-      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
-        (tab) => {
-          if (tab.itemSectionRenderer) {
-            if (
-              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                .type.componentType.model.feedNudgeModel
-            ) {
-              // console.warn(tab.itemSectionRenderer);
-              title =
-                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                  .type.componentType.model.feedNudgeModel.nudgeData.title
-                  .content;
-            }
-          } else {
-            title =
-              tab.tabRenderer.content.richGridRenderer.contents[1]
-                .richSectionRenderer.content.feedNudgeRenderer.title.runs[0]
-                .text;
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+          (tab) => {
+              if (tab.itemSectionRenderer) {
+                if (
+                  tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                    .type.componentType.model.feedNudgeModel
+                ) {
+                  // console.warn(tab.itemSectionRenderer);
+                  title =
+                    tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                      .type.componentType.model.feedNudgeModel.nudgeData.title
+                      .content;
+                }
+              } else {
+                title =
+                  tab.tabRenderer.content.richGridRenderer.contents[1]
+                    .richSectionRenderer.content.feedNudgeRenderer.title.runs[0]
+                    .text;
+              }
           }
-        }
-      );
+        );
 
       let subtitle;
 
-      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
-        (tab) => {
-          if (tab.itemSectionRenderer) {
-            if (
-              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                .type.componentType.model.feedNudgeModel
-            ) {
-              // console.warn(tab.itemSectionRenderer);
-              subtitle =
-                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                  .type.componentType.model.feedNudgeModel.nudgeData.subtitle
-                  .content;
-            }
-          } else {
-            subtitle =
-              tab.tabRenderer.content.richGridRenderer.contents[1]
-                .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
-                .text;
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+          (tab) => {
+              if (tab.itemSectionRenderer) {
+                if (
+                  tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                    .type.componentType.model.feedNudgeModel
+                ) {
+                  // console.warn(tab.itemSectionRenderer);
+                  subtitle =
+                    tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                      .type.componentType.model.feedNudgeModel.nudgeData.subtitle
+                      .content;
+                }
+              } else {
+                subtitle =
+                  tab.tabRenderer.content.richGridRenderer.contents[1]
+                    .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
+                    .text;
+              }
           }
-        }
-      );
+        );
 
       // title = response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.sectionListRenderer
@@ -368,7 +367,7 @@ const innertubeModule = {
 
       // console.log(response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.richGridRenderer);
-      return { title: title, subtitle: subtitle };
+        return { title: title, subtitle: subtitle };
     }
   },
 
