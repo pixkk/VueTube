@@ -370,9 +370,16 @@ class Innertube {
       context: { ...contextAdditional },
       continuation: continuation,
     };
-    data.context.client = {
-      ...constants.INNERTUBE_VIDEO(this.context.client),
-    };
+    if (contextAdditional.client.clientName === "MWEB") {
+      data.context.client = {
+        ...constants.INNERTUBE_VIDEO(this.context.client),
+      };
+    }
+    else {
+      data.context.client = {
+        ...constants.INNERTUBE_CLIENT(this.context.client),
+      };
+    }
     let url;
     switch (type.toLowerCase()) {
       case "browse":
@@ -641,11 +648,20 @@ class Innertube {
   // Static methods
 
   static getThumbnail(id, resolution) {
+
     if (resolution === "max") {
-      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-    } else {
-      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      let xhr = new XMLHttpRequest();
+
+      xhr.open('GET', maxResUrl, false);
+      xhr.send();
+      if (xhr.status === 200) {
+        return maxResUrl;
+      } else {
+        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+      }
     }
+    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   }
 
   // Simple Wrappers
