@@ -129,7 +129,8 @@ const innertubeModule = {
     try {
       return await InnertubeAPI.VidInfoAsync(id);
     } catch (error) {
-      console.error(error);
+      await this.getAPI();
+      return await InnertubeAPI.VidInfoAsync(id);
     }
   },
 

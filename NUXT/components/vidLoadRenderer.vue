@@ -1,4 +1,4 @@
-// this is an loading animation for videos
+<!--this is an loading animation for videos-->
 <template>
   <div>
     <v-sheet color="background" v-for="i in count" :key="i">

@@ -107,12 +107,24 @@ const module = {
     return true;
   },
 
-  resetBackActions() {
-    backActions.reset();
+  async resetBackActions() {
+    try {
+      backActions.reset();
+
+    } catch (e) {
+      await this.launchBackHandling();
+      backActions.reset();
+    }
   },
 
-  addBackAction(action) {
-    backActions.addAction(action);
+  async addBackAction(action) {
+    try {
+      backActions.addAction(action);
+
+    } catch (e) {
+      await this.launchBackHandling();
+      backActions.addAction(action);
+    }
   },
 
   back(listenerFunc) {

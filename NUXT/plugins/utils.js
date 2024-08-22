@@ -51,12 +51,70 @@ function setHttp(link) {
 
 // Replace inputted html with tweemoji
 function parseEmoji(body) {
-  if (twemoji)
-    return twemoji.parse(body, {
-      folder: "svg",
-      ext: ".svg",
-      base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
-    });
+  try {
+
+    if (twemoji)
+      return twemoji.parse(body, {
+        folder: "svg",
+        ext: ".svg",
+        base: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/'
+      });
+  }catch (e) {
+
+  }
+}
+
+// Function to convert seconds to VTT timestamp format
+function secondsToVTTTime(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const milliseconds = Math.round((seconds % 1) * 1000);
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+}
+function decodeHtmlEntities(str) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<!doctype html><body>${str}`, 'text/html');
+  return doc.body.textContent || '';
+}
+
+// Function to parse transcript and convert to VTT
+function convertTranscriptToVTT(transcript) {
+  // transcript =JSON.parse(JSON.stringify(transcript)).data;
+  console.warn(transcript);
+  // Extract <text> elements from the transcript
+  const textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
+
+  console.warn(textElements);
+  // Initialize VTT output with header
+  let vttOutput = 'WEBVTT\n\n';
+  for (let i = 0; i < textElements.length; i++) {
+    let textElement = textElements[i];
+    const startMatch = textElement.match(/start="([\d.]+)"/);
+    const durMatch = textElement.match(/dur="([\d.]+)"/);
+    const contentMatch = textElement.match(/>([^<]+)<\/text>/);
+
+    if (startMatch && durMatch && contentMatch) {
+      const start = parseFloat(startMatch[1]);
+      const duration = parseFloat(durMatch[1]);
+      const content = decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
+
+      let end;
+      if (i+1 >= textElements.length) {
+        end = start + duration;
+      }
+      else {
+        end = textElements[i+1].match(/start="([\d.]+)"/)[1];
+      }
+      const startTime = secondsToVTTTime(start);
+      const endTime = secondsToVTTTime(end);
+
+      vttOutput += `${startTime} --> ${endTime}\n\n\n`; // margin bottom huh
+      vttOutput += `${startTime} --> ${endTime}\n${content}\n\n`;
+    }
+  }
+  return vttOutput.trim();
 }
 
 function linkParser(url) {
@@ -93,4 +151,5 @@ module.exports = {
   delay,
   parseEmoji,
   humanFileSize,
+  convertTranscriptToVTT
 };

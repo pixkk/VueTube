@@ -57,7 +57,9 @@
       :poster="$youtube.getThumbnail($route.query.v, '', [])"
       @loadedmetadata="checkDimensions()"
       @click="controlsHandler()"
-    />
+    >
+      <track default kind="captions" id="captions" src="">
+    </video>
     <audio ref="audio" mediagroup="vuetubecute" :src="audSrc" />
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
@@ -162,7 +164,11 @@
           </div>
         </div>
         <v-spacer />
-        <captions />
+        <captions
+          :captions="video.captions"
+          @captionsHandler="captionsHandler($event)"
+
+        />
         <loop
           v-if="$refs.player"
           class="mx-2"
@@ -353,6 +359,9 @@ import progressbar from "~/components/Player/progressbar.vue";
 import sponsorblock from "~/components/Player/sponsorblock.vue";
 
 import backType from "~/plugins/classes/backType";
+import constants from "@/plugins/constants";
+import { Http } from "@capacitor-community/http";
+import { convertTranscriptToVTT } from "~/plugins/utils";
 
 export default {
   components: {
@@ -378,6 +387,9 @@ export default {
     sources: {
       type: Array,
       required: true,
+    },
+    captions: {
+      type: Array,
     },
     recommends: {
       type: Object,
@@ -779,6 +791,36 @@ export default {
       this.$refs.player.playbackRate = speed;
       this.$refs.audio.playbackRate = speed;
     },
+    async captionsHandler(q) {
+      if (q.baseUrl != null) {
+
+        const html = await Http.get({
+          url: constants.URLS.YT_MOBILE + q.baseUrl,
+          params: {},
+        }).catch((error) => error);
+        console.log(html);
+        let captions = convertTranscriptToVTT(html.data);
+        function textToDataURL(text) {
+          const blob = new Blob([text], { type: 'text/plain' });
+          const reader = new FileReader();
+          return new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+              resolve(reader.result);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+        textToDataURL(captions).then((dataurl) => {
+          document.getElementById("captions").src = dataurl;
+        })
+      }
+      else {
+        document.getElementById("captions").src = "";
+      }
+      const rootElement = document.getElementById('__nuxt');
+      rootElement.className += "web chrome";
+    },
     checkDimensions() {
       if (this.$refs.player.videoHeight > this.$refs.player.videoWidth) {
         this.isVerticalVideo = true;
@@ -878,5 +920,16 @@ export default {
 }
 .invisible {
   opacity: 0;
+}
+
+//captions style
+.chrome {
+  video::cue {
+    //font-size: 13.4px;
+    opacity: 1;
+    background-color: black;
+    -webkit-transform: translateY(10%) !important;
+    transform: translateY(10%) !important;
+  }
 }
 </style>

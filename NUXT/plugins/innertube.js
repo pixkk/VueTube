@@ -750,6 +750,13 @@ class Innertube {
       (content) => content.slimOwnerRenderer
     )?.slimOwnerRenderer;
 
+    const captions = responseInfo.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    captions.unshift({
+      baseUrl: null,
+      name: {
+        runs: [{text: "Disable captions"}]
+      }
+    })
     try {
       console.log(vidMetadata.contents);
       this.playerParams =
@@ -819,6 +826,7 @@ class Innertube {
         ownerData.navigationEndpoint
       ),
       channelImg: ownerData?.thumbnail?.thumbnails[0].url,
+      captions: captions,
       availableResolutions: resolutions?.formats,
       availableResolutionsAdaptive: resolutions?.adaptiveFormats,
       metadata: {
