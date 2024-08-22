@@ -598,7 +598,7 @@ class Innertube {
         ...data.context.client,
         clientFormFactor: "SMALL_FORM_FACTOR",
       };
-      console.warn("DATA" , data);
+      // console.warn("DATA" , data);
       response = await Http.post({
         // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
         url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
@@ -688,7 +688,7 @@ class Innertube {
           );
         case "community":
           if (channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length <= 2) {
-            console.warn("Community null")
+            // console.warn("Community null")
             return null;
           }
           return await this.browseAsync(

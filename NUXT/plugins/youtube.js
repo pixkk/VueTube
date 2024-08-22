@@ -210,8 +210,7 @@ const innertubeModule = {
       const continuations =
         response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
           .tabRenderer.content.sectionListRenderer.continuations;
-      // console.log({ continuations: continuations, contents: final });
-      console.warn({ continuations: continuations, contents: final });
+      // console.warn({ continuations: continuations, contents: final });
 
       return { continuations: continuations, contents: final };
     } else {

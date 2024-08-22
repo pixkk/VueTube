@@ -16,7 +16,7 @@ export const state = () => ({
     addHistory(state, video) {
       state.historyVideos = state.historyVideos.filter((v) => v.id != video.id); // remove video if it is already in the history list
       state.historyVideos.unshift(video);
-      console.warn(state.historyVideos);
+      // console.warn(state.historyVideos);
       localStorage.setItem(
         "historyVideos",
         JSON.stringify(state.historyVideos)

@@ -82,11 +82,11 @@ function decodeHtmlEntities(str) {
 // Function to parse transcript and convert to VTT
 function convertTranscriptToVTT(transcript) {
   // transcript =JSON.parse(JSON.stringify(transcript)).data;
-  console.warn(transcript);
+  // console.warn(transcript);
   // Extract <text> elements from the transcript
   const textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
 
-  console.warn(textElements);
+  // console.warn(textElements);
   // Initialize VTT output with header
   let vttOutput = 'WEBVTT\n\n';
   for (let i = 0; i < textElements.length; i++) {
