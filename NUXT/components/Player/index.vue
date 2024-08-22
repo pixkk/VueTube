@@ -16,6 +16,7 @@
     }"
   >
     <video
+      preload="metadata"
       ref="player"
       v-touch="{
         up: () => {
@@ -53,7 +54,7 @@
               }rem 0rem 0rem !important`
             : '0',
       }"
-      :poster="$youtube.getThumbnail($route.query.v, 'max', [])"
+      :poster="$youtube.getThumbnail($route.query.v, '', [])"
       @loadedmetadata="checkDimensions()"
       @click="controlsHandler()"
     />

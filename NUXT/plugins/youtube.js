@@ -136,10 +136,18 @@ const innertubeModule = {
   getThumbnail(id, resolution, backupThumbnail) {
     // 19.08.2024 - backupThumbnail temporary unused
     if (resolution === "max") {
-      return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-    } else {
-      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      let xhr = new XMLHttpRequest();
+
+      xhr.open('GET', maxResUrl, false);
+      xhr.send();
+      if (xhr.status === 200) {
+        return maxResUrl;
+      } else {
+          return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+      }
     }
+    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
   async getChannel(url, tab="main", continuation = null) {
@@ -420,7 +428,8 @@ const innertubeModule = {
 
   async getContinuation(continuation, endpoint, mode = "android") {
     let contextAdditional = {};
-    if (mode.toLowerCase() == "web") {
+    console.log("mode: ", mode);
+    if (mode.toLowerCase() === "web") {
       contextAdditional = {
         ...contextAdditional,
         ...{
