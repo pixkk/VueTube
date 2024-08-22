@@ -30,12 +30,10 @@ export default {
 
   computed: {
     thumbnailOverlayText() {
-      this.video.thumbnailOverlays.forEach((thumbnail) => {
-        if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
-          return thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text;
-        }
-      });
-      return "";
+
+      // console.warn(this.video)
+      return this.video.lengthText.runs[0].text;
+      // return "";
     },
     thumbnailOverlayStyle() {
       this.video.thumbnailOverlays.forEach((thumbnail) => {
