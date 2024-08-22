@@ -66,6 +66,7 @@ export default {
     this.$store.commit("initTelemetryPreference");
     this.$store.commit("tweaks/initTweaks");
     this.$store.commit("player/initPlayer");
+    this.$store.commit("history/initHistory");
     await this.$vuetube.launchBackHandling();
 
     //---   Load Theming   ---//
