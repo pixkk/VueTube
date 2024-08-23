@@ -34,7 +34,7 @@ export default {
       // console.warn(this.video)
       this.video.thumbnailOverlays.forEach((thumbnail) => {
         if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
-          console.warn(thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text)
+          // console.warn(thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text)
           text = thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text;
         }
       });

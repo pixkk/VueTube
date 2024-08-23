@@ -737,7 +737,7 @@ class Innertube {
     //     ?.results;
     let resolutions = responseInfo.streamingData;
     let hls = responseInfo.streamingData.hlsManifestUrl;
-    console.warn(hls)
+    // console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
     const vidMetadata = columnUI.contents.find(
@@ -766,7 +766,7 @@ class Innertube {
     } catch (e) {}
     // Deciphering urls
     resolutions = resolutions.formats ? resolutions.formats.concat(resolutions.adaptiveFormats) : resolutions.adaptiveFormats;
-    console.warn(resolutions);
+    // console.warn(resolutions);
     resolutions.forEach((source) => {
       if (source.isLive) {
         isLive = true;

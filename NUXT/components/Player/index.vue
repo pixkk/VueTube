@@ -562,7 +562,7 @@ export default {
 
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
-    this.hls = this.video.hls;console.warn(this.hls);
+    this.hls = this.video.hls;
     if (this.hls) {
       this.hlsStream = new Hls();
       this.hlsStream.loadSource(this.hls);
