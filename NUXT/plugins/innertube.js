@@ -735,7 +735,9 @@ class Innertube {
     // const columnUI =
     //   responseInfo[3].response?.contents.singleColumnWatchNextResults?.results
     //     ?.results;
-    const resolutions = responseInfo.streamingData;
+    let resolutions = responseInfo.streamingData;
+    let hls = responseInfo.streamingData.hlsManifestUrl;
+    console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
     const vidMetadata = columnUI.contents.find(
@@ -749,9 +751,9 @@ class Innertube {
     const ownerData = vidMetadata.contents.find(
       (content) => content.slimOwnerRenderer
     )?.slimOwnerRenderer;
-
+    let isLive = false;
     const captions = responseInfo.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-    captions.unshift({
+    captions?.unshift({
       baseUrl: null,
       name: {
         runs: [{text: "Disable captions"}]
@@ -763,9 +765,12 @@ class Innertube {
         ownerData.navigationEndpoint.watchEndpoint.playerParams;
     } catch (e) {}
     // Deciphering urls
-    resolutions.formats
-      .concat(resolutions.adaptiveFormats)
-      .forEach((source) => {
+    resolutions = resolutions.formats ? resolutions.formats.concat(resolutions.adaptiveFormats) : resolutions.adaptiveFormats;
+    console.warn(resolutions);
+    resolutions.forEach((source) => {
+      if (source.isLive) {
+        isLive = true;
+      }
         if (source.signatureCipher) {
           const params = new Proxy(
             new URLSearchParams(source.signatureCipher),
@@ -827,8 +832,9 @@ class Innertube {
       ),
       channelImg: ownerData?.thumbnail?.thumbnails[0].url,
       captions: captions,
-      availableResolutions: resolutions?.formats,
-      availableResolutionsAdaptive: resolutions?.adaptiveFormats,
+      availableResolutions: resolutions.formats ? resolutions.formats : resolutions,
+      availableResolutionsAdaptive: resolutions?.adaptiveFormats ? resolutions.adaptiveFormats : resolutions,
+      hls: hls,
       metadata: {
         publishDate: publishDate,
         contents: vidMetadata.contents,
@@ -837,6 +843,7 @@ class Innertube {
         isPrivate: details.isPrivate,
         viewCount: details.viewCount,
         lengthSeconds: details.lengthSeconds,
+        isLive: isLive,
         // likes: parseInt(
         //   vidMetadata.contents
         //     .find((content) => content.slimVideoActionBarRenderer)

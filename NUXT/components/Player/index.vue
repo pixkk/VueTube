@@ -29,7 +29,7 @@
       }"
       mediagroup="vuetubecute"
       width="100%"
-      :src="vidSrc"
+      :src="hls ? '' : vidSrc"
       :height="isFullscreen ? '100%' : 'auto'"
       style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
       :class="
@@ -56,11 +56,12 @@
       }"
       :poster="$youtube.getThumbnail($route.query.v, '', [])"
       @loadedmetadata="checkDimensions()"
+      :autoplay="true"
       @click="controlsHandler()"
     >
       <track default kind="captions" id="captions" src=""/>
     </video>
-    <audio ref="audio" mediagroup="vuetubecute" :src="audSrc" />
+    <audio ref="audio" mediagroup="vuetubecute" :src="hls ? '' : audSrc" />
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
@@ -164,10 +165,19 @@
           </div>
         </div>
         <v-spacer />
+        <settings
+            disabled="disabled"
+            aria-disabled="true"
+          v-if="$refs.player"
+          class="mx-2"
+          @volumeHandler="volumeHandler($event)"
+          @brightnessHandler="volumeHandler($event)"
+        />
         <captions
+          v-if="$refs.player"
+          class="mx-2"
           :captions="video.captions"
           @captionsHandler="captionsHandler($event)"
-
         />
         <loop
           v-if="$refs.player"
@@ -262,7 +272,7 @@
         <v-spacer />
         <!-- // TODO: merge the bottom 2 into 1 reusable component -->
         <quality
-          v-if="$refs.player && $refs.player.currentSrc"
+          v-if="$refs.player && $refs.player.currentSrc && !hls"
           :sources="sources"
           :current-source="$refs.player"
           @quality="qualityHandler($event)"
@@ -351,6 +361,7 @@ import seekbar from "~/components/Player/seekbar.vue";
 import quality from "~/components/Player/quality.vue";
 import minimize from "~/components/Player/minimize.vue";
 import captions from "~/components/Player/captions.vue";
+import settings from "~/components/Player/settings.vue";
 import playpause from "~/components/Player/playpause.vue";
 import watchtime from "~/components/Player/watchtime.vue";
 import fscontrols from "~/components/Player/fscontrols.vue";
@@ -365,6 +376,7 @@ import { convertTranscriptToVTT } from "~/plugins/utils";
 
 export default {
   components: {
+    // player,
     sponsorblock,
     progressbar,
     fullscreen,
@@ -378,6 +390,7 @@ export default {
     speed,
     close,
     loop,
+    settings
   },
   props: {
     video: {
@@ -418,6 +431,8 @@ export default {
       watched: 0,
       vidSrc: "",
       audSrc: "",
+      hls: null,
+      hlsStream: null,
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
       videoEnded: false,
@@ -546,6 +561,13 @@ export default {
     });
 
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+
+    this.hls = this.video.hls;console.warn(this.hls);
+    if (this.hls) {
+      this.hlsStream = new Hls();
+      this.hlsStream.loadSource(this.hls);
+      this.hlsStream.attachMedia(this.vid);
+    }
   },
   created() {
     screen.orientation.addEventListener("change", () =>
@@ -693,12 +715,17 @@ export default {
       this.videoEnded = false;
       if (this.bufferingDetected != false) {
         clearTimeout(this.bufferingDetected);
-        this.$refs.audio.currentTime = this.vid.currentTime;
-        this.bufferingDetected = false;
+        // this.$refs.audio.currentTime = this.vid.currentTime;
+        this.vid.currentTime = this.$refs.audio.currentTime;
+        setTimeout(() => {
+
+          this.bufferingDetected = false;
+        }, 1000);
       }
       this.$refs.audio.play();
     },
     cleanup() {
+      if (this.hlsStream) this.hlsStream.destroy();
       if (this.xhr) this.xhr.abort();
       if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
@@ -820,6 +847,12 @@ export default {
       }
       const rootElement = document.getElementById('__nuxt');
       rootElement.className += "web chrome";
+    },
+    volumeHandler(q) {
+
+    },
+    brightnessHandler(q) {
+
     },
     checkDimensions() {
       if (this.$refs.player.videoHeight > this.$refs.player.videoWidth) {

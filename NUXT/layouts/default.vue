@@ -166,6 +166,13 @@ export default {
     );
     plugin.setAttribute("crossorigin", "anonymous");
     document.head.appendChild(plugin);
+    const plugin2 = document.createElement("script");
+    plugin2.setAttribute(
+      "src",
+      "https://cdn.jsdelivr.net/npm/hls.js@1"
+    );
+    plugin2.setAttribute("crossorigin", "anonymous");
+    document.head.appendChild(plugin2);
   },
 
   beforeDestroy() {
