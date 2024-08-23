@@ -58,7 +58,7 @@
       @loadedmetadata="checkDimensions()"
       @click="controlsHandler()"
     >
-      <track default kind="captions" id="captions" src="">
+      <track default kind="captions" id="captions" src=""/>
     </video>
     <audio ref="audio" mediagroup="vuetubecute" :src="audSrc" />
 
@@ -922,7 +922,6 @@ export default {
   opacity: 0;
 }
 
-//captions style
 .chrome {
   video::cue {
     //font-size: 13.4px;
