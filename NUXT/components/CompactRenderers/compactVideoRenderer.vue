@@ -29,12 +29,26 @@ export default {
       return this.video?.videoData ? this.video.videoData.avatar.image.sources[0].url : this.video?.channelThumbnail?.thumbnails[0]?.url;
     },
     thumbnailOverlayText() {
-      return this.video?.videoData
-        ? this.video.videoData.thumbnail?.timestampText
-        : this.video?.lengthText?.runs[0]?.text;
+      let text = "-";
+      // console.warn(this.video)
+      this.video.thumbnailOverlays.forEach((thumbnail) => {
+        if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
+          console.warn(thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text)
+          text = thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text;
+        }
+      });
+      // return this.video.lengthText? this.video.lengthText.runs[0].text :
+      // return "";
+      return text;
     },
     thumbnailOverlayStyle() {
-      return this.video?.videoData ? this.video.videoData.thumbnail?.timestampStyle : null;
+      let text = "-";
+      this.video.thumbnailOverlays.forEach((thumbnail) => {
+        if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
+          text = thumbnail.thumbnailOverlayTimeStatusRenderer.style;
+        }
+      });
+      return text!== "-" ? text : "DEFAULT";
     },
     thumbnailSources() {
       return this.video?.videoData ? this.video.videoData.thumbnail?.image.sources : this.video?.thumbnail?.thumbnails;
@@ -51,8 +65,10 @@ export default {
   methods: {
     parseBottom(video) {
       const bottomText = [
+          video?.videoData ? video.videoData.longBylineText.runs[0].text : video?.longBylineText.runs[0].text,
         // video?.videoData ? video.videoData.metadata.title : video?.title?.runs[0]?.text,
         video?.videoData ? video.videoData.metadata.metadataDetails : video?.shortViewCountText?.runs[0]?.text,
+        video?.shortViewCountText ? video?.shortViewCountText?.runs[1]?.text : "",
       ];
       if (video?.videoData ? video.videoData.publishedTimeText?.runs[0].text : video?.publishedTimeText?.runs[0]?.text)
         bottomText.push(video?.videoData ? video.videoData.publishedTimeText?.runs[0].text : video?.publishedTimeText?.runs[0]?.text);
