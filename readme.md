@@ -202,7 +202,7 @@ Progress
 |               🟢 Watch Page (100%)               |          🔴 Miniplayer (0%)           |                         🔴 Comments (0%)                         |
 |        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
 |               🟠 Auto Update (50%)               |      🔴 Picture in Picture (0%)       |                     🔴 Trending content (0%)                     |
-|              🟡 Channel Page (60%)               |           🔴 Captions (0%)            |                       🔴 Interactions (0%)                       |
+|              🟡 Channel Page (60%)               |           🟡 Captions (95%)            |                       🔴 Interactions (0%)                       |
 |             🟡 Community Posts (90%)             |             🔴 Cards (0%)             |                        🔴 Playlists (0%)                         |
 |         🟠 Customizable Shorts UI (10%)          |                                       |                      🔴 Notifications (0%)                       |
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
@@ -215,6 +215,7 @@ Progress
 |           🔴 Local Watch History (0%)            |                                       |                                                                  |
 |            🔴 Subscriptions Page (0%)            |                                       |                                                                  |
 |          🔴 Other Platform Support (0%)          |                                       |                                                                  |
+
 
 
 ### Technologies used
