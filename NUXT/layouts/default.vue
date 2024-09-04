@@ -173,6 +173,13 @@ export default {
     );
     plugin2.setAttribute("crossorigin", "anonymous");
     document.head.appendChild(plugin2);
+    const plugin3 = document.createElement("script");
+    plugin3.setAttribute(
+      "src",
+      "https://cdn.dashjs.org/latest/dash.all.min.js"
+    );
+    plugin3.setAttribute("crossorigin", "anonymous");
+    document.head.appendChild(plugin3);
   },
 
   beforeDestroy() {

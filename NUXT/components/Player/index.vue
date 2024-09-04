@@ -29,7 +29,7 @@
       }"
       mediagroup="vuetubecute"
       width="100%"
-      :src="hls ? '' : vidSrc"
+      :src="hls || dash ? '' : vidSrc"
       :height="isFullscreen ? '100%' : 'auto'"
       style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
       :class="
@@ -54,14 +54,14 @@
               }rem 0rem 0rem !important`
             : '0',
       }"
-      :poster="$youtube.getThumbnail($route.query.v, '', [])"
+      :poster="poster"
       @loadedmetadata="checkDimensions()"
       :autoplay="true"
       @click="controlsHandler()"
     >
       <track default kind="captions" id="captions" src=""/>
     </video>
-    <audio ref="audio" mediagroup="vuetubecute" :src="hls ? '' : audSrc" />
+    <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" />
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
@@ -272,7 +272,7 @@
         <v-spacer />
         <!-- // TODO: merge the bottom 2 into 1 reusable component -->
         <quality
-          v-if="$refs.player && $refs.player.currentSrc && !hls"
+          v-if="$refs.player && $refs.player.currentSrc && (!hls || !dash)"
           :sources="sources"
           :current-source="$refs.player"
           @quality="qualityHandler($event)"
@@ -373,6 +373,7 @@ import backType from "~/plugins/classes/backType";
 import constants from "@/plugins/constants";
 import { Http } from "@capacitor-community/http";
 import { convertTranscriptToVTT } from "~/plugins/utils";
+import $youtube from "@/plugins/innertube";
 
 export default {
   components: {
@@ -432,16 +433,20 @@ export default {
       vidSrc: "",
       audSrc: "",
       hls: null,
+      dash: null,
       hlsStream: null,
+      dashStream: null,
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
       videoEnded: false,
       isMusic: false,
       sponsorBlocks: [],
       vid: null,
+      poster: "",
     };
   },
-  mounted() {
+  async mounted() {
+    this.poster = await $youtube.getThumbnail(this.$route.query.v, '', []);
 
     console.log("SPSR BLCK" + this.sponsorBlocks);
     if (
@@ -451,18 +456,17 @@ export default {
       this.$youtube.getSponsorBlock(this.video.id, (data) => {
         console.warn("sbreturn", data.segments);
         // if (Array.isArray(data)) {
-          this.sponsorBlocks = data;
-          data.segments?.forEach((block) => {
-            if (block.category === "music_offtopic") {
-              this.isMusic = true;
-              this.$refs.audio.playbackRate = 1;
-              this.$refs.player.playbackRate = 1;
-            }
-          });
+        this.sponsorBlocks = data;
+        data.segments?.forEach((block) => {
+          if (block.category === "music_offtopic") {
+            this.isMusic = true;
+            this.$refs.audio.playbackRate = 1;
+            this.$refs.player.playbackRate = 1;
+          }
+        });
         // }
       });
-    }
-    else {
+    } else {
       // this.sponsorBlocks = [];
     }
     // console.log("sources", this.sources);
@@ -470,6 +474,7 @@ export default {
     // console.log("video", this.video);
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
+
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
 
 
@@ -525,6 +530,7 @@ export default {
         this.sources.splice(i, 1);
       }
     }
+    this.sources.splice(0, 1);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       else {
@@ -563,10 +569,14 @@ export default {
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
     this.hls = this.video.hls;
+    this.dash = this.video.dash;
     if (this.hls) {
       this.hlsStream = new Hls();
       this.hlsStream.loadSource(this.hls);
       this.hlsStream.attachMedia(this.vid);
+    } else if (this.dash) {
+      this.dashStream = dashjs.MediaPlayer().create();
+      this.dashStream.initialize(this.vid, this.dash, true);
     }
   },
   created() {
@@ -669,10 +679,15 @@ export default {
         // console.warn(data);
         this.sponsorBlocks?.segments?.forEach((block) => {
           // block.segments.forEach((segments) => {
+          // console.log(this.vid.duration);
           if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded === false) {
             console.log("Skipping the sponsor");
             this.$youtube.showToast("Skipped "+ block.category + " sponsor");
             this.$refs.player.currentTime = block.segment[1];
+            if (this.vid.duration < block.segment[1]) {
+              this.videoEnded = true;
+              // this.vid.pause();
+            }
             // this.$refs.audio.currentTime = this.$refs.player.currentTime;
           }
           // });
