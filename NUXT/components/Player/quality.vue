@@ -68,7 +68,7 @@
                 }}) {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
               </v-list-item-title>
               <v-list-item-subtitle>
-                {{ src.mimeType }} {{ src.averageBitrate }}
+                {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}. AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
