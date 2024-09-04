@@ -36,60 +36,63 @@
           style="max-height: 50vh; flex-direction: column !important"
           class="pa-0 d-flex flex-column-reverse"
         >
-<!--          <v-slider-->
-<!--            id="volumeSlider"-->
-<!--            :max="1"-->
-<!--            :step="0.1"-->
-<!--            :thumb-label="true"-->
-<!--            :thumb-size="20"-->
-<!--           ></v-slider>-->
-<!--          <v-slider-->
-<!--            id="brightnessSlider"-->
-<!--            :max="1"-->
-<!--            :step="0.1"-->
-<!--            :thumb-label="true"-->
-<!--            :thumb-size="20"-->
-<!--          ></v-slider>-->
-
-
-
-
-
+          <div class="slider-container"
+               style="width: 50%; align-self: center;">
+            <span class="slider-label">Volume:</span>
+            <v-slider
+              @input="handleVolumeChange"
+              ref="volumeSlider"
+              :max="1"
+              :step="0.01"
+              :thumb-label="true"
+              :thumb-size="25"
+              v-model="volume"
+              class="slider"
+            ></v-slider>
+          </div>
+          <div class="slider-container"
+               style="width: 50%; align-self: center;">
+            <span class="slider-label">Brightness:</span>
+            <v-slider
+              @input="handleBrightnessChange"
+              ref="brightnessSlider"
+              v-model="brightness"
+              :max="1"
+              :step="0.01"
+              :thumb-label="true"
+              :thumb-size="25"
+              class="slider"
+            ></v-slider>
+          </div>
         </v-card-text>
       </v-card>
     </v-bottom-sheet>
   </div>
 </template>
+
 <script>
 export default {
-  props: {},
-  emits: ["volumeHandler", "brightnessHandler"],
-  data: () => ({
-    sheet: false,
-  }),
+  data() {
+    return {
+      sheet: false,
+      volume: parseFloat(localStorage.getItem("volume")) || 1,
+      brightness: parseFloat(localStorage.getItem("brightness")) || 1
 
-  mounted() {
-    document.addEventListener("DOMContentLoaded", function(event) {
-
-
-    console.warn("DISPLAYED")
-      const volumeSlider = document.getElementById('volumeSlider');
-      console.log(volumeSlider);
-      console.log(document);
-      const brightnessSlider = document.getElementById('brightnessSlider');
-      document.getElementsByTagName("audio")[0].volume = localStorage.getItem("volume") || 1;
-      document.getElementsByTagName("video")[0].style.filter = `brightness(${localStorage.getItem("brightness") || 1})`;
-
-      // volumeSlider.addEventListener('input', function() {
-      //   document.getElementsByTagName("audio")[0].volume = volumeSlider.value;
-      //   localStorage.setItem("volume", volumeSlider.value);
-      // });
-
-      // brightnessSlider.addEventListener('input', function() {
-      //   document.getElementsByTagName("video")[0].style.filter = `brightness(${brightnessSlider.value})`;
-      //   localStorage.setItem("brightness", brightnessSlider.value);
-      // });
-    });
-  }
+    };
+  },
+  methods: {
+    handleVolumeChange(value) {
+      document.getElementsByTagName("audio")[0].volume = value;
+      localStorage.setItem("volume", value);
+    },
+    handleBrightnessChange(value) {
+      document.getElementsByTagName("video")[0].style.filter = `brightness(${value})`;
+      localStorage.setItem("brightness", value);
+    }
+  },
+mounted() {
+  document.getElementsByTagName("audio")[0].volume = localStorage.getItem("volume");
+  document.getElementsByTagName("video")[0].style.filter = `brightness(${localStorage.getItem("brightness")})`;
+}
 }
 </script>
