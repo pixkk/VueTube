@@ -126,7 +126,7 @@ module.exports = {
       configInfo: info.configInfo,
       remoteHost: info.remoteHost,
       visitorData: info.visitorData,
-      clientFormFactor: "SMALL_FORM_FACTOR",
+      clientFormFactor: "LARGE_FORM_FACTOR",
       screenDensityFloat: "1",
       timeZone: info.timeZone,
       browserName: info.browserName,

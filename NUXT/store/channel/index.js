@@ -77,7 +77,7 @@ export const actions = {
       channel = await this.$youtube.getChannel(channelRequest, "main");
       community = await this.$youtube.getChannel(channelRequest, "community");
       videos = await this.$youtube.getChannel(channelRequest, "videos");
-      aboutChannelInfo = await this.$youtube.getChannel(channelRequest, "aboutChannelInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution.attributionViewModel.suffix.commandRuns[0].onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token : channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
+      aboutChannelInfo = await this.$youtube.getChannel(channelRequest, "aboutChannelInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns ? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns[0]?.onTap?.innertubeCommand?.showEngagementPanelEndpoint?.engagementPanel?.engagementPanelSectionListRenderer?.content?.sectionListRenderer?.contents[0]?.itemSectionRenderer.contents[0]?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token : channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
       fullChannelInfo = aboutChannelInfo.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems[0].aboutChannelRenderer.metadata.aboutChannelViewModel;
       videoList = await this.$youtube.channelVideos(videos);
     }
@@ -96,7 +96,7 @@ export const actions = {
         banner:
           channel.header.c4TabbedHeaderRenderer?.banner?.thumbnails[
             channel.header.c4TabbedHeaderRenderer?.banner.thumbnails.length - 1
-          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources.length - 1].url || "",
+          ].url || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner?.imageBannerViewModel.image.sources[channel.header.pageHeaderRenderer.content.pageHeaderViewModel.banner.imageBannerViewModel.image.sources.length - 1].url || "",
         title: channel.header.c4TabbedHeaderRenderer?.title || channel.header.pageHeaderRenderer.content.pageHeaderViewModel.title.dynamicTextViewModel.text.content,
         subscribe:
           channel.header.c4TabbedHeaderRenderer?.subscribeButton.buttonRenderer

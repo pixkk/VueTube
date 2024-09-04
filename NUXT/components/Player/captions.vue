@@ -62,7 +62,6 @@ export default {
   props: {
     captions: {
       type: Array,
-      default: [],
     },
   },
   emits: ["captionsHandler"],
