@@ -273,7 +273,7 @@ class Innertube {
         };
         data.context.client = {
           ...data.context.client,
-          clientFormFactor: "SMALL_FORM_FACTOR",
+          clientFormFactor: "LARGE_FORM_FACTOR",
         };
         data.context = {
           ...data.context,
@@ -288,7 +288,7 @@ class Innertube {
         };
         data.context.client = {
           ...data.context.client,
-          clientFormFactor: "SMALL_FORM_FACTOR",
+          clientFormFactor: "LARGE_FORM_FACTOR",
         };
         data.context = {
           ...data.context,
@@ -340,7 +340,7 @@ class Innertube {
     };
     data.context.client = {
       ...data.context.client,
-      clientFormFactor: "SMALL_FORM_FACTOR",
+      clientFormFactor: "LARGE_FORM_FACTOR",
     };
     data.context = {
       ...data.context,
@@ -565,7 +565,7 @@ class Innertube {
       };
       data.context.client = {
         ...data.context.client,
-        clientFormFactor: "SMALL_FORM_FACTOR",
+        clientFormFactor: "LARGE_FORM_FACTOR",
       };
       response = await Http.post({
         // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
@@ -596,7 +596,7 @@ class Innertube {
       };
       data.context.client = {
         ...data.context.client,
-        clientFormFactor: "SMALL_FORM_FACTOR",
+        clientFormFactor: "LARGE_FORM_FACTOR",
       };
       // console.warn("DATA" , data);
       response = await Http.post({
@@ -647,17 +647,24 @@ class Innertube {
 
   // Static methods
 
-  static getThumbnail(id, resolution) {
-
-    if (resolution === "max") {
+  static async getThumbnail(id, resolution) {
+    if (resolution === "max" || resolution === "resmax") {
       let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      let xhr = new XMLHttpRequest();
-
-      xhr.open('GET', maxResUrl, false);
-      xhr.send();
-      if (xhr.status === 200) {
-        return maxResUrl;
-      } else {
+      try {
+        let xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        return new Promise((resolve, reject) => {
+          xhr.open('GET', maxResUrl, true);
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(URL.createObjectURL(xhr.response));
+            } else {
+              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+            }
+          };
+          xhr.send();
+        });
+      } catch (error) {
         return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
       }
     }
@@ -736,7 +743,8 @@ class Innertube {
     //   responseInfo[3].response?.contents.singleColumnWatchNextResults?.results
     //     ?.results;
     let resolutions = responseInfo.streamingData;
-    let hls = responseInfo.streamingData.hlsManifestUrl;
+    let hls = responseInfo.streamingData.hlsManifestUrl ? responseInfo.streamingData.hlsManifestUrl : null;
+    let dash = responseInfo.streamingData.dashManifestUrl ? responseInfo.streamingData.dashManifestUrl : null;
     // console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
@@ -835,6 +843,7 @@ class Innertube {
       availableResolutions: resolutions.formats ? resolutions.formats : resolutions,
       availableResolutionsAdaptive: resolutions?.adaptiveFormats ? resolutions.adaptiveFormats : resolutions,
       hls: hls,
+      dash: dash,
       metadata: {
         publishDate: publishDate,
         contents: vidMetadata.contents,

@@ -134,22 +134,31 @@ const innertubeModule = {
     }
   },
 
-  getThumbnail(id, resolution, backupThumbnail) {
+  async getThumbnail(id, resolution, backupThumbnail) {
     // 19.08.2024 - backupThumbnail temporary unused
-    if (resolution === "max") {
+    if (resolution === "max" || resolution === "resmax") {
       let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      let xhr = new XMLHttpRequest();
-
-      xhr.open('GET', maxResUrl, false);
-      xhr.send();
-      if (xhr.status === 200) {
-        return maxResUrl;
-      } else {
-          return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+      try {
+        let xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        return new Promise((resolve, reject) => {
+          xhr.open('GET', maxResUrl, true);
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(URL.createObjectURL(xhr.response));
+            } else {
+              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+            }
+          };
+          xhr.send();
+        });
+      } catch (error) {
+        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
       }
     }
     return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
+
 
   async getChannel(url, tab="main", continuation = null) {
     if (tab === "aboutChannelInfo") {
