@@ -29,7 +29,7 @@ jobs:
         working-directory: NUXT
         run: npm run generate
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
@@ -46,7 +46,7 @@ jobs:
           name: dist
           path: dist
       - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
@@ -63,7 +63,7 @@ jobs:
         working-directory: android
         run: chmod +x gradlew; ./gradlew clean assembleRelease -x test -Pandroid.injected.signing.store.file=/home/runner/work/VueTube/VueTube/android/key.jks -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_STORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: android
           path: android/app/build/outputs/apk/release/app-release.apk
@@ -80,7 +80,7 @@ jobs:
           name: dist
           path: dist
       - name: Set up Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
@@ -110,7 +110,7 @@ jobs:
         run: mkdir Payload && mv ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphoneos/App.app/ Payload && zip -r Payload.zip Payload && mv Payload.zip VueTube.ipa
     
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: iOS
           path: VueTube.ipa
