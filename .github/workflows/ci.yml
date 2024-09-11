@@ -55,6 +55,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 11
+          distribution: 'oracle'
       - name: Copy web assets to native platform
         run: npx cap copy android
       - name: Update native platform
