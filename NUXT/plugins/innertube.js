@@ -370,7 +370,7 @@ class Innertube {
       context: { ...contextAdditional },
       continuation: continuation,
     };
-    if (contextAdditional.client.clientName === "MWEB") {
+    if (contextAdditional.client ? contextAdditional.client.clientName === "MWEB" : false) {
       data.context.client = {
         ...constants.INNERTUBE_VIDEO(this.context.client),
       };
