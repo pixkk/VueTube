@@ -97,9 +97,14 @@ export default {
     postText() {
       let text = "";
       // console.log(this.video);
-      this.text.runs.forEach((run) => {
-        text += run.text;
-      });
+      if (this.text.runs) {
+        this.text.runs.forEach((run) => {
+          text += run.text;
+        });
+      }
+      else {
+        text = "";
+      }
       let regex = /(https?:\/\/[^\s]+)/g;
       text = text.replace(regex, '<a onclick=openExternal("$1")>$1</a>');
       return text;
