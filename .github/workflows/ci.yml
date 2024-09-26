@@ -66,7 +66,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android
+          name: app-release.apk
           path: android/app/build/outputs/apk/release/app-release.apk
   ios:
     name: Build iOS platform
@@ -113,5 +113,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: iOS
+          name: VueTube.ipa
           path: VueTube.ipa
