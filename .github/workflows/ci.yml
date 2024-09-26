@@ -68,6 +68,28 @@ jobs:
         with:
           name: app-release.apk
           path: android/app/build/outputs/apk/release/app-release.apk
+          
+      - name: Download APK using GitHub API
+        run: |
+          TOKEN="${{ secrets.TOKEN_SECRET }}"
+          OWNER="pixkk"
+          REPO="VueTube"
+          WORKFLOW_RUN_ID="${{ github.run_id }}"
+
+          ARTIFACTS=$(curl -H "Authorization: token $TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$OWNER/$REPO/actions/runs/$WORKFLOW_RUN_ID/artifacts)
+
+          ARTIFACT_ID=$(echo $ARTIFACTS | jq '.artifacts[] | select(.name == "app-release") | .id')
+
+          curl -L -H "Authorization: token $TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$OWNER/$REPO/actions/artifacts/$ARTIFACT_ID/zip \
+               --output artifact.zip
+
+          unzip artifact.zip -d extracted
+
+          mv extracted/app-release.apk ./app-release.apk
   ios:
     name: Build iOS platform
     runs-on: macos-latest
