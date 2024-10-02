@@ -44,7 +44,7 @@
       <div>
         {{ lang.installed }}:
         {{ installedVersion.substring(0, 7) || "Unknown" }}
-        ({{ installedChannel }})
+        {{ installedChannel.toLowerCase() === "unstable" ? "(unstable)" : "" }}
       </div>
       <div>{{ lang.latest }}: {{ latestVersion.tag_name }}</div>
 
