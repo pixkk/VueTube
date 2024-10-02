@@ -1,13 +1,13 @@
 name: CI
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
-      version:
+      versionNumber:
         description: 'Canary version number'
-        default: '0.0.0'
         required: true
         type: string
+
 env:
   NODE_VERSION: 16
   GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
@@ -26,7 +26,7 @@ jobs:
         run: npm i; cd NUXT; npm i
       - name: Set App Version
         working-directory: NUXT
-        run: sed -i 's/dev-local/${{ inputs.version }}/' nuxt.config.js
+        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' nuxt.config.js
       - name: Build web assets
         working-directory: NUXT
         run: npm run generate
