@@ -55,6 +55,7 @@
             : '0',
       }"
       :poster="poster"
+      id="playerVideo"
       @loadedmetadata="checkDimensions()"
       :autoplay="true"
       @click="controlsHandler()"
@@ -455,7 +456,7 @@ export default {
     ) {
       this.$youtube.getSponsorBlock(this.video.id, (data) => {
         console.warn("sbreturn", data.segments);
-        // if (Array.isArray(data)) {
+
         this.sponsorBlocks = data;
         data.segments?.forEach((block) => {
           if (block.category === "music_offtopic") {
@@ -464,14 +465,12 @@ export default {
             this.$refs.player.playbackRate = 1;
           }
         });
-        // }
+
       });
     } else {
-      // this.sponsorBlocks = [];
+
     }
-    // console.log("sources", this.sources);
-    // console.log("recommends", this.recommends);
-    // console.log("video", this.video);
+
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
 
@@ -578,6 +577,13 @@ export default {
       this.dashStream = dashjs.MediaPlayer().create();
       this.dashStream.initialize(this.vid, this.dash, true);
     }
+    else {
+      const url = new URL(window.location.href);
+
+      const tParam = url.searchParams.get("t");
+
+      this.setStartTime(tParam);
+    }
   },
   created() {
     screen.orientation.addEventListener("change", () =>
@@ -593,6 +599,14 @@ export default {
       this.loadedDataEvent();
     },
     loadedDataEvent() {
+
+
+      window.navigation.addEventListener("navigate", (event) => {
+        const url = new URL(event.destination.url);
+
+        const tParam = url.searchParams.get("t");
+        this.setStartTime(tParam)
+      })
       // networkState: An integer property that represents the network state of the video. The possible values are:
       // NETWORK_EMPTY (0): No source has been set or the video element's load() method has not been called.
       // NETWORK_IDLE (1): The video element's load() method has been called, and the video is fetching the media resource.
@@ -631,6 +645,15 @@ export default {
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
         this.$refs.player.addEventListener("ended", this.endedEvent);
+
+        this.$refs.player.addEventListener('pause', () => {
+          this.aud.pause();
+        });
+        this.$refs.player.addEventListener('play', () => {
+          this.aud.play();
+        });
+
+
       }
       else {
         this.vid.pause();
@@ -660,7 +683,7 @@ export default {
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 1000 / 1000) {
 
         setTimeout(() => {
           this.bufferingDetected = true;
@@ -719,7 +742,7 @@ export default {
       // buffering detection & sync
       let threshold = 1000; //ms after which user perceives buffering
       if (!this.$refs.player.paused) {
-        this.bufferingDetected = setTimeout(() => {
+        setTimeout(() => {
           this.bufferingDetected = true;
           this.$refs.audio.pause();
           //show buffering
@@ -728,7 +751,7 @@ export default {
     },
     playingEvent() {
       this.videoEnded = false;
-      if (this.bufferingDetected != false) {
+      if (this.bufferingDetected !== false) {
         clearTimeout(this.bufferingDetected);
         // this.$refs.audio.currentTime = this.vid.currentTime;
         this.vid.currentTime = this.$refs.audio.currentTime;
@@ -946,12 +969,19 @@ export default {
         )
       );
     },
+    setStartTime(startTime) {
+      console.warn(startTime);
+      if (startTime) {
+        this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
+        this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
+      }
+    },
     getPlayer() {
       return this.$refs.player;
     },
     pauseHandler() {
-      this.$refs.player.pause();
-      this.$refs.audio.pause();
+      this.vid.pause();
+      this.aud.pause();
       clearTimeout(this.bufferingDetected);
       this.bufferingDetected = false;
     },

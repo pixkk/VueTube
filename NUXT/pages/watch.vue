@@ -421,6 +421,13 @@ export default {
       // using item.action in the v-for loop
       this[name]();
     },
+    async pip() {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (document.pictureInPictureEnabled) {
+        await this.$refs.player.getPlayer().requestPictureInPicture();
+      }
+    },
     async share() {
       // this.share = !this.share;
       await Share.share({
@@ -459,6 +466,7 @@ export default {
     },
 
     async initWatchTime() {
+
       await this.$youtube.saveApiStats(
         {
           cpn: this.cpn,
@@ -504,12 +512,12 @@ export default {
             actionName: "save",
             disabled: false,
           },
-          // {
-          //   name: "Quality",
-          //   icon: "mdi-high-definition",
-          //   actionName: "quality",
-          //   disabled: false,
-          // },
+          {
+            name: "PiP",
+            icon: "mdi-picture-in-picture-bottom-right",
+            actionName: "pip",
+            disabled: false,
+          },
           // {
           //   name: "Speed",
           //   icon: "mdi-speedometer",
