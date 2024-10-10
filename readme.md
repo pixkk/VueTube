@@ -28,7 +28,7 @@
 , <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>
 , <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>
 , <a href="https://github.com/tired6488">@tired6488</a>, <a href="https://github.com/DARKDRAGON532">@DARKDRAGON532</a>
-, <a href="https://github.com/PickleNik">@PickleNik</a> and <a href="https://github.com/Zyborg777">@Zyborg777</a></sub>
+, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a></sub> and <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
 
 </details>
 
@@ -119,7 +119,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
-(Apple does not officially support sideloading, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices)
+(Apple does not officially support sideloading except in Europen Union, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices if you live outside Europe)
 
 
 <h2 align="left">

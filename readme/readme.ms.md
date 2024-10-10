@@ -1,5 +1,11 @@
+
+>[!TIP]
+>01.08.2024 - KAMI MEMPUNYAI ISU DENGAN PEMBANGUNAN VUETUBE -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)
+>
+>**18.08.2024 - Masalah diselesaikan**
+
 <p align="center">
-    <a href="https://vuetube.app/">
+    <a href="https://pixkk.com/">
     <picture>
       <source 
         srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
@@ -12,7 +18,8 @@
        />
     </picture>
   </a>
-  </br>
+  </p>
+
   <details>
   <summary>Tunjukkan kredit Readme</summary>
   
@@ -27,15 +34,16 @@ Disebut View Tube (<code>/ˈvjuːˌtjuːb/</code>)
 </p>
 
 <p align="center">
-  <a href="https://github.com/VueTubeApp/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/VueTubeApp/VueTube"></img></a>
-  <a href="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/VueTubeApp/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
-  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?label=r%2FVuetube&logo=reddit&logoColor=white"></img></a>
+  <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
+  <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
+  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/Vuetube"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
-  <a href="https://twitter.com/VueTubeApp" alt="Twitter"><img src="https://img.shields.io/twitter/follow/VueTubeApp?label=Follow&style=flat&logo=twitter"></img></a>
-</p>
+  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
 
-Baca ini dalam bahasa lain: **Read this page in other languages**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
+  </p>
+
+**Baca halaman ini dalam bahasa lain**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
 
 <h2 align="left">
 <sub>
@@ -51,7 +59,7 @@ Ciri-ciri
 - 🎨 **Tema:** Cerah, Gelap, OLED, dan semua warna pelangi! Tetapkan warna aksen dan latar belakang mengikut pilihan anda.
 - 🖌️ **UI yang diboleh suaikan:** Sesuaikan butang, sudut dan nyahdayakan beberapa bahagian UI yang anda tidak gunakan untuk mendapat pengalaman optimum.
 - ⬆️ **Kemaskini Auto:** Anda akan dimaklumkan apabila kemas kini tersedia, muat turun melalui aplikasi dan kembali ke versi lama jika anda tidak menyukainya!
-- 👁️ **Perlindungan Penjejak:** Tiada telemetri (maklumat peribadi) dihantar daripada peranti anda secara lalai dan kami tidak menggunakan API luaran. Privasi adalah satu keperluan!
+- 👁️ **Perlindungan Penjejak:** Tiada telemetri (maklumat peribadi) dihantar daripada peranti anda secara piawai dan kami tidak menggunakan API luaran. Privasi adalah satu keperluan!
 - 📺 **Pemain video tersuai:** Pemain video yang diintegrasikan dalam aplikasi dengan semua yang anda perlukan untuk bergembira, seperti kelajuan 16x.
 - 🌍 **Terjemahan:** Aplikasi ini tersedia dalam lebih daripada 25 bahasa! Bahasa aplikasi ditentukan berdasarkan konfigurasi peranti anda.
 - 👎 **Return YouTube Dislike:** - Hidupkan semula _dislike counter_ (kiraan tidak suka) dalam video. [_Maklumat lanjut dalam Bahasa Inggeris_](https://returnyoutubedislike.com)
@@ -70,39 +78,35 @@ Pasang
 
 Untuk memasang aplikasi VueTube, sila lawati www.vuetube.app/install
 
-<details>
-  <summary> 🖱️Klik di sini untuk menunjukkan semua versi </summary>
-<br />
+
 
 <h3 align="left">
 <sub>
-<img  src="/resources/readme_icon_android.png"
+<img  src="resources/readme_icon_android.png"
       height="20"
       width="20">
 </sub>
 Android
 </h3>
 
-| <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/android.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.5><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=/resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                            | Kurang pepijat daripada versi _unstable_ sementara mempunyai lebih banyak ciri daripada versi _stable_                                   | Belum tersedia lagi                                                                             |
+| Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
 <h3 align="left">
 <sub>
-<img  src="/resources/readme_icon_ios.png"
+<img  src="resources/readme_icon_ios.png"
       height="20"
       width="20">
 </sub>
 iOS
 </h3>
 
-| <a href=https://nightly.link/VueTubeApp/VueTube/workflows/ci/main/iOS.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/VueTubeApp/VueTube/releases/tag/0.3><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://vuetube.app/install><img id="im" width="200" src=/resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Agak tidak stabil, tetapi anda boleh mendapat akses awal kepada ciri-ciri baharu                                                        | Kurang pepijat daripada versi _unstable_ sementara mempunyai lebih banyak ciri daripada versi _stable_                                                                                     | Belum tersedia lagi                                                                             |
+| Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
-(Apple tidak menyokong _sideloading_, iaitu pemasangan aplikasi dengan hanya menggunakan fail tanpa ia dimuat naik ke Apple App Store. Ia adalah perlu untuk menggunakan kaedah lanjutan untuk memasang VueTube pada peranti iPhone / iPad)
-
-</details>
+(Apple tidak menyokong _sideloading_ secara rasmi kecuali di Kesatuan Eropah}, iaitu pemasangan aplikasi dengan hanya fail aplikasi tanpa dimuat naik ke Apple App Store. Anda perlu menggunakan kaedah lanjutan untuk memasang VueTube pada iPhone / iPad jika anda tinggal di luar Eropah)
 
 <h2 align="left">
 <sub>
@@ -119,7 +123,7 @@ Perancangan
 - 🗞️ **Sejarah tontonan tempatan:** Dapatkan semula video tontonan terakhir anda tanpa log masuk.
 - ✂️ **YouTube Shorts:** Video pendek yang berdurasi dari 15 hingga 60 saat.
 - 🧑 **Log masuk dengan akaun Google anda:** Log masuk untuk mendapatkan pengalaman penuh dengan mengundi dan komen pada video dan melanggan saluran.
-- 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain. [Maklumat lanjut dalam Bahasa Inggeris](https://support.google.com/youtube/answer/7552722?co=GENIE.Platform=Android&hl=en#zippy=%2Cturn-on-picture-in-picture%2Cwho-can-use-picture-in-picture)
+- 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain.
 - 🧩 **Plugin:** Pasang _plugin_ pihak ketiga yang dibuat oleh komuniti dengan ciri-ciri yang berguna!
 - Dan lebih lagi!
 
@@ -134,15 +138,15 @@ Anda boleh mencadangkan fungsi baru dengan membuka isu fungsi baru dalam reposit
 Tangkapan skrin
 </h2>
 
-[Lihat ia pada laman sesawang kami](www.vuetube.app/info/screenshots) atau klik di bawah untuk menunjukkannya
+[Lihat ia pada laman sesawang kami](https://www.pixkk.com/info/screenshots) atau klik di bawah untuk menunjukkannya
 
 <details>
   <summary> 🖱️Klik di sini untuk menunjukkan tangkapan skrin </summary>
 <br />
   
-<img src="https://vuetube.app/wtch.png" width="400">
-<img src="https://vuetube.app/stng.png" width="400">
-<img src="https://vuetube.app/srch.png" width="400">
+<img src="https://pixkk.com/wtch.png" width="400">
+<img src="https://pixkk.com/stng.png" width="400">
+<img src="https://pixkk.com/srch.png" width="400">
      
 </details>
 
@@ -157,7 +161,7 @@ Komuniti
 
 Kami menggunakan beberapa platform yang berbeza untuk berhubung dengan komuniti kami. Anda boleh menyertai secara aktif dalam pembangunan VueTube atau mengikuti perkembangan terkini VueTube dengan menyertai grup berikut:
 
-- Discord _server_ (https://vuetube.app/discord)
+- Discord _server_ (https://discord.gg/7P8KJrdd5W)
 - Grup Telegram (https://t.me/vuetube)
 - Halaman Reddit (subreddit) (https://www.reddit.com/r/vuetube)
 
@@ -175,35 +179,42 @@ Kemajuan
 
  <br>
  
-**Umum** | **Pemain** | [**Pengekstrak (Extractor)**](https://github.com/VueTubeApp/VueTube-Extractor) |
-:-: | :-: | :-: |
-🟢 Komen (100%) | 🟢 Main / Jeda (100%) | 🟢 Autolengkap carian (100%) |
-🟢 Huraian video (description) (100%) | 🟢 Ketik untuk tunjuk / sorok kawalan video (100%) | 🟢 Laman utama (100%) |
-🟢 Laman Utama (100%) | 🟠 Seekbar / Scrubber (80%) | 🟢 Carian (100%)
-🟢 Pengintegrasian RYD (100%) | 🟠 Skrin Penuh (80%) | 🟠 Maklumat Video (60%) |
-🟢 Tema (100%) | 🟠 Pemilih Resolusi (720p, HD) (50%) | 🔴 Saluran (0%) |
-🟢 Halaman Tonton (100%) | 🔴 Pemain Mini (0%) | 🔴 Komen (0%) |
-🟠 Pengintegrasian SponsorBlock (95%) | 🔴 Main video di latar belakang (0%) | 🔴 Sembang Langsung (0%) |
-🟠 Auto Kemaskini (50%) | 🔴 Picture in Picture (0%) | 🔴 Kandungan Trending (0%)
-🟠 Halaman Saluran (50%) |  🔴 Kapsyen / Sarikata (0%) | 🔴 Interaksi (0%) |
-🟠 Hantaran Komuniti (10%) | 🔴 Kad (0%) | 🔴 Senarai Main (0%) |
-🟠 Shorts UI yang Dibolehsuai (10%) |  | 🔴 Notifikasi (0%)
-🟠 YT Music UI yang Dibolehsuai (10%) |  | 🔴 Log masuk (0%)
-🟠 UI yang Dibolehsuai (30%) |  |  |
-🟠 Halaman Pustaka (10%) |  |  |
-🟠 Balasan Komen (50%) |  |  |
-🟠 Pemalam (Plugins) pihak ketiga (40%) |  |  |
-🟠 Pemain VueTube (Lihat kemajuan di tengah) |  |  |
-🟠 Pengekstrak (Extractor) VueTube (Lihat kemajuan di sebelah kanan) |  |  |
-🔴 Sejarah Tontonan Setempat (0%) |  |  |
-🔴 Halaman Langganan (0%) |  |  |
-🔴 Sokongan Platform Lain (0%) |  |  |
+|                   **Umum**                    |              **Pemain**               | [**Extractor**](https://github.com/VueTubeApp/VueTube-Extractor) |
+| :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
+|                🟡 Komen (90%)                |        🟢 Main / Jeda (100%)         |                  🟢 Search Autocomplete (100%)                   |
+|              🟢 Huraian (description) (100%)               | 🟢 Ketik untuk tunjuk / sorok kawalan video (100%) |                       🟢 Laman utama (100%)                        |
+|               🟢 Laman utama (100%)                |      🟠 _Seekbar / Scrubber_ (80%)      |                         🟢 Search (100%)                         |
+|            🟢 Pengintegrasian RYD (100%)             |          🟠 Skrin penuh (80%)          |                    🟠 Maklumat video (60%)                    |
+|                 🟢 Tema (100%)                 |      🟡 Pemilih Resolusi (95%)       |                         🔴 Saluran (0%)                         |
+|               🟢 Halaman Tonton (100%)               |          🔴 Pemain mini (0%)           |                         🔴 Komen (0%)                         |
+|        🟡 Pengintegrasian Sponsorblock (90%)         |        🔴 Main video di latar belakang (0%)        |                        🔴 Sembang Langsung (0%)                         |
+|               🟠 Kemaskini Auto (50%)               |      🔴 Gambar dalam gambar (0%)       |                     🔴 Kandungan sohor kini (0%)                     |
+|              🟡 Halaman Saluran (60%)               |           🟡 Sarikata (95%)            |                       🔴 Interaksi (0%)                       |
+|             🟡 Hantaran Komuniti (90%)             |             🔴 Kad (0%)             |                        🔴 Senarai main (0%)                         |
+|         🟠 UI Shorts yang boleh diubahsuai (10%)          |                                       |                      🔴 Notifications (0%)                       |
+|        🟠 UI YT Music yang boleh diubahsuai (10%)         |                                       |                          🔴 Login (0%)                           |
+|             🟠 UI yang boleh diubahsuai (30%)             |                                       |                                                                  |
+|             🟠 Halaman Pustaka (10%)              |                                       |                                                                  |
+|                 🟠 Balasan (50%)                 |                                       |                                                                  |
+|           🟠 _Plugin_ Pihak Ketiga (40%)           |                                       |                                                                  |
+|  🟠 Pemain VueTube (Lihat kemajuan di sebelah kanan)   |                                       |                                                                  |
+| 🟠 _VueTube Extractor_ (Lihat kemajuan di sebelah kanan) |                                       |                                                                  |
+|           🔴 Sejarah Tontonan Tempatan (0%)            |                                       |                                                                  |
+|            🔴 Halaman Langganan (0%)            |                                       |                                                                  |
+|          🔴 Sokongan Platform Lain (0%)          |                                       |                                                                  |
   
 </details>
 
 ### Teknologi yang digunakan
 
-<a href="https://capacitorjs.com/solution/vue"><img src="https://cdn.discordapp.com/attachments/953538236716814356/955694368742834176/Capacitator-Dark.svg" height=40/></a> <a href="https://vuetifyjs.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/973719873467342908/Vuetify-Dark.svg" height=40/></a> <a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/NuxtJS-Dark.svg" height=40/></a> <a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/VueJS-Dark.svg" height=40/></a> <a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> <a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Java-Dark.svg" height=40/></a> <a href="https://gradle.com/"><img src="https://cdn.discordapp.com/attachments/810799100940255260/955691550560636958/Gradle.svg" height=40/></a> <a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
+<a href="https://capacitorjs.com/solution/vue"><img src="https://avatars.githubusercontent.com/u/3171503" height=40/></a> 
+<a href="https://vuetifyjs.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Vuetify-Dark.svg" height=40/></a> 
+<a href="https://nuxtjs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/NuxtJS-Dark.svg" height=40/></a> 
+<a href="https://vuejs.org/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/VueJS-Dark.svg" height=40/></a> 
+<a href="https://javascript.com/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/JavaScript.svg" height=40/></a> 
+<a href="https://java.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Java-Dark.svg" height=40/></a> 
+<a href="https://gradle.com/"><img src="https://github.com/tandpfun/skill-icons/blob/main/icons/Gradle-Dark.svg" height=40/></a> 
+<a href="https://developer.apple.com/swift/"><img src="https://github.com/tandpfun/skill-icons/raw/main/icons/Swift.svg" height=40/></a>
 
 ### Mengapa kami melakukan ini?
 
@@ -211,9 +222,9 @@ VueTube dibuat dengan tujuan untuk menyediakan sebuah alternatif yang percuma, s
 
 ### Berminat untuk menyumbang?
 
-Terima kasih kerana berminat untuk menyumbang! Sila baca di laman sesawang kami untuk mengetahui bagaimana anda boleh melakukannya: [vuetube.app/contributing](https://www.vuetube.app/contributing)
+Terima kasih kerana berminat untuk menyumbang! Sila baca di laman sesawang kami untuk mengetahui bagaimana anda boleh melakukannya: [pixkk.com/contributing](https://www.pixkk.com/contributing)
 
-Sekiranya anda mahu menterjemahkan aplikasi ini, [klik di sini](/NUXT/plugins/languages) dan baca arahan. Jika GitHub itu sukar atau anda tidak selesa menggunakannya, anda boleh hantarkan medan yang diterjemahkan dalam satu fail teks pada [pelayan Discord](https://vuetube.app/discord) kami dan kami akan melaksanakannya. Jangan bimbang!
+Sekiranya anda mahu menterjemahkan aplikasi ini, [klik di sini](/NUXT/plugins/languages) dan baca arahan. Jika anda berfikir GitHub itu sukar atau anda tidak selesa menggunakannya, anda boleh hantarkan medan yang diterjemahkan dalam satu fail teks pada [pelayan Discord](https://pixkk.com/discord) kami dan kami akan melaksanakannya. Jangan bimbang!
 
 <h2 align="left">
 <sub>
@@ -225,7 +236,7 @@ Penyumbang-penyumbang GitHub
 </h2>
 
 <a href="https://github.com/VueTubeApp/VueTube/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=VueTubeApp/VueTube" />
+  <img src="https://contrib.rocks/image?repo=pixkk/VueTube" />
 </a>
 
 <sub>Papan pemuka dibuat secara automatik dengan [contrib.rocks](https://contrib.rocks). </sub>
@@ -268,7 +279,7 @@ VueTube adalah dan sentiasa akan percuma dan sumber terbuka, tetapi anda boleh m
 Penafian
 </h2>
 
-Projek VueTube dan kandungannya tidak bergabung dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh didapati di [www.youtube.com](https://www.youtube.com).
+Projek VueTube dan kandungannya tidak bersekutu dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh didapati di [www.youtube.com](https://www.youtube.com).
 
 Sebarang tanda dagangan, tanda perkhidmatan, nama dagangan atau hak harta intelek lain yang digunakan dalam projek VueTube dimiliki oleh pemilik masing-masing.
 
@@ -278,7 +289,7 @@ Sebarang tanda dagangan, tanda perkhidmatan, nama dagangan atau hak harta intele
       height="30"
       width="30">
 </sub>
-Repo-repo VueTube yang lain
+Repositori VueTube yang lain
 </h2>
 
 <details>
@@ -286,15 +297,60 @@ Repo-repo VueTube yang lain
 
 <br>
 
-[![VueTube Extractor](https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor)](https://github.com/VueTubeApp/VueTube-Extractor)
+<a href="https://github.com/VueTubeApp/VueTube-Extractor">
+    <picture>
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=dark"
+        media="(prefers-color-scheme: dark)"
+      />
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=highcontrast"
+        media="(prefers-color-scheme: dark_colorblind)"
+      />
+      <img
+        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor"
+        alt="VueTube Extractor"
+       />
+    </picture>
+</a>
 
-**VueTube Extractor** ialah sejenis pustaka yang direka untuk mengekstrak data dari perkhidmatan penstriman, direka untuk digunakan dengan apl VueTube.
+**VueTube Extractor** ialah pustaka yang direka untuk mengekstrak data dari perkkhidmatan penstriman, direka untuk digunakan dalam apl VueTube.
 
-[![VueTube Translator](https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator)](https://github.com/VueTubeApp/VueTube-Translator)
+<a href="https://github.com/VueTubeApp/VueTube-Translator">
+    <picture>
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=dark"
+        media="(prefers-color-scheme: dark)"
+      />
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=highcontrast"
+        media="(prefers-color-scheme: dark_colorblind)"
+      />
+      <img
+        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator"
+        alt="VueTube Extractor"
+       />
+    </picture>
+</a>
 
-**VueTube Translator** ialah sejenis alat untuk menterjemahkan medan fail GitHub seperti JSON atau JS dan mengeksport hasil dengan struktur yang betul. Ia dibuat untuk membantu penterjemah-penterjemah VueTube tetapi ia boleh digunakan untuk tujuan lain.
+**VueTube Translator** ialah alat untuk menterjemahkan medan fail GitHub seperti JSON or JS dan mengeksport hasil dengan struktur yang betul. Ia dibuat untuk membantu penterjemah VueTube, tetapi boleh digunakan untuk tujuan lain.
 
-[![VueTube HTTP](https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http)](https://github.com/VueTubeApp/vuetube-http)
+<a href="https://github.com/VueTubeApp/vuetube-http">
+    <picture>
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=dark"
+        media="(prefers-color-scheme: dark)"
+      />
+      <source
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=highcontrast"
+        media="(prefers-color-scheme: dark_colorblind)"
+      />
+      <img
+        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http"
+        alt="VueTube Extractor"
+       />
+    </picture>
+</a>
 
 **VueTube HTTP** ialah sejenis _plugin_ untuk permintaan HTTP _native_, muat naik/turun fail, dan pengurusan kuki. Ia adalah sejenis _fork_ daripada [projek HTTP asal](https://github.com/capacitor-community/http) daripada Capacitor Community dengan sedikit penambahan daripada kumpulan VueTube.
 
@@ -303,5 +359,5 @@ Repo-repo VueTube yang lain
 <hr>
 
 <p align="center">
-<sub>VueTube, membuat semua orang gembira dan menginspirasikan hati mereka sejak 2022.</sub>
+<img src="resources/bottom_banner_readme.png" width="800">
 </p>
