@@ -2,7 +2,7 @@ package com.Frontesque.vuetube;
 
 import android.os.Bundle;
 
-import com.Frontesque.server.ServerManager;
+//import com.Frontesque.server.ServerManager;
 import com.getcapacitor.BridgeActivity;
 
 import android.app.PictureInPictureParams;
