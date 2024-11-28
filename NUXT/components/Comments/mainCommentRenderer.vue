@@ -25,6 +25,7 @@
           :is="Object.keys(comment)[0]"
           v-if="getComponents()[Object.keys(comment)[0]]"
           :comment="comment[Object.keys(comment)[0]]"
+          :continuationToken="comment.commentThreadRenderer?.replies?.commentRepliesRenderer.contents[0].continuationItemRenderer.button.buttonRenderer.command.continuationCommand.token"
           @intersect="paginate"
           @showReplies="openReply"
         ></component>
@@ -158,7 +159,7 @@ export default {
         this.$vuetube.addBackAction(dismissReply);
       }
 
-      this.replyData = { parent: event, replyContinuation: null };
+      this.replyData = { parent: event, replyContinuation: event?.replies?.commentRepliesRenderer?.contents[0]?.continuationItemRenderer?.button?.buttonRenderer?.command?.continuationCommand?.token };
     },
   },
 };
