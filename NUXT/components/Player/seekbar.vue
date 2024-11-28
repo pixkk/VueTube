@@ -5,7 +5,6 @@
       muted
       autoplay
       style="display: none"
-      :src="vidWrs"
     />
     <!-- Scrubber -->
     <v-slider

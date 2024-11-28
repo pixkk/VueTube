@@ -415,6 +415,10 @@ export default {
         this.interactions[0].value = data.likes.toLocaleString();
         this.interactions[1].value = data.dislikes.toLocaleString();
       });
+      if (!document.pictureInPictureEnabled) {
+        //this.interactions[this.interactions.length - 1].disabled = true;
+        //this.interactions[this.interactions.length - 1].hidden = true;
+      }
     },
     callMethodByName(name) {
       // Helper function needed because of issues when directly calling method
@@ -423,9 +427,9 @@ export default {
     },
     async pip() {
       if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
+        // await document.exitPictureInPicture();
       } else if (document.pictureInPictureEnabled) {
-        await this.$refs.player.getPlayer().requestPictureInPicture();
+        // await this.$refs.player.getPlayer().requestPictureInPicture();
       }
     },
     async share() {
@@ -516,7 +520,7 @@ export default {
             name: "PiP",
             icon: "mdi-picture-in-picture-bottom-right",
             actionName: "pip",
-            disabled: false,
+            disabled: true,
           },
           // {
           //   name: "Speed",

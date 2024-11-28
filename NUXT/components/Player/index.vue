@@ -419,6 +419,7 @@ export default {
   },
   data() {
     return {
+      isPIP: false,
       isFullscreen: false,
       fullscreenLock: false,
       shortTransition: false,
@@ -600,13 +601,23 @@ export default {
     },
     loadedDataEvent() {
 
+      try {
 
-      window.navigation.addEventListener("navigate", (event) => {
-        const url = new URL(event.destination.url);
+        window.navigation.addEventListener("navigate", (event) => {
+          const url = new URL(event.destination.url);
 
-        const tParam = url.searchParams.get("t");
-        this.setStartTime(tParam)
-      })
+          const tParam = url.searchParams.get("t");
+          this.setStartTime(tParam)
+        })
+      }catch (e) {
+        window.addEventListener('locationchange', function (event) {
+          const url = new URL(event.destination.url);
+
+          const tParam = url.searchParams.get("t");
+          this.setStartTime(tParam)
+        });
+
+      }
       // networkState: An integer property that represents the network state of the video. The possible values are:
       // NETWORK_EMPTY (0): No source has been set or the video element's load() method has not been called.
       // NETWORK_IDLE (1): The video element's load() method has been called, and the video is fetching the media resource.
