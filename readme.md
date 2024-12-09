@@ -1,6 +1,6 @@
 
 >[!TIP] 
->01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)
+>~~01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)~~
 >
 >**18.08.2024 - Problem resolved**
 
@@ -45,7 +45,12 @@
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
   <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
-    
+
+</p>
+<p align="center">
+  <a href="https://ko-fi.com/W7W216PASY" target="_blank">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" />
+  </a>
 </p>
 
 **Read this page in other languages**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
