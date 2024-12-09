@@ -558,11 +558,13 @@ export default {
     }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
+    this.$refs.player.type = this.sources[indexOfPreferredQuality].mimeType;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
 
     this.sources.forEach((source) => {
       if (source.mimeType.indexOf("audio") > -1 && !this.audSrc) {
         this.audSrc = source.url;
+        this.$refs.audio.type = source.mimeType;
       }
     });
 

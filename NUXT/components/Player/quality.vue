@@ -16,9 +16,9 @@
           v-on="on"
         >
           {{
-            sources.find((src) => src.url == currentSource.src).qualityLabel
-              ? sources.find((src) => src.url == currentSource.src).qualityLabel
-              : sources.find((src) => src.url == currentSource.src).quality
+            sources.find((src) => src.url == currentSource.src)?.qualityLabel
+              ? sources.find((src) => src.url == currentSource.src)?.qualityLabel
+              : sources.find((src) => src.url == currentSource.src)?.quality
           }}
         </v-btn>
       </template>

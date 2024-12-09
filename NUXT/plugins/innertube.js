@@ -827,6 +827,7 @@ class Innertube {
         source["url"] = source["url"] + "&cpn=" + generateCPN();
         if (searchParams.get("mime").indexOf("audio") < 0) {
           source["url"] = source["url"] + "&range=0-";
+          source["url"] = source["url"] + "&alr=yes";
         }
       });
     const vidData = {
