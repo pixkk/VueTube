@@ -62,6 +62,15 @@
     >
       <track default kind="captions" id="captions" src=""/>
     </video>
+    <button id="skipButton"
+            ref="skipButton" class="skip-button"
+    :style="{
+      backgroundColor: 'primary',
+      display: isSegment ? 'block' : 'none',
+    }"
+
+    >Skip {{ sBblockCategoryText }}</button>
+
     <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" />
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
@@ -444,10 +453,14 @@ export default {
       isMusic: false,
       sponsorBlocks: [],
       vid: null,
+      isSegment: false,
+      sBblockCategoryText: "",
+      endBlockTime: -1,
       poster: "",
     };
   },
   async mounted() {
+    this.isSegment = false;
     this.poster = await $youtube.getThumbnail(this.$route.query.v, '', []);
 
     console.log("SPSR BLCK" + this.sponsorBlocks);
@@ -714,21 +727,31 @@ export default {
         let vidTime = this.vid.currentTime;
         // this.sponsorBlocks = data;
         // console.warn(data);
+      this.endBlockTime = -1;
         this.sponsorBlocks?.segments?.forEach((block) => {
           // block.segments.forEach((segments) => {
           // console.log(this.vid.duration);
-          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded === false) {
-            console.log("Skipping the sponsor");
-            this.$youtube.showToast("Skipped "+ block.category + " sponsor");
-            this.$refs.player.currentTime = block.segment[1];
-            if (this.vid.duration < block.segment[1]) {
-              this.videoEnded = true;
-              // this.vid.pause();
+            if (vidTime >= block.segment[0] && vidTime < block.segment[1]) {
+              this.endBlockTime = block.segment[1];
+              this.isSegment = true;
+              this.sBblockCategoryText = block.category;
+              this.$refs.skipButton.onclick = skipSegment.bind(null, this.$refs.player, this.vid.duration, this.$youtube, block.segment[1], block.category);
+
+              function skipSegment(param1, param2, param3, param4, param5) {
+                console.log("skipped");
+                param1.currentTime = param4;
+                param3.showToast("Skipped " + param5 + " sponsor");
+              }
+
+              // this.$refs.audio.currentTime = this.$refs.player.currentTime;
+              return;
             }
-            // this.$refs.audio.currentTime = this.$refs.player.currentTime;
-          }
+
           // });
         });
+        if (vidTime > this.endBlockTime) {
+          this.isSegment = false;
+        }
     },
     endedEvent() {
       this.videoEnded = true;
@@ -1029,5 +1052,18 @@ export default {
     -webkit-transform: translateY(10%) !important;
     transform: translateY(10%) !important;
   }
+}
+.skip-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  margin-bottom: 5rem;
+  background-color: var(--v-primary-base);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  //display: block;
+  z-index: 9999;
 }
 </style>

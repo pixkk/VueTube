@@ -139,7 +139,7 @@
           color: 'var(--v-primary-base)',
         }"
       >
-        {{ "mdi-block-helper" }}
+        {{ "mdi-account-cancel" }}
       </v-icon>
       <div
         class="my-auto pa-4 ml-n4 background ma-0"

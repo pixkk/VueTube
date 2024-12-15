@@ -40,7 +40,7 @@ export default {
       settingsItems: [
         {
           name: "SponsorBlock General",
-          icon: "mdi-block-helper",
+          icon: "mdi-account-cancel",
           to: "/mods/sponsorblock/general",
         },
       ],
