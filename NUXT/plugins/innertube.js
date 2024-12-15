@@ -19,6 +19,9 @@ class Innertube {
     this.playerParams = "";
     this.signatureTimestamp = 0;
     this.nfunction = "";
+    this.visitorData = "";
+    this.getPot = "";
+    this.pot = "";
   }
 
   checkErrorCallback() {
@@ -41,44 +44,44 @@ class Innertube {
           baseJs.data
         );
     } else if (
-      /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([A-Za-z],[A-Za-z]\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/.exec(
+      /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([A-z0-9],[A-z0-9]\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/.exec(
         baseJs.data
       )
     ) {
       isMatch =
-        /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([A-Za-z],[A-Za-z]\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/.exec(
+        /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([A-z0-9],[A-z0-9]\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/.exec(
           baseJs.data
         );
     }
 
     if (isMatch) {
-      const firstPart = isMatch[0].substring(1);
+      const firstPart = isMatch[0];
 
       if (
-        /\{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return [A-Za-z]\.join\(""\)\};/.exec(
+        /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
           baseJs.data
         )
       ) {
         isMatch =
-          /\{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return [A-Za-z]\.join\(""\)\};/.exec(
+          /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
             baseJs.data
           );
       } else if (
-        /{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return +[A-Za-z]\.join\(""\)};/.exec(
+        /{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
           baseJs.data
         )
       ) {
         isMatch =
-          /{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return +[A-Za-z]\.join\(""\)};/.exec(
+          /{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
             baseJs.data
           );
       } else if (
-        /\{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return +[A-Za-z]\.join\(""\)};/.exec(
+        /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
           baseJs.data
         )
       ) {
         isMatch =
-          /\{[A-Za-z$]=[A-Za-z]\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return +[A-Za-z]\.join\(""\)};/.exec(
+          /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
             baseJs.data
           );
       } else if (/\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data)) {
@@ -86,7 +89,7 @@ class Innertube {
         isMatch = /\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data);
       } else {
         isMatch =
-          /\{a=a\.split\(""\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);[A-Za-z]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
+          /\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
             baseJs.data
           );
       }
@@ -99,10 +102,23 @@ class Innertube {
       // {a=a.split("");IF.k4(a,4);IF.VN(a,68);IF.DW(a,2);IF.VN(a,66);IF.k4(a,19);IF.DW(a,2);IF.VN(a,36);IF.DW(a,2);IF.k4(a,41);return a.join("")};
 
       // Get second part of decipher function
+      // console.warn(firstPart);
+      // console.warn(isMatch[0]);
+
+      let functionArg = "";
+      const match = isMatch[0].match(/(\w+)\.join\(\s*""\s*\)/);
+
+      if (match) {
+        functionArg = match[1];
+      }
+
+
       const secondPart =
-        "var decodeUrl=function(a)" + isMatch[0] + "return decodeUrl;";
+        "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
+      // console.warn(secondPart);
       let decodeFunction = firstPart + secondPart;
       let decodeUrlFunction = new Function(decodeFunction);
+      // console.warn(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
       let signatureIntValue = /.sts="[0-9]+";/.exec(baseJs.data);
       // Get signature timestamp
@@ -115,12 +131,114 @@ class Innertube {
       );
     }
   }
+  async getPOTFunction(baseJs) {
+    /**
+     * Convertation of EOM_VISITOR_DATA || VISITOR_DATA to Uint8Array
+     * @type {RegExpExecArray}
+     */
+    let firstFunction = /[A-Za-z0-9]+=function\([A-Za-z0-9]+\)\{for\([^)]*\)\{[^}]*\}return [A-Za-z0-9]+\};/gm.exec(baseJs.data);
+    let firstFunctionName = "";
+
+    /**
+     * Modification result from firstFunction
+     * @type {RegExpExecArray}
+     */
+    let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9]+\}/m.exec(baseJs.data);
+    let secondFunctionName = "";
+
+    let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
+    let fourthFunction = /[A-z0-9]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
+
+    let resultF = "";
+    if (firstFunction) {
+      firstFunctionName = firstFunction[0].match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
+
+      // console.log(firstFunction[0]);
+      // console.log(firstFunctionName);
+      // console.log(firstFunctionName);
+      // console.log(firstFunctionName);
+      if (secondFunction) {
+        // console.log(secondFunction[0]);
+        let optimizedSecondFunc = secondFunction[0];
+
+
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._]+\([0-9]+,"[^"]*"\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9]+\.[A-Za-z0-9]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
+
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9]+)\=[A-z0-9]+\(([A-z0-9]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
+
+
+        // console.log(optimizedSecondFunc);
+        secondFunctionName = optimizedSecondFunc.match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
+
+
+
+
+        if (thirdFunction) {
+          let functionNameForInserting = /[A-z0-9$]+\(\)/.exec(thirdFunction[0])[0];
+          // let thirdFunction[0] = thirdFunction[0].replace(functionForInserting + "=", secondFunctionName);
+          // console.log(functionNameForInserting);
+          // console.log(fourthFunction[0]);
+          // console.log(thirdFunction[0]);
+          let inFFKV = fourthFunction[0].match(/([A-z0-9]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
+          // console.warn(inFFKV);
+          let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
+          // console.warn(fourthFunctionKeyValue);
+          let modifiedThirdFunction = thirdFunction[0].replace(functionNameForInserting, "var "+ inFFKV +"={};\nvar "+fourthFunctionKeyValue+"=null;\n"+"var "+optimizedSecondFunc+";\n"+fourthFunction[0]+"\n"+functionNameForInserting+";\n");
+
+
+          //
+          // console.warn(modifiedThirdFunction);
+          let fourthFunctionTwoKeyValue = modifiedThirdFunction.match(/[A-Za-z0-9$]+\[[A-Za-z0-9$]+\]=[A-Za-z0-9$]+;/)[0].split('[')[0];
+          // console.warn(fourthFunctionTwoKeyValue);
+
+          modifiedThirdFunction = modifiedThirdFunction.replace(functionNameForInserting+";\n", functionNameForInserting+";\nvar "+fourthFunctionTwoKeyValue+"="+secondFunctionName+"("+fourthFunctionTwoKeyValue+")\n");
+
+          modifiedThirdFunction = modifiedThirdFunction.replace("var "+fourthFunctionKeyValue+"=null;\n", "var "+fourthFunctionKeyValue+"=null;\n");
+
+          // console.warn(modifiedThirdFunction);
+          resultF = modifiedThirdFunction;
+        }
+
+
+        else {
+
+        }
+        const match = resultF.match(/function\s*\(([^)]+)\)/);
+        let functionArg = "";
+        if (match) {
+          // console.error(match);
+          // functionArg = match[1].trim();
+        }
+
+        // let challenge_name = "CHALLENGE_NAME";
+        const fullCode =
+          "var getPot=" + resultF + " return getPot;";
+        // console.error(fullCode);
+
+        let getPot = new Function(fullCode);
+        this.getPot = getPot();
+      }
+      else {
+        console.error("The second part of POT function does not match the regex pattern.");
+      }
+
+    }
+    else {
+      console.error("The first part of POT function does not match the regex pattern.");
+    }
+  }
 
   async getNFunction(baseJs) {
     let challenge_name =
       /\.get\("n"\)\)&&\(b=([a-zA-Z0-9$]+)(?:\[(\d+)\])?\([a-zA-Z0-9]\)/.exec(
         baseJs.data
       );
+
+    let functionArg = "";
     if (challenge_name) {
       challenge_name = challenge_name[1];
       //.get("n"))&&(b=fG[0](b),a.set("n",b),fG.length||kq(""))}}
@@ -136,18 +254,17 @@ class Innertube {
         ).exec(baseJs.data)[2];
       }
     }else {
-      challenge_name = /[A-Za-z]=String\.fromCharCode\(110\),[A-Za-z]=[A-Za-z]\.get\([A-Za-z]\)\)&&\([A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\),[A-Za-z]\.set\([A-Za-z],[A-Za-z]\)/i.exec(baseJs.data);
+      challenge_name = /[A-z0-9$]=String\.fromCharCode\(110\),[A-z0-9$]=[A-z0-9$]\.get\([A-z0-9$]\)\)&&\([A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\),[A-z0-9$]\.set\([A-z0-9$],[A-z0-9$]\)/i.exec(baseJs.data);
 
       if (challenge_name === null) {
 
-        challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(baseJs.data);
+        challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(baseJs.data);
       }
       else {
-        challenge_name = /[A-Za-z]=[A-Za-z0-9]+\[0\]\([A-Za-z]\)/i.exec(challenge_name[0]);
+        challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(challenge_name[0]);
       }
 
       challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
-
 
       challenge_name = new RegExp(
         `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
@@ -155,12 +272,20 @@ class Innertube {
       challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
 
       challenge_name = challenge_name.replace("$", "\\$");
-      // challenge_name = new RegExp(
-      //   `${challenge_name}=function\\(a\\){[\\s\\S]*,.*?join\\(""\\)\\};`).exec(baseJs.data);
-      challenge_name = new RegExp(`${challenge_name}=function\\(a\\){[\\s\\S]*?return.*?\\.join\\(""\\)}`, 'g').exec(baseJs.data);
+
+      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(""\\)}`, 'g').exec(baseJs.data);
 
 
-      challenge_name = challenge_name[0];
+      challenge_name = res[0];
+
+
+      const match = challenge_name.match(/function\s*\(([^)]+)\)/);
+
+      if (match) {
+        functionArg = match[1].trim();
+      }
+
+
       var startIndex = challenge_name.indexOf('{');
 
         let trimmedCode = challenge_name.slice(startIndex).substring(1);
@@ -169,8 +294,13 @@ class Innertube {
           challenge_name = trimmedCode;
     }
 
-    const fullCode =
-      "var getN=function(a){" + challenge_name + "}; return getN;";
+    let fullCode =
+      "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
+
+    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+    // console.warn(fullCode);
+    // console.warn(fullCode);
+    // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -192,6 +322,7 @@ class Innertube {
     }).catch((error) => error);
     await this.makeDecipherFunction(baseJs);
     await this.getNFunction(baseJs);
+    await this.getPOTFunction(baseJs);
     try {
       if (html instanceof Error && this.checkErrorCallback)
         this.ErrorCallback(html.message, true);
@@ -200,6 +331,8 @@ class Innertube {
         const data = JSON.parse(
           "{" + getBetweenStrings(html.data, "ytcfg.set({", ");")
         );
+        // console.warn(data);
+        this.visitorData = data.VISITOR_DATA;
         if (data.INNERTUBE_CONTEXT) {
           this.key = data.INNERTUBE_API_KEY;
           this.context = data.INNERTUBE_CONTEXT;
@@ -374,6 +507,8 @@ class Innertube {
       data.context.client = {
         ...constants.INNERTUBE_VIDEO(this.context.client),
       };
+      data.context.client.clientName = contextAdditional.client.clientName;
+      data.context.client.clientVersion = contextAdditional.client.clientVersion;
     }
     else {
       data.context.client = {
@@ -440,6 +575,7 @@ class Innertube {
       headers: constants.INNERTUBE_HEADER(this.context.client),
     }).catch((error) => error);
 
+    this.pot = this.getPot(this.visitorData, 2);
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
       data: {
@@ -448,8 +584,12 @@ class Innertube {
           playerParams: this.playerParams,
           contentCheckOk: false,
           racyCheckOk: false,
-          mwebCapabilities: {
-            mobileClientSupportsLivestream: true,
+          // mwebCapabilities: {
+          //   mobileClientSupportsLivestream: true,
+          // },
+
+          serviceIntegrityDimensions: {
+            poToken: this.pot
           },
           playbackContext: {
             contentPlaybackContext: {
@@ -738,7 +878,7 @@ class Innertube {
     const responseNext = response.data.outputNext;
     const details = responseInfo.videoDetails;
     const publishDate =
-      responseInfo.microformat.playerMicroformatRenderer.publishDate;
+      responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     // const columnUI =
     //   responseInfo[3].response?.contents.singleColumnWatchNextResults?.results
     //     ?.results;
@@ -825,9 +965,13 @@ class Innertube {
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
         source["url"] = source["url"] + "&cpn=" + generateCPN();
+        // console.log(this.visitorData);
+        // console.log(this.pot);
+        source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+        // source["url"] = source["url"] + "&range=0-" + source.contentLength;
         if (searchParams.get("mime").indexOf("audio") < 0) {
-          source["url"] = source["url"] + "&range=0-";
-          source["url"] = source["url"] + "&alr=yes";
+          // source["url"] = source["url"] + "&range=0-";
+          // source["url"] = source["url"] + "&alr=yes";
         }
       });
     const vidData = {

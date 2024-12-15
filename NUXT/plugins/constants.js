@@ -15,8 +15,8 @@ const ytApiVal = {
   // VERSION: "16.25",
   VERSION: "19.09",
   CLIENTNAME: "ANDROID",
-  // VERSION_WEB: "2.20240312.06.00",
-  VERSION_WEB: "2.20240710.00.00",
+  VERSION_WEB: "2.20240628.01.00",
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
@@ -30,7 +30,7 @@ module.exports = {
   fs: filesystem,
 
   INNERTUBE_HEADER: (info) => {
-    let headers = {
+    return {
       accept: "*/*",
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
@@ -40,32 +40,29 @@ module.exports = {
       "x-youtube-client-name": ytApiVal.CLIENTNAME,
       "x-youtube-client-version": ytApiVal.VERSION,
     };
-    return headers;
   },
 
   INNERTUBE_NEW_HEADER: (info) => {
-    let headers = {
+    return {
       accept: "*/*",
-      "user-agent":
-        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+      "user-agent": ytApiVal.USER_AGENT,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": "2",
-      "x-youtube-client-version": "2.20240628.01.00",
+      "x-youtube-client-name": ytApiVal.CLIENT_WEB_M,
+      "x-youtube-client-version": ytApiVal.VERSION,
     };
-    return headers;
   },
   INNERTUBE_CLIENT: (info) => {
-    let client = {
+    return {
       gl: info.gl,
       hl: info.hl,
       deviceMake: "Google",
       // deviceMake: info.deviceMake,
       // deviceModel: info.deviceModel,
       deviceModel: "Nexus 5",
-      userAgent: info.userAgent,
+      userAgent: ytApiVal.USER_AGENT,
       clientName: ytApiVal.CLIENTNAME,
       clientVersion: ytApiVal.VERSION,
       osName: info.osName,
@@ -77,17 +74,14 @@ module.exports = {
       remoteHost: info.remoteHost,
       visitorData: info.visitorData,
     };
-    return client;
   },
   INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
-    let client = {
+    return {
       gl: info.gl,
       hl: info.hl,
       deviceMake: "Generic",
-      // deviceMake: info.deviceMake,
-      // deviceModel: info.deviceModel,
-      deviceModel: "Android 10.0",
-      userAgent: info.userAgent,
+      deviceModel: "Android 15.0",
+      userAgent: ytApiVal.USER_AGENT,
       clientName: "MWEB",
       clientVersion: ytApiVal.VERSION_WEB,
       osName: info.osName,
@@ -99,24 +93,23 @@ module.exports = {
       remoteHost: info.remoteHost,
       visitorData: info.visitorData,
     };
-    return client;
   },
   INNERTUBE_REQUEST: () => {
-    let request = {
+    return {
       useSsl: true,
       internalExperimentFlags: [],
     };
-    return request;
   },
+  // https://github.com/zerodytrash/YouTube-Internal-Clients
   INNERTUBE_VIDEO: (info) => {
-    let client = {
+    return {
       gl: info.gl,
       hl: info.hl,
       deviceMake: info.deviceMake,
       deviceModel: info.deviceModel,
       userAgent: info.userAgent,
-      clientName: "MWEB",
-      clientVersion: "2.20240628.01.00",
+      clientName: "WEB_EMBEDDED_PLAYER",
+      clientVersion: ytApiVal.VERSION_WEB,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
@@ -145,6 +138,5 @@ module.exports = {
         isWebNativeShareAvailable: true,
       },
     };
-    return client;
   },
 };
