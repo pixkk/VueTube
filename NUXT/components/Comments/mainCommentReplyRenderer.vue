@@ -59,8 +59,6 @@ export default {
   },
   props: ["defaultContinuation", "parentComment", "showReplies"],
   mounted() {
-    console.error(this.defaultContinuation);
-
     this.paginate();
   },
   computed: {
@@ -70,16 +68,12 @@ export default {
   },
   methods: {
     paginate() {
-      console.error(this.defaultContinuation);
       if (this.defaultContinuation) {
         this.loading = true;
         this.$youtube
           .getContinuation(this.defaultContinuation, "next", "web")
           .then((result) => {
-            console.log(result.data);
             let processed;
-            // onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems
-
             processed = result.data.onResponseReceivedEndpoints.map(
               (endpoints) =>
                 endpoints.appendContinuationItemsAction.continuationItems

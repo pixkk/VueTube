@@ -110,7 +110,7 @@ export default {
           .then((result) => {
             let processed;
             if (
-              result.data.onResponseReceivedEndpoints.find(
+              result.data.onResponseReceivedEndpoints?.find(
                 (endpoints) => endpoints.reloadContinuationItemsCommand
               )
             ) {
@@ -119,9 +119,9 @@ export default {
                   endpoints.reloadContinuationItemsCommand.continuationItems
               );
             } else {
-              processed = result.data.onResponseReceivedEndpoints.map(
+              processed = result.data.onResponseReceivedEndpoints?.map(
                 (endpoints) =>
-                  endpoints.appendContinuationItemsAction.continuationItems
+                  endpoints?.appendContinuationItemsAction?.continuationItems
               );
             }
             processed = processed.flat(1);

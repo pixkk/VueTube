@@ -374,6 +374,8 @@ export default {
         this.captions = result.captions;
         console.log("Video info data", result);
         this.video = result;
+        this.video.title = this.video.title ? this.video.title : "null";
+        this.video.channelName = this.video.channelName ? this.video.channelName : "null";
 
         //---   Content Stuff   ---//
         // NOTE: extractor likes are broken, using RYD likes instead

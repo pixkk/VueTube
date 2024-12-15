@@ -17,8 +17,6 @@ class rendererUtils {
       return `/watch?v=${base.watchEndpoint.videoId}`;
     } else if (base.navigationEndpoint) {
       if (base.navigationEndpoint.browseEndpoint) {
-        // console.warn(base.navigationEndpoint.browseEndpoint);
-        // return base.navigationEndpoint.browseEndpoint.canonicalBaseUrl; //for now
         return base.navigationEndpoint.browseEndpoint.browseId; //for now
       }
     } else if (base.searchEndpoint) {
