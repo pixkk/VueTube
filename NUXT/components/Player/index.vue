@@ -865,12 +865,12 @@ export default {
             }, 250);
     },
     qualityHandler(q) {
-      this.$refs.player.pause();
-      this.$refs.player.src = '';
-      this.$refs.player.load();
       console.log(q);
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
+      this.$refs.player.pause();
+      this.$refs.player.src = '';
+      this.$refs.player.load();
       this.$refs.player.src = q;
       this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;

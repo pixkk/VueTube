@@ -576,7 +576,7 @@ class Innertube {
     }).catch((error) => error);
 
     this.pot = this.getPot(this.visitorData, 2);
-    const response = await Http.post({
+    let response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
       data: {
         ...data,
@@ -613,12 +613,56 @@ class Innertube {
       headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
     }).catch((error) => error);
 
-    if (response.error)
+    if (response.data.playabilityStatus.status === "UNPLAYABLE") {
+      data.context.client.clientName = "ANDROID_VR";
+      data.context.client.clientVersion = "1.37";
+      response = await Http.post({
+        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
+        data: {
+          ...data,
+          ...{
+            playerParams: this.playerParams,
+            contentCheckOk: false,
+            racyCheckOk: false,
+            // mwebCapabilities: {
+            //   mobileClientSupportsLivestream: true,
+            // },
+
+            serviceIntegrityDimensions: {
+              poToken: this.pot
+            },
+            playbackContext: {
+              contentPlaybackContext: {
+                currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
+                vis: 0,
+                splay: false,
+                autoCaptionsDefaultOn: false,
+                autonavState: "STATE_NONE",
+                html5Preference: "HTML5_PREF_WANTS",
+                signatureTimestamp: this.signatureTimestamp,
+                referer: "https://m.youtube.com/",
+                lactMilliseconds: "-1",
+                watchAmbientModeContext: {
+                  watchAmbientModeEnabled: true,
+                },
+              },
+            },
+          },
+        },
+        // headers: constants.INNERTUBE_HEADER(this.context.client),
+        headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
+      }).catch((error) => error);
+
+    }
+
+    if (response.error) {
+
       return {
         success: false,
         status_code: response.status,
         message: response.message,
-      };
+      };}
+
     else if (responseNext.error)
       return {
         success: false,
@@ -883,8 +927,8 @@ class Innertube {
     //   responseInfo[3].response?.contents.singleColumnWatchNextResults?.results
     //     ?.results;
     let resolutions = responseInfo.streamingData;
-    let hls = responseInfo.streamingData.hlsManifestUrl ? responseInfo.streamingData.hlsManifestUrl : null;
-    let dash = responseInfo.streamingData.dashManifestUrl ? responseInfo.streamingData.dashManifestUrl : null;
+    let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
+    let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
     // console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
@@ -955,11 +999,15 @@ class Innertube {
         //Iterate the search parameters.
         let n = searchParams.get("n");
         //let clen = searchParams.get("clen");
+        let nValue = "";
+        if (n !== null) {
+          nValue = "&n=" + this.nfunction(n)
+        }
         searchParams.delete("n");
 
         // For some reasons, searchParams.delete not removes &n in music videos
         source["url"] = source["url"].replace(/&n=[^&]*/g, "");
-              source["url"] = source["url"] + "&n=" + this.nfunction(n);
+              source["url"] = source["url"] + nValue;
         // source["url"] = source["url"] + "&alr=yes";
         source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
         // source["url"] = source["url"] + "&ump=1";
