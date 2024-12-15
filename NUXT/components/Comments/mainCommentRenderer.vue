@@ -4,9 +4,9 @@
       <v-toolbar-title>
         <template v-for="text in commentData.headerText.runs">
           <template v-if="text.bold">
-            <strong :key="text.text">{{ text.text }}</strong>
+            <strong :key="text.text">{{ text.text + "(" + commentData.commentCount.runs[0].text + ")" }}</strong>
           </template>
-          <template v-else>{{ text.text }}</template>
+          <template v-else>{{ text.text }} {{ "(" + commentData.commentCount.runs[0].text + ")" }}</template>
         </template>
       </v-toolbar-title>
       <v-spacer></v-spacer>
@@ -23,14 +23,14 @@
       <v-list-item class="px-0">
         <component
           :is="Object.keys(comment)[0]"
-          v-if="getComponents()[Object.keys(comment)[0]]"
+          v-if="comment && getComponents()[Object.keys(comment)[0]]"
           :comment="comment[Object.keys(comment)[0]]"
           :continuationToken="comment.commentThreadRenderer?.replies?.commentRepliesRenderer.contents[0].continuationItemRenderer.button.buttonRenderer.command.continuationCommand.token"
           @intersect="paginate"
           @showReplies="openReply"
         ></component>
       </v-list-item>
-      <v-divider v-if="getComponents()[Object.keys(comment)[0]]"></v-divider>
+      <v-divider v-if="comment && getComponents()[Object.keys(comment)[0]]"></v-divider>
     </div>
 
     <div v-if="loading" class="loading">
