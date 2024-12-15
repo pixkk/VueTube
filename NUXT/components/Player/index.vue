@@ -558,13 +558,14 @@ export default {
     }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
-    this.$refs.player.type = this.sources[indexOfPreferredQuality].mimeType;
+    // console.warn(this.vidSrc);
+    // this.$refs.player.type = this.sources[indexOfPreferredQuality].mimeType;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
 
     this.sources.forEach((source) => {
       if (source.mimeType.indexOf("audio") > -1 && !this.audSrc) {
-        this.audSrc = source.url;
-        this.$refs.audio.type = source.mimeType;
+        // this.audSrc = source.url;
+        // this.$refs.audio.type = source.mimeType;
       }
     });
 
@@ -780,6 +781,10 @@ export default {
       if (this.xhr) this.xhr.abort();
       if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
+
+      this.$refs.player.pause();
+      this.$refs.player.src = '';
+      this.$refs.player.load();
       // screen.orientation.removeEventListener("change");
       this.$refs.player.removeEventListener("loadeddata", this.loadedDataEvent);
       this.$refs.player.removeEventListener("timeupdate", this.timeUpdateEvent);
@@ -860,6 +865,9 @@ export default {
             }, 250);
     },
     qualityHandler(q) {
+      this.$refs.player.pause();
+      this.$refs.player.src = '';
+      this.$refs.player.load();
       console.log(q);
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
