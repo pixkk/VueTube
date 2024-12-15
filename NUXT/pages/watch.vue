@@ -200,7 +200,7 @@
       />
 
       <!-- Comments -->
-      <div v-if="loaded && video.commentData" @click="toggleComment">
+      <div v-if="loaded && video.commentData && parseInt(video.commentData.commentCount.runs[0].text) > 1" @click="toggleComment">
         <v-card
           v-ripple
           flat
@@ -227,9 +227,9 @@
           <v-card-text class="comment-count keep-spaces px-0">
             <template v-for="text in video.commentData.headerText.runs">
               <template v-if="text.bold">
-                <strong :key="text.text">{{ text.text }}</strong>
+                <strong :key="text.text">{{ text.text + "(" + video.commentData.commentCount.runs[0].text + ")" }}</strong>
               </template>
-              <template v-else>{{ text.text }}</template>
+              <template v-else>{{ text.text }} {{ "(" + video.commentData.commentCount.runs[0].text + ")" }}</template>
             </template>
           </v-card-text>
           <v-icon v-if="showComments" dense>mdi-unfold-less-horizontal</v-icon>
