@@ -902,12 +902,10 @@ export default {
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {
-
         const html = await Http.get({
-          url: constants.URLS.YT_MOBILE + q.baseUrl,
+          url: (constants.URLS.YT_MOBILE + q.baseUrl).replace("https://www.youtube.com", ""),
           params: {},
         }).catch((error) => error);
-        console.log(html);
         let captions = convertTranscriptToVTT(html.data);
         function textToDataURL(text) {
           const blob = new Blob([text], { type: 'text/plain' });
