@@ -200,7 +200,7 @@
       />
 
       <!-- Comments -->
-      <div v-if="loaded && video.commentData && parseFloat(video.commentData.commentCount.runs[0].text) > 1" @click="toggleComment">
+      <div v-if="loaded && video.commentData && parseFloat(video.commentData.commentCount.runs[0].text.replace(',', '.')) > 1" @click="toggleComment">
         <v-card
           v-ripple
           flat
