@@ -83,6 +83,7 @@ export default {
   methods: {
     handleVolumeChange(value) {
       document.getElementsByTagName("audio")[0].volume = value;
+      document.getElementsByTagName("video")[0].volume = value;
       localStorage.setItem("volume", value);
     },
     handleBrightnessChange(value) {
@@ -92,6 +93,7 @@ export default {
   },
 mounted() {
   document.getElementsByTagName("audio")[0].volume = parseFloat(localStorage.getItem("volume")) || 1;
+  document.getElementsByTagName("video")[0].volume = parseFloat(localStorage.getItem("volume")) || 1;
   document.getElementsByTagName("video")[0].style.filter = `brightness(${parseFloat(localStorage.getItem("brightness")) || 1})`;
 }
 }
