@@ -1033,6 +1033,7 @@ class Innertube {
       ),
       channelImg: ownerData?.thumbnail?.thumbnails[0].url,
       captions: captions,
+      endscreen: responseInfo.endscreen,
       availableResolutions: resolutions.formats ? resolutions.formats : resolutions,
       availableResolutionsAdaptive: resolutions?.adaptiveFormats ? resolutions.adaptiveFormats : resolutions,
       hls: hls,

@@ -2,9 +2,10 @@
   <!-- // TODO: down: () => minimize, -->
   <div
     ref="vidcontainer"
-    class="d-flex flex-column black"
+    class="d-flex flex-column black justify-center"
     style="position: relative"
     :style="{
+      width: 'auto',
       height: isFullscreen ? '100vh' : 'auto',
       maxHeight: isFullscreen ? '' : '50vh',
       borderRadius:
@@ -15,10 +16,10 @@
           : '0',
     }"
   >
-    <video
-      preload="metadata"
-      ref="player"
-      v-touch="{
+      <video
+        preload="metadata"
+        ref="player"
+        v-touch="{
         up: () => {
           if (!isFullscreen) fullscreenHandler(true);
           else if (verticalFullscreen) shortNext();
@@ -27,12 +28,12 @@
           if (isFullscreen) fullscreenHandler(true);
         },
       }"
-      mediagroup="vuetubecute"
-      width="100%"
-      :src="hls || dash ? '' : vidSrc"
-      :height="isFullscreen ? '100%' : 'auto'"
-      style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
-      :class="
+        mediagroup="vuetubecute"
+        width="100%"
+        :src="hls || dash ? '' : vidSrc"
+        style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
+        height="auto"
+        :class="
         controls ||
         seeking ||
         skipping ||
@@ -43,7 +44,7 @@
             : 'dim'
           : ''
       "
-      :style="{
+        :style="{
         transform: shortTransition ? 'translateY(-100%)' : '',
         objectFit: contain ? 'contain' : 'cover',
         maxHeight: isFullscreen ? '' : '50vh',
@@ -54,14 +55,27 @@
               }rem 0rem 0rem !important`
             : '0',
       }"
-      :poster="poster"
-      id="playerVideo"
-      @loadedmetadata="checkDimensions()"
-      :autoplay="true"
-      @click="controlsHandler()"
-    >
-      <track default kind="captions" id="captions" src=""/>
-    </video>
+        :poster="poster"
+        id="playerVideo"
+        @loadedmetadata="checkDimensions()"
+        :autoplay="true"
+        @click="controlsHandler()"
+      >
+        <track default kind="captions" id="captions" src=""/>
+      </video>
+      <endscreen
+        v-if="$refs.player?.videoHeight"
+        ref="endscrn"
+        :endscreen="video.endscreen"
+        :isFullscreen="isFullscreen"
+        :video-height="$refs.player.videoHeight"
+        :video-width="$refs.player.videoWidth"
+        :video-block-height="$refs.player.height || $refs.vidcontainer.offsetHeight" :video-block-width="$refs.player.width === 100 ? $refs.vidcontainer.offsetWidth : $refs.player.width"
+        :current-time="$refs.player.currentTime"
+      :player-object="$refs.player"
+      />
+
+
     <button id="skipButton"
             ref="skipButton" class="skip-button"
     :style="{
@@ -384,9 +398,11 @@ import constants from "@/plugins/constants";
 import { Http } from "@capacitor-community/http";
 import { convertTranscriptToVTT } from "~/plugins/utils";
 import $youtube from "@/plugins/innertube";
+import Endscreen from "./endscreen.vue";
 
 export default {
   components: {
+    Endscreen,
     // player,
     sponsorblock,
     progressbar,
@@ -460,6 +476,25 @@ export default {
     };
   },
   async mounted() {
+    window.addEventListener("resize", ()=> {
+      this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
+      if (this.$refs.player.height < (50 * window.innerHeight) / 100) {
+        this.$refs.player.height = this.$refs.vidcontainer.offsetWidth / (this.$refs.player?.videoWidth / this.$refs.player?.videoHeight);
+      }
+    });
+    screen.orientation.addEventListener('change', (e)=> {
+
+      if (e.currentTarget.type === 'landscape-primary') {
+        this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
+        this.$refs.player.height = "auto";
+      } else if (e.currentTarget.type === 'portrait-primary') {
+        this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
+        if (this.$refs.player.height < (50 * window.innerHeight) / 100) {
+          this.$refs.player.height = this.$refs.vidcontainer.offsetWidth / (this.$refs.player?.videoWidth / this.$refs.player?.videoHeight);
+        }
+      }
+    });
+
     this.isSegment = false;
     this.poster = await $youtube.getThumbnail(this.$route.query.v, '', []);
 
@@ -674,17 +709,17 @@ export default {
         this.$refs.player.addEventListener("ended", this.endedEvent);
 
         this.$refs.player.addEventListener('pause', () => {
-          this.aud.pause();
+          this.$refs.audio.pause();
         });
         this.$refs.player.addEventListener('play', () => {
-          this.aud.play();
+          this.$refs.audio.play();
         });
 
 
       }
       else {
         this.vid.pause();
-        this.aud.pause();
+        this.$refs.audio.pause();
       }
     },
     seekingEvent() {
@@ -899,6 +934,10 @@ export default {
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
       this.$refs.audio.playbackRate = speed;
+      this.hls = false;
+      this.dash = false;
+      this.hlsStream = null;
+      this.aud = this.audSrc;
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {
@@ -1022,8 +1061,8 @@ export default {
       return this.$refs.player;
     },
     pauseHandler() {
-      this.vid.pause();
-      this.aud.pause();
+      this.$refs.player.pause();
+      this.$refs.audio.pause();
       clearTimeout(this.bufferingDetected);
       this.bufferingDetected = false;
     },

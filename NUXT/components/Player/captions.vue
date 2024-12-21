@@ -38,7 +38,6 @@
         >
           <v-list-item-group
             v-for="src in captions"
-            :key="src"
             >
             <v-list-item
               @click="(sheet = false), $emit('captionsHandler', src)">
