@@ -32,7 +32,7 @@
         width="100%"
         :src="hls || dash ? '' : vidSrc"
         style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
-        height="auto"
+        :height="isFullscreen ? '100%' : 'auto'"
         :class="
         controls ||
         seeking ||
@@ -178,7 +178,7 @@
     >
       <!-- top controls row -->
       <div
-        style="position: absolute; width: 100%; top: 0.25rem"
+        style="position: absolute; width: 100%; top: 0.25rem; filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-center px-2"
       >
         <minimize />
@@ -225,6 +225,7 @@
           position: absolute;
           left: 50%;
           top: 50%;
+          filter: drop-shadow(0 0 0.5rem #000)
         "
       >
         <v-btn
@@ -265,7 +266,7 @@
       <div
         :style="isFullscreen ? 'bottom: 4.25rem' : 'bottom: 0.5rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
-        style="position: absolute; width: 100%"
+        style="position: absolute; width: 100% ;  filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"
       >
         <watchtime
@@ -285,7 +286,7 @@
 
       <!-- bottom controls row -->
       <div
-        style="position: absolute; width: 100%; bottom: 0.5rem"
+        style="position: absolute; width: 100%; bottom: 0.5rem;  filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-between align-center px-2"
         @click.self="controlsHandler()"
       >
@@ -476,12 +477,6 @@ export default {
     };
   },
   async mounted() {
-    window.addEventListener("resize", ()=> {
-      this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
-      if (this.$refs.player.height < (50 * window.innerHeight) / 100) {
-        this.$refs.player.height = this.$refs.vidcontainer.offsetWidth / (this.$refs.player?.videoWidth / this.$refs.player?.videoHeight);
-      }
-    });
     screen.orientation.addEventListener('change', (e)=> {
 
       if (e.currentTarget.type === 'landscape-primary') {
