@@ -208,7 +208,7 @@ Progress
 |        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
 |               🟠 Auto Update (50%)               |      🔴 Picture in Picture (0%)       |                     🔴 Trending content (0%)                     |
 |              🟡 Channel Page (60%)               |           🟡 Captions (95%)            |                       🔴 Interactions (0%)                       |
-|             🟡 Community Posts (90%)             |             🔴 Cards (0%)             |                        🔴 Playlists (0%)                         |
+|             🟡 Community Posts (90%)             |             🟠 Cards (10%)             |                        🔴 Playlists (0%)                         |
 |         🟠 Customizable Shorts UI (10%)          |                                       |                      🔴 Notifications (0%)                       |
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 Customizable UI (30%)             |                                       |                                                                  |
