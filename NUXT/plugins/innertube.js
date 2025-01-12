@@ -1,6 +1,6 @@
 //⚠️🚧 WARNING: THIS FILE IS IN MAINTENANCE MODE 🚧⚠️
-// DO NOT ADD NEW FEATURES TO THIS FILE. INNERTUBE.JS IS NOW A SEPARATE LIBRARY
-// contribute to the library here: https://github.com/VueTubeApp/Vuetube-Extractor
+// NEW FEATURES FROM THIS FILE WILL BE TRASFERRED TO INNERTUBE.JS - A SEPARATE LIBRARY
+// New library: https://github.com/pixkk/Vuetube-Extractor (currently is not active)
 
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
@@ -87,11 +87,19 @@ class Innertube {
       } else if (/\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data)) {
         // 10.07.2023
         isMatch = /\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data);
-      } else {
+      } else if (/\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
+        baseJs.data
+      )){
         isMatch =
           /\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
             baseJs.data
           );
+      }
+      else {
+      // 12.01.2025
+        isMatch = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
+          baseJs.data
+        );
       }
       if (!isMatch) {
         console.warn(
