@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootOfEndscreen" class="d-flex justify-space-between" style="border-radius: 1px; position: absolute; left: 50%; transform: translate(-50%, -60%); " id="ttttttttttt" :style="{
+  <div ref="rootOfEndscreen" class="d-flex justify-space-between" style="border-radius: 1px; position: absolute; left: 50%; transform: translate(-50%, -60%); " :style="{
     maxHeight: '50vh',
     width: isFullscreen ? '100%' : 'fit-content',
     height: isFullscreen ? '100%' : 'fit-content',
@@ -14,7 +14,7 @@
   }">
       <div v-if="endscreen?.endscreenRenderer?.elements" v-for="element in endscreen?.endscreenRenderer?.elements"
       >
-        {{updatePlayerStyles}}
+        {{updatePlayerStyles()}}
         <div :style="{
         ...calculatePosition(element),
         width: calculateWidth(element),
@@ -153,6 +153,7 @@ export default {
       else {
         this.playerObject.style.filter = `brightness(50%)`;
       }
+      return "";
     },
     getStyleOfEndscreenElement(style) {
       if (!style) return {};
