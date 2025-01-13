@@ -27,6 +27,9 @@ jobs:
       - name: Set App Version
         working-directory: NUXT
         run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' nuxt.config.js
+      - name: Set App Version in build.gradle
+        working-directory: android/app
+        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle
       - name: Build web assets
         working-directory: NUXT
         run: npm run generate
@@ -101,6 +104,7 @@ jobs:
       - name: Build and archive with xcodebuild
         working-directory: ios
         run: xcodebuild
+          -downloadPlatform iOS -buildVersion 18.2
           -workspace App/App.xcworkspace
           -scheme App
           -archivePath App/build/App.xarchive
