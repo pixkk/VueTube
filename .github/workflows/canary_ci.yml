@@ -1,4 +1,4 @@
-name: CI
+name: Canary version creation
 
 on:
   workflow_dispatch:
