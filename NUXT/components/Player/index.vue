@@ -732,8 +732,8 @@ export default {
 
         this.$refs.player.play();
         this.$refs.audio.play();
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.bufferingDetected = false;
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
       }, 1000);
       // }
     },
@@ -742,8 +742,8 @@ export default {
     timeUpdateEvent() {
       if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 1000 / 1000) {
 
+        this.bufferingDetected = true;
         setTimeout(() => {
-          this.bufferingDetected = true;
           this.$refs.audio.currentTime = this.$refs.player.currentTime;
           this.bufferingDetected = false;
         }, 1000);
@@ -787,11 +787,11 @@ export default {
       this.videoEnded = true;
     },
     progressEvent() {
-      if (this.bufferingDetected) {
-        this.$refs.audio.currentTime = this.vid.currentTime;
-        clearTimeout(this.bufferingDetected);
-        this.bufferingDetected = false;
-      }
+      // if (this.bufferingDetected) {
+      //   this.$refs.audio.currentTime = this.vid.currentTime;
+      //   clearTimeout(this.bufferingDetected);
+      //   this.bufferingDetected = false;
+      // }
       if (
         this.$refs.audio.paused &&
         !this.$refs.player.paused &&
