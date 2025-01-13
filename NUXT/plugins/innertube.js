@@ -191,7 +191,7 @@ class Innertube {
           // console.log(functionNameForInserting);
           // console.log(fourthFunction[0]);
           // console.log(thirdFunction[0]);
-          let inFFKV = fourthFunction[0].match(/([A-z0-9]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
+          let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
           // console.warn(inFFKV);
           let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
           // console.warn(fourthFunctionKeyValue);
