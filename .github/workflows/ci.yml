@@ -25,6 +25,9 @@ jobs:
       - name: Set App Version
         working-directory: NUXT
         run: sed -i 's/dev-local/${{ github.sha }}/' nuxt.config.js
+      - name: Set App Version in build.gradle
+        working-directory: android/app
+        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle
       - name: Build web assets
         working-directory: NUXT
         run: npm run generate
@@ -93,7 +96,7 @@ jobs:
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: 16.1.0
       - name: Add `GoogleService-Info.plist`
         run: echo "${{ env.GOOGLE_SERVICE_INFO_PLIST }}" > ios/App/App/GoogleService-Info.plist
       - name: Build and archive with xcodebuild
