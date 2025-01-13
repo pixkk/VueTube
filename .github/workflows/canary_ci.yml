@@ -104,7 +104,6 @@ jobs:
       - name: Build and archive with xcodebuild
         working-directory: ios
         run: xcodebuild
-          -downloadPlatform iOS -buildVersion 18.2
           -workspace App/App.xcworkspace
           -scheme App
           -archivePath App/build/App.xarchive
