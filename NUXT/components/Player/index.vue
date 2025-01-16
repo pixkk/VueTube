@@ -314,11 +314,8 @@
                 : {}
           "
         />
-        <v-btn v-if="isFullscreen" fab text small disabled @click.stop="">
-          <v-icon>mdi-cards-outline</v-icon>
-        </v-btn>
         <!-- placeholder for moving fullscreen button above -->
-        <v-btn v-else fab text small disabled> </v-btn>
+        <v-btn fab text small @click="fullscreenHandler(true)"> </v-btn>
       </div>
       <!-- bottom controls row -->
     </div>
@@ -691,8 +688,8 @@ export default {
           this.$refs.player.playbackRate = 1;
         }
 
-        this.$refs.player.loop = this.$store.state.player.loop;
-        this.$refs.audio.loop = this.$store.state.player.loop;
+        this.$refs.player.loop = this.$store.state.player.loop || false;
+        this.$refs.audio.loop = this.$store.state.player.loop || false;
         this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
         // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
@@ -980,10 +977,10 @@ export default {
     fullscreenHandler(pressedFullscreenBtn) {
       // Prevent fullscreen button press from being handled twice
       // (once by pressing fullscreen button, another by the resulting rotation)
-      if (this.midRotation) {
-        this.midRotation = false;
-        return;
-      }
+      // if (this.midRotation) {
+      //   this.midRotation = false;
+      //   return;
+      // }
       // Toggle fullscreen state
       if (this.isFullscreen) {
         this.exitFullscreen(pressedFullscreenBtn);

@@ -452,10 +452,14 @@ export default {
     },
     loop: {
       get() {
-        return this.$store.state.player.loop;
+        return this.$store.state.player.loop || false;
       },
       set(value) {
-        this.$store.commit("player/setLoop", value);
+        if (value) {
+          this.$store.commit("player/setLoop", value);
+        } else {
+          this.$store.commit("player/setLoop", false);
+        }
       },
     },
     speed: {
