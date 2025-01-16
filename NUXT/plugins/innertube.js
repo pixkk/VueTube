@@ -84,9 +84,9 @@ class Innertube {
           /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
             baseJs.data
           );
-      } else if (/\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data)) {
+      } else if (/\{[A-Za-z]=[A-Za-z]\.split\(""[^"]*""\)\};/i.exec(baseJs.data)) {
         // 10.07.2023
-        isMatch = /\{a=a\.split\(""[^"]*""\)\};/i.exec(baseJs.data);
+        isMatch = /\{[A-Za-z]=[A-Za-z]\.split\(""[^"]*""\)\};/i.exec(baseJs.data);
       } else if (/\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
         baseJs.data
       )){
@@ -104,9 +104,8 @@ class Innertube {
         );
       }
       else {
-        // TODO: Optimize regex patterns
-        // 13.01.2025
-        isMatch = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
+        // 16.01.2025
+        isMatch = /{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
           baseJs.data
         );
       }
@@ -270,23 +269,28 @@ class Innertube {
           "s"
         ).exec(baseJs.data)[2];
       }
+      console.warn("NFunction - 1 error");
     }else {
       challenge_name = /[A-z0-9$]=String\.fromCharCode\(110\),[A-z0-9$]=[A-z0-9$]\.get\([A-z0-9$]\)\)&&\([A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\),[A-z0-9$]\.set\([A-z0-9$],[A-z0-9$]\)/i.exec(baseJs.data);
 
       if (challenge_name === null) {
-
-        challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(baseJs.data);
+        console.warn("NFunction - 2 error");
+        challenge_name = /\nvar [A-z0-9_$]+=\[[A-z0-9_$]+\];/i.exec(baseJs.data);
       }
       else {
+        console.warn("NFunction - success");
         challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(challenge_name[0]);
       }
 
-      challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
+      // challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
+      challenge_name = /^.*?=\s*\[(.*)\];/gm.exec(challenge_name[0])[1];
 
-      challenge_name = new RegExp(
-        `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
-
-      challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
+      // challenge_name = new RegExp(
+      //   `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
+      // console.warn(challenge_name);
+      //
+      // challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
+      // console.warn(challenge_name);
 
       challenge_name = challenge_name.replace("$", "\\$");
 
@@ -315,9 +319,6 @@ class Innertube {
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
-    // console.warn(fullCode);
-    // console.warn(fullCode);
-    // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -338,8 +339,13 @@ class Innertube {
       url: baseJsUrl,
     }).catch((error) => error);
     await this.makeDecipherFunction(baseJs);
+
+    console.warn("one");
     await this.getNFunction(baseJs);
+    console.warn("two");
     await this.getPOTFunction(baseJs);
+    console.warn("three");
+
     try {
       if (html instanceof Error && this.checkErrorCallback)
         this.ErrorCallback(html.message, true);
@@ -385,11 +391,13 @@ class Innertube {
       }
     } catch (error) {
       this.ErrorCallback(error, true);
+      console.error(error);
     }
   }
 
   static async createAsync(ErrorCallback) {
     const created = new Innertube(ErrorCallback);
+
     await created.initAsync();
     return created;
   }
