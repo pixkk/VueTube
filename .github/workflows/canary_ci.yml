@@ -29,7 +29,7 @@ jobs:
         run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' nuxt.config.js
       - name: Set App Version in build.gradle
         working-directory: android/app
-        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle
+        run: cd ..; cd android/app; sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle
       - name: Build web assets
         working-directory: NUXT
         run: npm run generate
