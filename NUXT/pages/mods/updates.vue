@@ -94,7 +94,7 @@
           :class="
             $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
           "
-          @click="$router.go(-1)"
+          @click="navigateBack"
         >
           {{ lang.later }}
         </v-btn>
@@ -143,10 +143,17 @@ export default {
     this.mkdwn = new showdown.Converter();
     this.mkdwn.setOption('tables', true);
 
-    this.getLatest();
+    await this.getLatest();
   },
 
   methods: {
+    navigateBack() {
+      if (window.history.length > 2) {
+        this.$router.go(-1);
+      } else {
+        this.$router.push('/');
+      }
+    },
     async getUpdate() {
       const device = await Device.getInfo();
       const platform = device.platform;
@@ -177,7 +184,7 @@ export default {
     async getLatest() {
       //---   Get Latest Version   ---//
       this.status = "checking";
-      const releases = await this.$vuetube.releases;
+      const releases = await this.$vuetube.checkForUpdates();
       this.latestVersion = releases[0];
 
       //---   Wait like 2 seconds because if people don't see loading, they think it didn't refresh properly   ---//
@@ -185,10 +192,10 @@ export default {
         await require("~/plugins/utils").delay(2000);
 
       //---   Get Proper File   ---//
-      this.getUpdate();
+      await this.getUpdate();
 
       //---   Kick Off Update Notice   ---//
-      if (this.latestVersion.tag_name != this.installedVersion) {
+      if (this.latestVersion.tag_name !== this.installedVersion) {
         this.status = "available";
       } else {
         this.status = "latest";

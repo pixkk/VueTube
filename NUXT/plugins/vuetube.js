@@ -24,19 +24,26 @@ const module = {
   },
 
   //---   Get GitHub Commits   ---//
-  releases: new Promise((resolve, reject) => {
-    Http.request({
-      method: "GET",
-      url: `${constants.URLS.VT_GITHUB}/releases`,
-      params: {},
-    })
-      .then((res) => {
-        resolve(res.data);
+  // releases: await checkForUpdates(),
+  async checkForUpdates() {
+    return new Promise((resolve, reject) => {
+      Http.request({
+        method: "GET",
+        url: `${constants.URLS.VT_GITHUB}/releases`,
+        params: {},
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
       })
-      .catch((err) => {
-        reject(err);
-      });
-  }),
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    })
+  },
+
 
   haptics: {
     async hapticsImpactHeavy(x) {
