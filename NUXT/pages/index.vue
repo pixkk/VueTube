@@ -50,11 +50,16 @@
     >
       {{ progressMsg }}...
     </div>
+
+    <updateChecker />
   </div>
 </template>
 
 <script>
+import UpdateChecker from "../components/updateChecker.vue";
+
 export default {
+  components: {UpdateChecker},
   layout: "empty",
 
   data: () => ({
@@ -80,7 +85,17 @@ export default {
       return this.$router.replace("/activities/update");
 
     //---   Start Innertube Connection   ---//
-    await this.$youtube.getAPI();
+    try {
+      // throw "e";
+      await this.$youtube.getAPI();
+    }
+    catch (e) {
+      this.progressMsg = "Error: " + e + ". Checking for updates";
+      setTimeout(() => {
+        this.$router.replace("/mods/updates");
+      }, 3000);
+      return ;
+    }
     this.progressMsg = this.$lang("index").launching;
 
     if (localStorage.getItem("firstTimeSetupComplete")) {
