@@ -82,7 +82,6 @@
 
     <bottomNavigation v-if="!search" />
 
-    <updateChecker />
   </v-app>
 </template>
 
