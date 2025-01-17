@@ -582,7 +582,7 @@ export default {
         ) {
           indexOfPreferredQuality = i;
         }
-        if (this.sources[i].mimeType.indexOf("audio") > -1) {
+        if (this.sources[i]?.audioQuality && this.sources[i]?.audioQuality === "AUDIO_QUALITY_MEDIUM") {
           this.audSrc = this.sources[i].url;
         }
       }
