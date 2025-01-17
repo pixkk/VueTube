@@ -19,6 +19,9 @@ class rendererUtils {
       if (base.navigationEndpoint.browseEndpoint) {
         return base.navigationEndpoint.browseEndpoint.browseId; //for now
       }
+      else if (base.navigationEndpoint.watchEndpoint){
+        return `/watch?v=${base.navigationEndpoint.watchEndpoint.videoId}&t=${base.navigationEndpoint.watchEndpoint.startTimeSeconds}`; //for now
+      }
     } else if (base.searchEndpoint) {
       return `/search?q=${encodeURI(base.searchEndpoint.query)}`;
     }
