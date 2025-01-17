@@ -27,9 +27,6 @@ jobs:
       - name: Set App Version
         working-directory: NUXT
         run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' nuxt.config.js
-      - name: Set App Version in build.gradle
-        working-directory: android/app
-        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle
       - name: Build web assets
         working-directory: NUXT
         run: npm run generate
@@ -65,6 +62,9 @@ jobs:
         run: npx cap copy android
       - name: Update native platform
         run: npx cap update android
+      - name: Set App Version in build.gradle
+        working-directory: android
+        run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle;
       - name: Build with Gradle
         working-directory: android
         run: chmod +x gradlew; ./gradlew clean assembleRelease -x test -Pandroid.injected.signing.store.file=/home/runner/work/VueTube/VueTube/android/key.jks -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_STORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
