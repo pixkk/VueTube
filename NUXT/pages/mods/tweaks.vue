@@ -1,5 +1,5 @@
 <template>
-  <div class="container-max-height d-flex flex-column justify-end">
+  <div class="container-max-height d-flex flex-column">
     <!-- // TODO: outer radius -->
     <!-- // TODO: Dense Navbar -->
     <!-- // TODO: Disable Top Bar -->
