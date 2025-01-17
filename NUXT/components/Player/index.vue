@@ -210,7 +210,7 @@
           @loop="
             ($refs.player.loop = !$refs.player.loop),
               ($refs.audio.loop = !$refs.audio.loop),
-              $store.commit('player/setLoop', $event)
+              $store.commit('player/setLoop', $refs.player.loop)
           "
         />
         <close />
