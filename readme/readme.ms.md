@@ -1,18 +1,12 @@
-
->[!TIP]
->01.08.2024 - KAMI MEMPUNYAI ISU DENGAN PEMBANGUNAN VUETUBE -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)
->
->**18.08.2024 - Masalah diselesaikan**
-
 <p align="center">
     <a href="https://pixkk.com/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
@@ -179,13 +173,13 @@ Kemajuan
 
  <br>
  
-|                   **Umum**                    |              **Pemain**               | [**Extractor**](https://github.com/VueTubeApp/VueTube-Extractor) |
+|                   **Umum**                    |              **Pemain**               | [**Extractor**](https://github.com/pixkk/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
-|                🟡 Komen (90%)                |        🟢 Main / Jeda (100%)         |                  🟢 Search Autocomplete (100%)                   |
+|                🟡 Komen (95%)                |        🟢 Main / Jeda (100%)         |                  🟢 Search Autocomplete (100%)                   |
 |              🟢 Huraian (description) (100%)               | 🟢 Ketik untuk tunjuk / sorok kawalan video (100%) |                       🟢 Laman utama (100%)                        |
 |               🟢 Laman utama (100%)                |      🟠 _Seekbar / Scrubber_ (80%)      |                         🟢 Search (100%)                         |
-|            🟢 Pengintegrasian RYD (100%)             |          🟠 Skrin penuh (80%)          |                    🟠 Maklumat video (60%)                    |
-|                 🟢 Tema (100%)                 |      🟡 Pemilih Resolusi (95%)       |                         🔴 Saluran (0%)                         |
+|            🟢 Pengintegrasian RYD (100%)             |          🟠 Skrin penuh (85%)          |                    🟠 Maklumat video (60%)                    |
+|                 🟡 Tema (100%)                 |      🟡 Pemilih Resolusi (95%)       |                         🔴 Saluran (0%)                         |
 |               🟢 Halaman Tonton (100%)               |          🔴 Pemain mini (0%)           |                         🔴 Komen (0%)                         |
 |        🟡 Pengintegrasian Sponsorblock (90%)         |        🔴 Main video di latar belakang (0%)        |                        🔴 Sembang Langsung (0%)                         |
 |               🟠 Kemaskini Auto (50%)               |      🔴 Gambar dalam gambar (0%)       |                     🔴 Kandungan sohor kini (0%)                     |
@@ -195,11 +189,11 @@ Kemajuan
 |        🟠 UI YT Music yang boleh diubahsuai (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 UI yang boleh diubahsuai (30%)             |                                       |                                                                  |
 |             🟠 Halaman Pustaka (10%)              |                                       |                                                                  |
-|                 🟠 Balasan (50%)                 |                                       |                                                                  |
+|                 🟡 Balasan (90%)                 |                                       |                                                                  |
 |           🟠 _Plugin_ Pihak Ketiga (40%)           |                                       |                                                                  |
 |  🟠 Pemain VueTube (Lihat kemajuan di sebelah kanan)   |                                       |                                                                  |
 | 🟠 _VueTube Extractor_ (Lihat kemajuan di sebelah kanan) |                                       |                                                                  |
-|           🔴 Sejarah Tontonan Tempatan (0%)            |                                       |                                                                  |
+|           🟢 Sejarah Tontonan Tempatan (100%)            |                                       |                                                                  |
 |            🔴 Halaman Langganan (0%)            |                                       |                                                                  |
 |          🔴 Sokongan Platform Lain (0%)          |                                       |                                                                  |
   
@@ -235,7 +229,7 @@ Sekiranya anda mahu menterjemahkan aplikasi ini, [klik di sini](/NUXT/plugins/la
 Penyumbang-penyumbang GitHub
 </h2>
 
-<a href="https://github.com/VueTubeApp/VueTube/graphs/contributors">
+<a href="https://github.com/pixkk/VueTube/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=pixkk/VueTube" />
 </a>
 
@@ -266,9 +260,9 @@ Derma
 
 VueTube adalah dan sentiasa akan percuma dan sumber terbuka, tetapi anda boleh menyokong pembangun kami dengan derma yang akan membantu untuk mengekalkan projek ini dan membangunkan ciri-ciri baru. Sebarang jenis pertolongan adalah sangat dialu-alukan! Berikut adalah pilihan menderma yang tersedia:
 
-[Derma di Ko-Fi.com](https://ko-fi.com/vuetube) (Rasmi)
+[Derma kepada Pixkk di Ko-Fi.com](https://ko-fi.com/W7W216PASY) (Pixkk)
 
-[Derma kepada PickleNik di GitHub](https://github.com/sponsors/PickleNik) (Penyelenggara)
+[Derma kepada PickleNik di GitHub](https://github.com/sponsors/PickleNik) (Penyelenggara VueTube yang asal)
 
 <h2 align="left">
 <sub>
@@ -297,18 +291,18 @@ Repositori VueTube yang lain
 
 <br>
 
-<a href="https://github.com/VueTubeApp/VueTube-Extractor">
+<a href="https://github.com/pixkk/VueTube-Extractor">
     <picture>
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor"
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor"
         alt="VueTube Extractor"
        />
     </picture>
@@ -316,18 +310,18 @@ Repositori VueTube yang lain
 
 **VueTube Extractor** ialah pustaka yang direka untuk mengekstrak data dari perkkhidmatan penstriman, direka untuk digunakan dalam apl VueTube.
 
-<a href="https://github.com/VueTubeApp/VueTube-Translator">
+<a href="https://github.com/pixkk/VueTube-Translator">
     <picture>
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator"
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator"
         alt="VueTube Extractor"
        />
     </picture>
@@ -335,18 +329,18 @@ Repositori VueTube yang lain
 
 **VueTube Translator** ialah alat untuk menterjemahkan medan fail GitHub seperti JSON or JS dan mengeksport hasil dengan struktur yang betul. Ia dibuat untuk membantu penterjemah VueTube, tetapi boleh digunakan untuk tujuan lain.
 
-<a href="https://github.com/VueTubeApp/vuetube-http">
+<a href="https://github.com/pixkk/vuetube-http">
     <picture>
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http"
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http"
         alt="VueTube Extractor"
        />
     </picture>
