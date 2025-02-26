@@ -169,12 +169,7 @@ class Innertube {
     if (firstFunction) {
       firstFunctionName = firstFunction[0].match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
-      // console.log(firstFunction[0]);
-      // console.log(firstFunctionName);
-      // console.log(firstFunctionName);
-      // console.log(firstFunctionName);
       if (secondFunction) {
-        // console.log(secondFunction[0]);
         let optimizedSecondFunc = secondFunction[0];
 
 
@@ -186,36 +181,23 @@ class Innertube {
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9]+)\=[A-z0-9]+\(([A-z0-9]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
 
-
-        // console.log(optimizedSecondFunc);
         secondFunctionName = optimizedSecondFunc.match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
-
 
 
 
         if (thirdFunction) {
           let functionNameForInserting = /[A-z0-9$]+\(\)/.exec(thirdFunction[0])[0];
-          // let thirdFunction[0] = thirdFunction[0].replace(functionForInserting + "=", secondFunctionName);
-          // console.log(functionNameForInserting);
-          // console.log(fourthFunction[0]);
-          // console.log(thirdFunction[0]);
+
           let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
-          // console.warn(inFFKV);
+
           let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
-          // console.warn(fourthFunctionKeyValue);
+
           let modifiedThirdFunction = thirdFunction[0].replace(functionNameForInserting, "var "+ inFFKV +"={};\nvar "+fourthFunctionKeyValue+"=null;\n"+"var "+optimizedSecondFunc+";\n"+fourthFunction[0]+"\n"+functionNameForInserting+";\n");
 
-
-          //
-          // console.warn(modifiedThirdFunction);
           let fourthFunctionTwoKeyValue = modifiedThirdFunction.match(/[A-Za-z0-9$]+\[[A-Za-z0-9$]+\]=[A-Za-z0-9$]+;/)[0].split('[')[0];
-          // console.warn(fourthFunctionTwoKeyValue);
 
           modifiedThirdFunction = modifiedThirdFunction.replace(functionNameForInserting+";\n", functionNameForInserting+";\nvar "+fourthFunctionTwoKeyValue+"="+secondFunctionName+"("+fourthFunctionTwoKeyValue+")\n");
-
           modifiedThirdFunction = modifiedThirdFunction.replace("var "+fourthFunctionKeyValue+"=null;\n", "var "+fourthFunctionKeyValue+"=null;\n");
-
-          // console.warn(modifiedThirdFunction);
           resultF = modifiedThirdFunction;
         }
 
@@ -224,13 +206,9 @@ class Innertube {
 
         }
         const match = resultF.match(/function\s*\(([^)]+)\)/);
-        let functionArg = "";
         if (match) {
-          // console.error(match);
-          // functionArg = match[1].trim();
         }
 
-        // let challenge_name = "CHALLENGE_NAME";
         const fullCode =
           "var getPot=" + resultF + " return getPot;";
         // console.error(fullCode);
@@ -319,6 +297,7 @@ class Innertube {
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -355,7 +334,7 @@ class Innertube {
           "{" + getBetweenStrings(html.data, "ytcfg.set({", ");")
         );
         // console.warn(data);
-        this.visitorData = data.VISITOR_DATA;
+        this.visitorData = data.VISITOR_DATA || data.EOM_VISITOR_DATA;
         if (data.INNERTUBE_CONTEXT) {
           this.key = data.INNERTUBE_API_KEY;
           this.context = data.INNERTUBE_CONTEXT;
