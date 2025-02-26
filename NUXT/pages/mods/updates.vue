@@ -44,7 +44,7 @@
       <div>
         {{ lang.installed }}:
         {{ installedVersion.substring(0, 7) || "Unknown" }}
-        ({{ installedChannel }})
+        {{ installedChannel.toLowerCase() === "unstable" ? "(unstable)" : "" }}
       </div>
       <div>{{ lang.latest }}: {{ latestVersion.tag_name }}</div>
 
@@ -77,7 +77,7 @@
       >
         <b>Changelog</b>
       </div>
-      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="new showdown.Converter().makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
+      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
       </div>
 
       <v-progress-linear
@@ -94,7 +94,7 @@
           :class="
             $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
           "
-          @click="$router.go(-1)"
+          @click="navigateBack"
         >
           {{ lang.later }}
         </v-btn>
@@ -123,6 +123,7 @@ export default {
       installedVersion: process.env.version,
       installedChannel: process.env.channel,
       latestVersion: "",
+      mkdwn: null,
       lang: {},
       status: "checking",
       update: {
@@ -139,11 +140,20 @@ export default {
   async mounted() {
     //---   Setup Lang Pack   ---//
     this.lang = this.$lang("mods").updates;
+    this.mkdwn = new showdown.Converter();
+    this.mkdwn.setOption('tables', true);
 
-    this.getLatest();
+    await this.getLatest();
   },
 
   methods: {
+    navigateBack() {
+      if (window.history.length > 2) {
+        this.$router.go(-1);
+      } else {
+        this.$router.push('/');
+      }
+    },
     async getUpdate() {
       const device = await Device.getInfo();
       const platform = device.platform;
@@ -174,7 +184,7 @@ export default {
     async getLatest() {
       //---   Get Latest Version   ---//
       this.status = "checking";
-      const releases = await this.$vuetube.releases;
+      const releases = await this.$vuetube.checkForUpdates();
       this.latestVersion = releases[0];
 
       //---   Wait like 2 seconds because if people don't see loading, they think it didn't refresh properly   ---//
@@ -182,10 +192,10 @@ export default {
         await require("~/plugins/utils").delay(2000);
 
       //---   Get Proper File   ---//
-      this.getUpdate();
+      await this.getUpdate();
 
       //---   Kick Off Update Notice   ---//
-      if (this.latestVersion.tag_name != this.installedVersion) {
+      if (this.latestVersion.tag_name !== this.installedVersion) {
         this.status = "available";
       } else {
         this.status = "latest";

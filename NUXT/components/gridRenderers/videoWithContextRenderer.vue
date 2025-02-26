@@ -30,20 +30,26 @@ export default {
 
   computed: {
     thumbnailOverlayText() {
+    let text = "-";
+      // console.warn(this.video)
       this.video.thumbnailOverlays.forEach((thumbnail) => {
         if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
-          return thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text;
+          // console.warn(thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text)
+          text = thumbnail.thumbnailOverlayTimeStatusRenderer.text.runs[0].text;
         }
       });
-      return "";
+      // return this.video.lengthText? this.video.lengthText.runs[0].text :
+      // return "";
+      return text;
     },
     thumbnailOverlayStyle() {
+      let text = "-";
       this.video.thumbnailOverlays.forEach((thumbnail) => {
         if (thumbnail.thumbnailOverlayTimeStatusRenderer) {
-          return thumbnail.thumbnailOverlayTimeStatusRenderer.style;
+          text = thumbnail.thumbnailOverlayTimeStatusRenderer.style;
         }
       });
-      return "DEFAULT";
+      return text!== "-" ? text : "DEFAULT";
     },
 
     thumbnailSources() {
@@ -56,7 +62,7 @@ export default {
     parseBottom(video) {
       const bottomText = [
         video.shortBylineText?.runs[0].text,
-        video.shortViewCountText?.runs[0].text,
+        video.shortViewCountText?.runs[0].text + (video.shortViewCountText?.runs[1]?.text ? video.shortViewCountText?.runs[1]?.text : "") ,
       ];
       if (video.publishedTimeText?.runs[0].text)
         bottomText.push(video.publishedTimeText?.runs[0].text);

@@ -17,6 +17,7 @@
       color="white"
       :class="verticalFullscreen ? 'ma-2' : 'mr-2'"
       :disabled="item.disabled"
+      :hidden="item.hidden ? item.hidden : false"
     >
       <v-icon v-text="item.icon" />
     </v-btn>

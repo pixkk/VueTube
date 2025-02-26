@@ -51,8 +51,8 @@
       >
         {{
           sponsorBlockIntegration
-            ? "mdi-block-helper"
-            : "mdi-block-helper"
+            ? "mdi-account-cancel"
+            : "mdi-account-cancel"
         }}
       </v-icon>
       <div
@@ -79,7 +79,7 @@
           :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
-          Enable SponsorBlock integration with skipping all segments.
+          Enable SponsorBlock integration.
         </div>
       </div>
       <v-switch

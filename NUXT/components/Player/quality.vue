@@ -16,9 +16,9 @@
           v-on="on"
         >
           {{
-            sources.find((src) => src.url == currentSource.src).qualityLabel
-              ? sources.find((src) => src.url == currentSource.src).qualityLabel
-              : sources.find((src) => src.url == currentSource.src).quality
+            sources.find((src) => src.url == currentSource.src)?.qualityLabel
+              ? sources.find((src) => src.url == currentSource.src)?.qualityLabel
+              : sources.find((src) => src.url == currentSource.src)?.quality || "Auto"
           }}
         </v-btn>
       </template>
@@ -41,7 +41,6 @@
         >
           <v-list-item
             v-for="src in sources"
-            :key="src"
             two-line
             @click="(sheet = false), $emit('quality', src.url)"
           >
@@ -63,12 +62,12 @@
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>
-                {{ src.qualityLabel ? src.qualityLabel : "" }} ({{
+                {{ src.qualityLabel ? src.qualityLabel : "Auto" }} ({{
                   src.quality
                 }}) {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
               </v-list-item-title>
               <v-list-item-subtitle>
-                {{ src.mimeType }} {{ src.averageBitrate }}
+                {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}. AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>

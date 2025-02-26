@@ -2,9 +2,10 @@
   <!-- // TODO: down: () => minimize, -->
   <div
     ref="vidcontainer"
-    class="d-flex flex-column black"
+    class="d-flex flex-column black justify-center"
     style="position: relative"
     :style="{
+      width: 'auto',
       height: isFullscreen ? '100vh' : 'auto',
       maxHeight: isFullscreen ? '' : '50vh',
       borderRadius:
@@ -15,9 +16,10 @@
           : '0',
     }"
   >
-    <video
-      ref="player"
-      v-touch="{
+      <video
+        preload="metadata"
+        ref="player"
+        v-touch="{
         up: () => {
           if (!isFullscreen) fullscreenHandler(true);
           else if (verticalFullscreen) shortNext();
@@ -26,12 +28,12 @@
           if (isFullscreen) fullscreenHandler(true);
         },
       }"
-      mediagroup="vuetubecute"
-      width="100%"
-      :src="vidSrc"
-      :height="isFullscreen ? '100%' : 'auto'"
-      style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
-      :class="
+        mediagroup="vuetubecute"
+        width="100%"
+        :src="hls || dash ? '' : vidSrc"
+        style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
+        :height="isFullscreen ? '100%' : 'auto'"
+        :class="
         controls ||
         seeking ||
         skipping ||
@@ -42,7 +44,7 @@
             : 'dim'
           : ''
       "
-      :style="{
+        :style="{
         transform: shortTransition ? 'translateY(-100%)' : '',
         objectFit: contain ? 'contain' : 'cover',
         maxHeight: isFullscreen ? '' : '50vh',
@@ -53,11 +55,37 @@
               }rem 0rem 0rem !important`
             : '0',
       }"
-      :poster="$youtube.getThumbnail($route.query.v, 'max', [])"
-      @loadedmetadata="checkDimensions()"
-      @click="controlsHandler()"
-    />
-    <audio ref="audio" mediagroup="vuetubecute" :src="audSrc" />
+        :poster="poster"
+        id="playerVideo"
+        @loadedmetadata="checkDimensions()"
+        :autoplay="true"
+        @click="controlsHandler()"
+      >
+        <track default kind="captions" id="captions" src=""/>
+      </video>
+      <endscreen
+        v-if="$refs.player?.videoHeight"
+        ref="endscrn"
+        :endscreen="video.endscreen"
+        :isFullscreen="isFullscreen"
+        :video-height="$refs.player.videoHeight"
+        :video-width="$refs.player.videoWidth"
+        :video-block-height="$refs.player.height || $refs.vidcontainer.offsetHeight" :video-block-width="$refs.player.width === 100 ? $refs.vidcontainer.offsetWidth : $refs.player.width"
+        :current-time="$refs.player.currentTime"
+      :player-object="$refs.player"
+      />
+
+
+    <button id="skipButton"
+            ref="skipButton" class="skip-button"
+    :style="{
+      backgroundColor: 'primary',
+      display: isSegment ? 'block' : 'none',
+    }"
+
+    >Skip {{ sBblockCategoryText }}</button>
+
+    <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" />
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
@@ -150,7 +178,7 @@
     >
       <!-- top controls row -->
       <div
-        style="position: absolute; width: 100%; top: 0.25rem"
+        style="position: absolute; width: 100%; top: 0.25rem; filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-center px-2"
       >
         <minimize />
@@ -161,7 +189,20 @@
           </div>
         </div>
         <v-spacer />
-        <captions />
+        <settings
+            disabled="disabled"
+            aria-disabled="true"
+          v-if="$refs.player"
+          class="mx-2"
+          @volumeHandler="volumeHandler($event)"
+          @brightnessHandler="volumeHandler($event)"
+        />
+        <captions
+          v-if="$refs.player"
+          class="mx-2"
+          :captions="video.captions"
+          @captionsHandler="captionsHandler($event)"
+        />
         <loop
           v-if="$refs.player"
           class="mx-2"
@@ -169,7 +210,7 @@
           @loop="
             ($refs.player.loop = !$refs.player.loop),
               ($refs.audio.loop = !$refs.audio.loop),
-              $store.commit('player/setLoop', $event)
+              $store.commit('player/setLoop', $refs.player.loop)
           "
         />
         <close />
@@ -184,6 +225,7 @@
           position: absolute;
           left: 50%;
           top: 50%;
+          filter: drop-shadow(0 0 0.5rem #000)
         "
       >
         <v-btn
@@ -224,7 +266,7 @@
       <div
         :style="isFullscreen ? 'bottom: 4.25rem' : 'bottom: 0.5rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
-        style="position: absolute; width: 100%"
+        style="position: absolute; width: 100% ;  filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"
       >
         <watchtime
@@ -244,7 +286,7 @@
 
       <!-- bottom controls row -->
       <div
-        style="position: absolute; width: 100%; bottom: 0.5rem"
+        style="position: absolute; width: 100%; bottom: 0.5rem;  filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-between align-center px-2"
         @click.self="controlsHandler()"
       >
@@ -255,7 +297,7 @@
         <v-spacer />
         <!-- // TODO: merge the bottom 2 into 1 reusable component -->
         <quality
-          v-if="$refs.player && $refs.player.currentSrc"
+          v-if="$refs.player && $refs.player.currentSrc && (!hls || !dash)"
           :sources="sources"
           :current-source="$refs.player"
           @quality="qualityHandler($event)"
@@ -272,11 +314,8 @@
                 : {}
           "
         />
-        <v-btn v-if="isFullscreen" fab text small disabled @click.stop="">
-          <v-icon>mdi-cards-outline</v-icon>
-        </v-btn>
         <!-- placeholder for moving fullscreen button above -->
-        <v-btn v-else fab text small disabled> </v-btn>
+        <v-btn fab text small @click="fullscreenHandler(true)"> </v-btn>
       </div>
       <!-- bottom controls row -->
     </div>
@@ -344,6 +383,7 @@ import seekbar from "~/components/Player/seekbar.vue";
 import quality from "~/components/Player/quality.vue";
 import minimize from "~/components/Player/minimize.vue";
 import captions from "~/components/Player/captions.vue";
+import settings from "~/components/Player/settings.vue";
 import playpause from "~/components/Player/playpause.vue";
 import watchtime from "~/components/Player/watchtime.vue";
 import fscontrols from "~/components/Player/fscontrols.vue";
@@ -352,9 +392,16 @@ import progressbar from "~/components/Player/progressbar.vue";
 import sponsorblock from "~/components/Player/sponsorblock.vue";
 
 import backType from "~/plugins/classes/backType";
+import constants from "@/plugins/constants";
+import { Http } from "@capacitor-community/http";
+import { convertTranscriptToVTT } from "~/plugins/utils";
+import $youtube from "@/plugins/innertube";
+import Endscreen from "./endscreen.vue";
 
 export default {
   components: {
+    Endscreen,
+    // player,
     sponsorblock,
     progressbar,
     fullscreen,
@@ -368,6 +415,7 @@ export default {
     speed,
     close,
     loop,
+    settings
   },
   props: {
     video: {
@@ -377,6 +425,9 @@ export default {
     sources: {
       type: Array,
       required: true,
+    },
+    captions: {
+      type: Array,
     },
     recommends: {
       type: Object,
@@ -391,6 +442,7 @@ export default {
   },
   data() {
     return {
+      isPIP: false,
       isFullscreen: false,
       fullscreenLock: false,
       shortTransition: false,
@@ -405,15 +457,38 @@ export default {
       watched: 0,
       vidSrc: "",
       audSrc: "",
+      hls: null,
+      dash: null,
+      hlsStream: null,
+      dashStream: null,
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
       bufferingDetected: false,
       videoEnded: false,
       isMusic: false,
       sponsorBlocks: [],
       vid: null,
+      isSegment: false,
+      sBblockCategoryText: "",
+      endBlockTime: -1,
+      poster: "",
     };
   },
-  mounted() {
+  async mounted() {
+    screen.orientation.addEventListener('change', (e)=> {
+
+      if (e.currentTarget.type === 'landscape-primary') {
+        this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
+        this.$refs.player.height = "auto";
+      } else if (e.currentTarget.type === 'portrait-primary') {
+        this.$refs.player.width = this.$refs.vidcontainer.offsetWidth;
+        if (this.$refs.player.height < (50 * window.innerHeight) / 100) {
+          this.$refs.player.height = this.$refs.vidcontainer.offsetWidth / (this.$refs.player?.videoWidth / this.$refs.player?.videoHeight);
+        }
+      }
+    });
+
+    this.isSegment = false;
+    this.poster = await $youtube.getThumbnail(this.$route.query.v, '', []);
 
     console.log("SPSR BLCK" + this.sponsorBlocks);
     if (
@@ -422,26 +497,24 @@ export default {
     ) {
       this.$youtube.getSponsorBlock(this.video.id, (data) => {
         console.warn("sbreturn", data.segments);
-        // if (Array.isArray(data)) {
-          this.sponsorBlocks = data;
-          data.segments?.forEach((block) => {
-            if (block.category === "music_offtopic") {
-              this.isMusic = true;
-              this.$refs.audio.playbackRate = 1;
-              this.$refs.player.playbackRate = 1;
-            }
-          });
-        // }
+
+        this.sponsorBlocks = data;
+        data.segments?.forEach((block) => {
+          if (block.category === "music_offtopic") {
+            this.isMusic = true;
+            this.$refs.audio.playbackRate = 1;
+            this.$refs.player.playbackRate = 1;
+          }
+        });
+
       });
+    } else {
+
     }
-    else {
-      // this.sponsorBlocks = [];
-    }
-    // console.log("sources", this.sources);
-    // console.log("recommends", this.recommends);
-    // console.log("video", this.video);
+
     this.vid = this.$refs.player;
     this.aud = this.$refs.audio;
+
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
 
 
@@ -497,6 +570,7 @@ export default {
         this.sources.splice(i, 1);
       }
     }
+    this.sources.splice(0, 1);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       else {
@@ -508,7 +582,7 @@ export default {
         ) {
           indexOfPreferredQuality = i;
         }
-        if (this.sources[i].mimeType.indexOf("audio") > -1) {
+        if (this.sources[i]?.audioQuality && this.sources[i]?.audioQuality === "AUDIO_QUALITY_MEDIUM") {
           this.audSrc = this.sources[i].url;
         }
       }
@@ -524,15 +598,36 @@ export default {
     }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
+    // console.warn(this.vidSrc);
+    // this.$refs.player.type = this.sources[indexOfPreferredQuality].mimeType;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
 
     this.sources.forEach((source) => {
-      if (source.mimeType.indexOf("audio") > -1) {
-        this.audSrc = source.url;
+      if (source.mimeType.indexOf("audio") > -1 && !this.audSrc) {
+        // this.audSrc = source.url;
+        // this.$refs.audio.type = source.mimeType;
       }
     });
 
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+
+    this.hls = this.video.hls;
+    this.dash = this.video.dash;
+    if (this.hls) {
+      this.hlsStream = new Hls();
+      this.hlsStream.loadSource(this.hls);
+      this.hlsStream.attachMedia(this.vid);
+    } else if (this.dash) {
+      this.dashStream = dashjs.MediaPlayer().create();
+      this.dashStream.initialize(this.vid, this.dash, true);
+    }
+    else {
+      const url = new URL(window.location.href);
+
+      const tParam = url.searchParams.get("t");
+
+      this.setStartTime(tParam);
+    }
   },
   created() {
     screen.orientation.addEventListener("change", () =>
@@ -548,6 +643,24 @@ export default {
       this.loadedDataEvent();
     },
     loadedDataEvent() {
+
+      try {
+
+        window.navigation.addEventListener("navigate", (event) => {
+          const url = new URL(event.destination.url);
+
+          const tParam = url.searchParams.get("t");
+          this.setStartTime(tParam)
+        })
+      }catch (e) {
+        window.addEventListener('locationchange', function (event) {
+          const url = new URL(event.destination.url);
+
+          const tParam = url.searchParams.get("t");
+          this.setStartTime(tParam)
+        });
+
+      }
       // networkState: An integer property that represents the network state of the video. The possible values are:
       // NETWORK_EMPTY (0): No source has been set or the video element's load() method has not been called.
       // NETWORK_IDLE (1): The video element's load() method has been called, and the video is fetching the media resource.
@@ -562,8 +675,9 @@ export default {
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
       if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
-        this.vid.play();
         this.aud.play();
+        this.vid.play();
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.bufferingDetected = false;
 
         if (!this.isMusic) {
@@ -574,18 +688,63 @@ export default {
           this.$refs.player.playbackRate = 1;
         }
 
-        this.$refs.player.loop = this.$store.state.player.loop;
-        this.$refs.audio.loop = this.$store.state.player.loop;
+        this.$refs.player.loop = this.$store.state.player.loop || false;
+        this.$refs.audio.loop = this.$store.state.player.loop || false;
         this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
         // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
         this.$refs.player.addEventListener("progress", this.progressEvent);
+        this.$refs.player.addEventListener("seeking", this.seekingEvent);
+        this.$refs.player.addEventListener("seeked", this.seekedEvent);
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
         this.$refs.player.addEventListener("ended", this.endedEvent);
+
+        this.$refs.player.addEventListener('pause', () => {
+          this.$refs.audio.pause();
+        });
+        this.$refs.player.addEventListener('play', () => {
+          this.$refs.audio.play();
+        });
+
+
+      }
+      else {
+        this.vid.pause();
+        this.$refs.audio.pause();
       }
     },
+    seekingEvent() {
+      // if (this.seeking) {
+        console.log("seeking");
+      this.bufferingDetected = true;
+        this.$refs.player.pause();
+        this.$refs.audio.pause();
+      // }
+    },
+    seekedEvent() {
+      // if (!this.seeking) {
+        console.log("seeked");
+      setTimeout(() => {
+
+        this.$refs.player.play();
+        this.$refs.audio.play();
+        this.bufferingDetected = false;
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
+      }, 1000);
+      // }
+    },
+
+
     timeUpdateEvent() {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 1000 / 1000) {
+
+        this.bufferingDetected = true;
+        setTimeout(() => {
+          this.$refs.audio.currentTime = this.$refs.player.currentTime;
+          this.bufferingDetected = false;
+        }, 1000);
+      }
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
       // console.log("sb check", this.sponsorBlocks);
@@ -595,39 +754,59 @@ export default {
         let vidTime = this.vid.currentTime;
         // this.sponsorBlocks = data;
         // console.warn(data);
+      this.endBlockTime = -1;
         this.sponsorBlocks?.segments?.forEach((block) => {
           // block.segments.forEach((segments) => {
-          if (vidTime >= block.segment[0] && vidTime < block.segment[1] && this.videoEnded == false) {
-            console.log("Skipping the sponsor");
-            this.$youtube.showToast("Skipped "+ block.category + " sponsor");
-            this.$refs.player.currentTime = block.segment[1];
-            this.$refs.audio.currentTime = this.$refs.player.currentTime;
-          }
+          // console.log(this.vid.duration);
+            if (vidTime >= block.segment[0] && vidTime < block.segment[1]) {
+              this.endBlockTime = block.segment[1];
+              this.isSegment = true;
+              this.sBblockCategoryText = block.category;
+              this.$refs.skipButton.onclick = skipSegment.bind(null, this.$refs.player, this.vid.duration, this.$youtube, block.segment[1], block.category);
+
+              function skipSegment(param1, param2, param3, param4, param5) {
+                console.log("skipped");
+                param1.currentTime = param4;
+                param3.showToast("Skipped " + param5 + " sponsor");
+              }
+
+              // this.$refs.audio.currentTime = this.$refs.player.currentTime;
+              return;
+            }
+
           // });
         });
+        if (vidTime > this.endBlockTime) {
+          this.isSegment = false;
+        }
     },
     endedEvent() {
       this.videoEnded = true;
     },
     progressEvent() {
-      if (this.bufferingDetected) {
-        this.$refs.audio.currentTime = this.vid.currentTime;
-        clearTimeout(this.bufferingDetected);
-        this.bufferingDetected = false;
-      }
+      // if (this.bufferingDetected) {
+      //   this.$refs.audio.currentTime = this.vid.currentTime;
+      //   clearTimeout(this.bufferingDetected);
+      //   this.bufferingDetected = false;
+      // }
       if (
         this.$refs.audio.paused &&
         !this.$refs.player.paused &&
         this.$refs.player.readyState >= 3
       )
         this.$refs.audio.play();
-      this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
+      try {
+
+        this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
+      }catch (e) {
+
+      }
     },
     waitingEvent() {
       // buffering detection & sync
-      let threshold = 250; //ms after which user perceives buffering
+      let threshold = 1000; //ms after which user perceives buffering
       if (!this.$refs.player.paused) {
-        this.bufferingDetected = setTimeout(() => {
+        setTimeout(() => {
           this.bufferingDetected = true;
           this.$refs.audio.pause();
           //show buffering
@@ -636,17 +815,26 @@ export default {
     },
     playingEvent() {
       this.videoEnded = false;
-      if (this.bufferingDetected != false) {
+      if (this.bufferingDetected !== false) {
         clearTimeout(this.bufferingDetected);
-        this.$refs.audio.currentTime = this.vid.currentTime;
-        this.bufferingDetected = false;
+        // this.$refs.audio.currentTime = this.vid.currentTime;
+        this.vid.currentTime = this.$refs.audio.currentTime;
+        setTimeout(() => {
+
+          this.bufferingDetected = false;
+        }, 1000);
       }
       this.$refs.audio.play();
     },
     cleanup() {
+      if (this.hlsStream) this.hlsStream.destroy();
       if (this.xhr) this.xhr.abort();
       if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
+
+      this.$refs.player.pause();
+      this.$refs.player.src = '';
+      this.$refs.player.load();
       // screen.orientation.removeEventListener("change");
       this.$refs.player.removeEventListener("loadeddata", this.loadedDataEvent);
       this.$refs.player.removeEventListener("timeupdate", this.timeUpdateEvent);
@@ -730,11 +918,52 @@ export default {
       console.log(q);
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
+      this.$refs.player.pause();
+      this.$refs.player.src = '';
+      this.$refs.player.load();
       this.$refs.player.src = q;
       this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
       this.$refs.audio.playbackRate = speed;
+      this.hls = false;
+      this.dash = false;
+      this.hlsStream = null;
+      this.aud = this.audSrc;
+    },
+    async captionsHandler(q) {
+      if (q.baseUrl != null) {
+        const html = await Http.get({
+          url: (constants.URLS.YT_MOBILE + q.baseUrl).replace("https://www.youtube.com", ""),
+          params: {},
+        }).catch((error) => error);
+        let captions = convertTranscriptToVTT(html.data);
+        function textToDataURL(text) {
+          const blob = new Blob([text], { type: 'text/plain' });
+          const reader = new FileReader();
+          return new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+              resolve(reader.result);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+        textToDataURL(captions).then((dataurl) => {
+          document.getElementById("captions").src = dataurl;
+        })
+      }
+      else {
+        document.getElementById("captions").src = "";
+      }
+      const rootElement = document.getElementById('__nuxt');
+      rootElement.className += "web chrome";
+    },
+    volumeHandler(q) {
+
+    },
+    brightnessHandler(q) {
+
     },
     checkDimensions() {
       if (this.$refs.player.videoHeight > this.$refs.player.videoWidth) {
@@ -748,10 +977,10 @@ export default {
     fullscreenHandler(pressedFullscreenBtn) {
       // Prevent fullscreen button press from being handled twice
       // (once by pressing fullscreen button, another by the resulting rotation)
-      if (this.midRotation) {
-        this.midRotation = false;
-        return;
-      }
+      // if (this.midRotation) {
+      //   this.midRotation = false;
+      //   return;
+      // }
       // Toggle fullscreen state
       if (this.isFullscreen) {
         this.exitFullscreen(pressedFullscreenBtn);
@@ -813,6 +1042,13 @@ export default {
         )
       );
     },
+    setStartTime(startTime) {
+      console.warn(startTime);
+      if (startTime) {
+        this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
+        this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
+      }
+    },
     getPlayer() {
       return this.$refs.player;
     },
@@ -835,5 +1071,28 @@ export default {
 }
 .invisible {
   opacity: 0;
+}
+
+.chrome {
+  video::cue {
+    //font-size: 13.4px;
+    opacity: 1;
+    background-color: black;
+    -webkit-transform: translateY(10%) !important;
+    transform: translateY(10%) !important;
+  }
+}
+.skip-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  margin-bottom: 5rem;
+  background-color: var(--v-primary-base);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  //display: block;
+  z-index: 9999;
 }
 </style>

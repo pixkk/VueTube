@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between mb-2 mx-7">
+    <div class="d-flex justify-space-between mb-2 mx-4">
       <h4
         class="background--text w-50"
         :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
@@ -11,6 +11,10 @@
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </div>
+
+    <div class="d-flex justify-space-between mb-1 mx-4 ">
+      <v-divider v-if="!$store.state.tweaks.roundTweak" />
+    </div>
     <div class="d-flex flex-column-reverse">
       <playlist-card
         v-for="(playlist, index) in playlists"
@@ -19,27 +23,54 @@
         @click="changeToPlaylist(index)"
       />
     </div>
-
-    <v-btn
-      text
-      class="entry text-left setting-btn no-spacing"
-      to="/history"
-      nuxt
-      :style="{
-        borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
-        paddingLeft:
-          $store.state.tweaks.roundTweak > 0 ? '' : '1.5rem !important',
-      }"
-    >
-      <v-icon
+    <div class="d-flex justify-space-between mb-1 mx-4 ">
+      <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
+    </div>
+    <div class="d-flex justify-space-between mb-1 mx-4 ">
+      <v-btn
+        text
+        class="entry text-left setting-btn no-spacing pa-0"
+        to="/history"
+        nuxt
         :style="{
+        borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
+        borderColor: `primary`,
+        paddingLeft:
+          // $store.state.tweaks.roundTweak > 0 ? '' : '1.5rem !important',
+          $store.state.tweaks.roundTweak > 0 ? '' : '',
+      }"
+      >
+        <v-icon
+          :style="{
           borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
         }"
-        class=".icon"
+          class=".icon"
         >mdi-history</v-icon
+        >
+        Full history
+      </v-btn>
+    </div>
+
+    <div class="d-flex justify-space-between mb-1 mx-4 ">
+      <v-divider v-if="!$store.state.tweaks.roundTweak" />
+    </div>
+    <div class="d-flex justify-space-between mb-2 mx-4">
+      <h4
+        class="background--text w-50"
+        :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
-      History
-    </v-btn>
+        Last videos:
+      </h4>
+    </div>
+    <div>
+
+      <history-card
+        v-for="(historyVideo, index) in historyVideos.slice(0, 5)"
+        :key="index"
+        :video="historyVideo"
+        @deleted="deleteHistoryVideo(index)"
+      />
+    </div>
     <!-- Create Playlist Dialog -->
     <v-dialog v-model="dialog" width="500">
       <v-card
@@ -82,6 +113,10 @@ export default {
     playlists() {
       return this.$store.state.playlist.playlists;
     },
+
+    historyVideos() {
+      return this.$store.state.history.historyVideos;
+    },
   },
   mounted() {
     const lang = this.$lang();
@@ -94,6 +129,9 @@ export default {
     },
     changeToPlaylist: function (videoIndex) {
       this.$store.commit("playlist/changeToPlaylist", videoIndex);
+    },
+    deleteHistoryVideo(target) {
+      this.$store.commit("history/removeHistory", target);
     },
   },
 };
@@ -112,7 +150,8 @@ export default {
   width: 100%;
   font-size: 1.2em;
   justify-content: left !important;
-  padding: 1.5em 0.5em 1.5em 0.5em !important;
+  padding-top: 1.5em !important;
+  padding-bottom: 1.5em !important;
 }
 .icon {
   margin-right: 0.5em;

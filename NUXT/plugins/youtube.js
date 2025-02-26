@@ -3,14 +3,14 @@
 // contribute to the library here: https://github.com/VueTubeApp/Vuetube-Extractor
 
 //---   Modules/Imports   ---//
-import { Http } from "@capacitor-community/http";
+import {Http} from "@capacitor-community/http";
 import Innertube from "./innertube";
 import constants from "./constants";
 import rendererUtils from "./renderers";
-import { Buffer } from "buffer";
+import {Buffer} from "buffer";
 import iconv from "iconv-lite";
-import { Toast } from "@capacitor/toast";
-import { createHash } from "crypto";
+import {Toast} from "@capacitor/toast";
+import {createHash} from "crypto";
 
 function getEncoding(contentType) {
   // console.warn(contentType);
@@ -129,34 +129,56 @@ const innertubeModule = {
     try {
       return await InnertubeAPI.VidInfoAsync(id);
     } catch (error) {
-      console.error(error);
+      await this.getAPI();
+      return await InnertubeAPI.VidInfoAsync(id);
     }
   },
 
-  getThumbnail(id, resolution, backupThumbnail) {
-    if (backupThumbnail[backupThumbnail.length - 1]) {
-      return backupThumbnail[backupThumbnail.length - 1].url;
-    } else if (resolution == "max") {
-      const url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-      let img = new Image();
-      img.src = url;
-      img.onload = function () {
-        if (img.height !== 120) return url;
-      };
-    } else return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+  async getThumbnail(id, resolution, backupThumbnail) {
+    // 19.08.2024 - backupThumbnail temporary unused
+    if (resolution === "max" || resolution === "resmax") {
+      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      try {
+        let xhr = new XMLHttpRequest();
+        xhr.responseType = 'blob';
+        return new Promise((resolve, reject) => {
+          xhr.open('GET', maxResUrl, true);
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              resolve(URL.createObjectURL(xhr.response));
+            } else {
+              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+            }
+          };
+          xhr.send();
+        });
+      } catch (error) {
+        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+      }
+    }
+    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
   },
 
-  async getChannel(url, tab="main") {
-    try {
-      const response = await InnertubeAPI.getChannelAsync(url, tab);
 
-      console.log(response.data);
+  async getChannel(url, tab="main", continuation = null) {
+    if (tab === "aboutChannelInfo") {
+      const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
       return response.data;
-    } catch (error) {
-      console.error(error)
+    }
+    else {
+      try {
+        const response = await InnertubeAPI.getChannelAsync(url, tab);
+
+        // console.log(response.data);
+        return response.data;
+      } catch (error) {
+        console.error(error)
+      }
     }
   },
-
+  async getChannelHtml(channel_url) {
+    return await InnertubeAPI.getChannelHtml(channel_url);
+  },
   // It just works™
   // Front page recommendation
   async recommend() {
@@ -197,8 +219,7 @@ const innertubeModule = {
       const continuations =
         response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
           .tabRenderer.content.sectionListRenderer.continuations;
-      // console.log({ continuations: continuations, contents: final });
-      console.warn({ continuations: continuations, contents: final });
+      // console.warn({ continuations: continuations, contents: final });
 
       return { continuations: continuations, contents: final };
     } else {
@@ -277,51 +298,51 @@ const innertubeModule = {
       // const title = response.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].elementRenderer.newElement.type.componentType.model.feedNudgeModel.context
       let title;
-      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
-        (tab) => {
-          if (tab.itemSectionRenderer) {
-            if (
-              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                .type.componentType.model.feedNudgeModel
-            ) {
-              // console.warn(tab.itemSectionRenderer);
-              title =
-                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                  .type.componentType.model.feedNudgeModel.nudgeData.title
-                  .content;
-            }
-          } else {
-            title =
-              tab.tabRenderer.content.richGridRenderer.contents[1]
-                .richSectionRenderer.content.feedNudgeRenderer.title.runs[0]
-                .text;
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+          (tab) => {
+              if (tab.itemSectionRenderer) {
+                if (
+                  tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                    .type.componentType.model.feedNudgeModel
+                ) {
+                  // console.warn(tab.itemSectionRenderer);
+                  title =
+                    tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                      .type.componentType.model.feedNudgeModel.nudgeData.title
+                      .content;
+                }
+              } else {
+                title =
+                  tab.tabRenderer.content.richGridRenderer.contents[1]
+                    .richSectionRenderer.content.feedNudgeRenderer.title.runs[0]
+                    .text;
+              }
           }
-        }
-      );
+        );
 
       let subtitle;
 
-      response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
-        (tab) => {
-          if (tab.itemSectionRenderer) {
-            if (
-              tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                .type.componentType.model.feedNudgeModel
-            ) {
-              // console.warn(tab.itemSectionRenderer);
-              subtitle =
-                tab.itemSectionRenderer.contents[0].elementRenderer.newElement
-                  .type.componentType.model.feedNudgeModel.nudgeData.subtitle
-                  .content;
-            }
-          } else {
-            subtitle =
-              tab.tabRenderer.content.richGridRenderer.contents[1]
-                .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
-                .text;
+        response.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents.forEach(
+          (tab) => {
+              if (tab.itemSectionRenderer) {
+                if (
+                  tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                    .type.componentType.model.feedNudgeModel
+                ) {
+                  // console.warn(tab.itemSectionRenderer);
+                  subtitle =
+                    tab.itemSectionRenderer.contents[0].elementRenderer.newElement
+                      .type.componentType.model.feedNudgeModel.nudgeData.subtitle
+                      .content;
+                }
+              } else {
+                subtitle =
+                  tab.tabRenderer.content.richGridRenderer.contents[1]
+                    .richSectionRenderer.content.feedNudgeRenderer.subtitle.runs[0]
+                    .text;
+              }
           }
-        }
-      );
+        );
 
       // title = response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.sectionListRenderer
@@ -359,7 +380,7 @@ const innertubeModule = {
 
       // console.log(response.data.contents.singleColumnBrowseResultsRenderer.tabs[0]
       //   .tabRenderer.content.richGridRenderer);
-      return { title: title, subtitle: subtitle };
+        return { title: title, subtitle: subtitle };
     }
   },
 
@@ -416,7 +437,8 @@ const innertubeModule = {
 
   async getContinuation(continuation, endpoint, mode = "android") {
     let contextAdditional = {};
-    if (mode.toLowerCase() == "web") {
+    console.log("mode: ", mode);
+    if (mode.toLowerCase() === "web") {
       contextAdditional = {
         ...contextAdditional,
         ...{

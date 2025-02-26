@@ -12,7 +12,7 @@
     <div style="position: relative" class="thumbnail-container overflow-hidden">
       <v-img
         :aspect-ratio="16 / 9"
-        :src="$youtube.getThumbnail(vidId, 'max', thumbnails)"
+        :src="thumbnailUrl"
         :style="{
           borderRadius: roundThumb ? `${roundTweak / 12}rem` : '0',
         }"
@@ -101,6 +101,11 @@ export default {
       type: String,
     },
   },
+  data() {
+    return {
+      thumbnailUrl: '', // This will hold the resolved URL from getThumbnail
+    };
+  },
 
   computed: {
     roundTweak() {
@@ -110,6 +115,9 @@ export default {
       return this.$store.state.tweaks.roundThumb;
     },
   },
+  async mounted() {
+    this.thumbnailUrl = await this.$youtube.getThumbnail(this.vidId, 'max', this.thumbnails);
+  }
 };
 </script>
 

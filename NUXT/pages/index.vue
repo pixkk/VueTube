@@ -50,11 +50,16 @@
     >
       {{ progressMsg }}...
     </div>
+
+    <updateChecker />
   </div>
 </template>
 
 <script>
+import UpdateChecker from "../components/updateChecker.vue";
+
 export default {
+  components: {UpdateChecker},
   layout: "empty",
 
   data: () => ({
@@ -66,6 +71,7 @@ export default {
     this.$store.commit("initTelemetryPreference");
     this.$store.commit("tweaks/initTweaks");
     this.$store.commit("player/initPlayer");
+    this.$store.commit("history/initHistory");
     await this.$vuetube.launchBackHandling();
 
     //---   Load Theming   ---//
@@ -79,7 +85,17 @@ export default {
       return this.$router.replace("/activities/update");
 
     //---   Start Innertube Connection   ---//
-    await this.$youtube.getAPI();
+    try {
+      // throw "e";
+      await this.$youtube.getAPI();
+    }
+    catch (e) {
+      this.progressMsg = "Error: " + e + ". Checking for updates";
+      setTimeout(() => {
+        this.$router.replace("/mods/updates");
+      }, 3000);
+      return ;
+    }
     this.progressMsg = this.$lang("index").launching;
 
     if (localStorage.getItem("firstTimeSetupComplete")) {
@@ -89,6 +105,15 @@ export default {
     }
   },
   methods: {
+    isLightColor(hex) {
+      hex = hex.replace("#", "");
+      let r = parseInt(hex.substring(0, 2), 16);
+      let g = parseInt(hex.substring(2, 4), 16);
+      let b = parseInt(hex.substring(4, 6), 16);
+
+      let brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return brightness > 128;
+    },
     theming() {
       return new Promise((resolve) =>
         // Set timeout is required for $vuetify.theme... dont ask me why -Front

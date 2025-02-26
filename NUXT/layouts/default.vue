@@ -82,7 +82,6 @@
 
     <bottomNavigation v-if="!search" />
 
-    <updateChecker />
   </v-app>
 </template>
 
@@ -166,6 +165,20 @@ export default {
     );
     plugin.setAttribute("crossorigin", "anonymous");
     document.head.appendChild(plugin);
+    const plugin2 = document.createElement("script");
+    plugin2.setAttribute(
+      "src",
+      "https://cdn.jsdelivr.net/npm/hls.js@1"
+    );
+    plugin2.setAttribute("crossorigin", "anonymous");
+    document.head.appendChild(plugin2);
+    const plugin3 = document.createElement("script");
+    plugin3.setAttribute(
+      "src",
+      "https://cdn.dashjs.org/latest/dash.all.min.js"
+    );
+    plugin3.setAttribute("crossorigin", "anonymous");
+    document.head.appendChild(plugin3);
   },
 
   beforeDestroy() {
@@ -183,7 +196,7 @@ export default {
       if (!isLink) {
         //---   Auto Suggest   ---//
         this.$youtube.autoComplete(text, (res) => {
-          console.log(res);
+          // console.log(res);
           try {
             const data = res.replace(/^.*?\(/, "").replace(/\)$/, ""); //Format Response
             this.response = JSON.parse(data)[1];
@@ -196,7 +209,7 @@ export default {
             this.response = JSON.parse(data)[1];
           }
           // this.response = res;
-          console.log(this.response);
+          // console.log(this.response);
         });
       } else {
         //---   User Pastes Link, Direct Them To Video   ---//

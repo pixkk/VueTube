@@ -2,11 +2,11 @@
     <a href="https://pixkk.com/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
@@ -22,7 +22,7 @@
 , <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>
 , <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>
 , <a href="https://github.com/tired6488">@tired6488</a>, <a href="https://github.com/DARKDRAGON532">@DARKDRAGON532</a>
-, <a href="https://github.com/PickleNik">@PickleNik</a> and <a href="https://github.com/Zyborg777">@Zyborg777</a></sub>
+, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a></sub> and <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
 
 </details>
 
@@ -35,10 +35,16 @@
 <p align="center">
   <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
   <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
-  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?label=r%2FVuetube&logo=reddit&logoColor=white"></img></a>
+  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/Vuetube"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
-  <a href="https://twitter.com/VueTubeApp" alt="Twitter"><img src="https://img.shields.io/twitter/follow/VueTubeApp?label=Follow&style=flat&logo=twitter"></img></a>
+  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
+
+</p>
+<p align="center">
+  <a href="https://ko-fi.com/W7W216PASY" target="_blank">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" />
+  </a>
 </p>
 
 **Read this page in other languages**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
@@ -95,7 +101,7 @@ To install the app, please check below all versions available:
 Android
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/android.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                                  | Less bugs than unstable while having more features than stable.                                                              | Not available yet.                                                                              |
 
@@ -108,11 +114,11 @@ Android
 iOS
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/iOS.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.3><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
-(Apple does not officially support sideloading, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices)
+(Apple does not officially support sideloading except in Europen Union, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices if you live outside Europe)
 
 
 <h2 align="left">
@@ -170,7 +176,7 @@ Community
 We use several different platforms to connect with our community. You can actively participate in the development of
 VueTube or simply keep up to date with all the news joining these groups:
 
-- Discord server (https://pixkk.com/discord)
+- Discord server (https://discord.gg/7P8KJrdd5W)
 - Telegram group (https://t.me/vuetube)
 - Reddit page (https://www.reddit.com/r/vuetube)
 
@@ -183,36 +189,33 @@ VueTube or simply keep up to date with all the news joining these groups:
 Progress
 </h2>
 
-<details>
-  <summary> 🖱️ Click to display progress </summary>
+<br>
 
- <br>
-
-|                   **General**                    |              **Player**               | [**Extractor**](https://github.com/VueTubeApp/VueTube-Extractor) |
+|                   **General**                    |              **Player**               | [**Extractor**](https://github.com/pixkk/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
-|                🟢 Comments (100%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
+|                🟡 Comments (95%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
 |              🟢 Description (100%)               | 🟢 Tap to show / hide controls (100%) |                       🟢 Home page (100%)                        |
 |               🟢 Home Page (100%)                |      🟠 Seekbar / Scrubber (80%)      |                         🟢 Search (100%)                         |
-|            🟢 RYD Integration (100%)             |          🟠 Fullscreen (80%)          |                    🟠 Video Information (60%)                    |
-|                 🟢 Themes (100%)                 |      🟠 Resolution Picker (50%)       |                         🔴 Channels (0%)                         |
+|            🟢 RYD Integration (100%)             |          🟠 Fullscreen (85%)          |                    🟠 Video Information (60%)                    |
+|                 🟢 Themes (100%)                 |      🟡 Resolution Picker (95%)       |                         🔴 Channels (0%)                         |
 |               🟢 Watch Page (100%)               |          🔴 Miniplayer (0%)           |                         🔴 Comments (0%)                         |
-|        🟠 Sponsorblock Integration (95%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
+|        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
 |               🟠 Auto Update (50%)               |      🔴 Picture in Picture (0%)       |                     🔴 Trending content (0%)                     |
-|              🟠 Channel Page (50%)               |           🔴 Captions (0%)            |                       🔴 Interactions (0%)                       |
-|             🟠 Community Posts (10%)             |             🔴 Cards (0%)             |                        🔴 Playlists (0%)                         |
+|              🟡 Channel Page (60%)               |           🟡 Captions (95%)            |                       🔴 Interactions (0%)                       |
+|             🟡 Community Posts (90%)             |             🟠 Cards (10%)             |                        🔴 Playlists (0%)                         |
 |         🟠 Customizable Shorts UI (10%)          |                                       |                      🔴 Notifications (0%)                       |
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 Customizable UI (30%)             |                                       |                                                                  |
 |             🟠 Libraries Page (10%)              |                                       |                                                                  |
-|                 🟠 Replies (50%)                 |                                       |                                                                  |
+|                 🟡 Replies (90%)                 |                                       |                                                                  |
 |           🟠 Third Party Plugins (40%)           |                                       |                                                                  |
 |  🟠 VueTube Player (See progress to the right)   |                                       |                                                                  |
 | 🟠 VueTube Extractor (See progress to the right) |                                       |                                                                  |
-|           🔴 Local Watch History (0%)            |                                       |                                                                  |
+|           🟢 Local Watch History (100%)            |                                       |                                                                  |
 |            🔴 Subscriptions Page (0%)            |                                       |                                                                  |
 |          🔴 Other Platform Support (0%)          |                                       |                                                                  |
 
-</details>
+
 
 ### Technologies used
 
@@ -249,8 +252,8 @@ our [Discord](https://pixkk.com/discord) and we will implement them. Don't worry
 GitHub contributors
 </h2>
 
-<a href="https://github.com/VueTubeApp/VueTube/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=VueTubeApp/VueTube" />
+<a href="https://github.com/pixkk/VueTube/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=pixkk/VueTube" />
 </a>
 
 <sub>Dashboard made automatically with [contrib.rocks](https://contrib.rocks). </sub>
@@ -283,9 +286,8 @@ Donate
 VueTube is and always will be free and open source, but you can support our devs with a donation that will help to
 maintain the project and develop new features. Every kind of help is welcome! These are the donating options available:
 
-[Donate on Ko-Fi.com](https://ko-fi.com/vuetube) (Official)
-
-[Donate to PickleNik on GitHub](https://github.com/sponsors/PickleNik) (Maintainer)
+[Donate to Pixkk on Ko-Fi](https://ko-fi.com/W7W216PASY) (Pixkk)
+[Donate to PickleNik on GitHub](https://github.com/sponsors/PickleNik) (Maintainer from original VueTube)
 
 <h2 align="left">
 <sub>
@@ -317,18 +319,18 @@ Other VueTube repos
 
 <br>
 
-<a href="https://github.com/VueTubeApp/VueTube-Extractor">
+<a href="https://github.com/pixkk/VueTube-Extractor">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor" 
         alt="VueTube Extractor"
        />
     </picture>
@@ -336,18 +338,18 @@ Other VueTube repos
 
 **VueTube Extractor** is a library designed to extract data from streaming services, designed for use in VueTube App.
 
-<a href="https://github.com/VueTubeApp/VueTube-Translator">
+<a href="https://github.com/pixkk/VueTube-Translator">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator" 
         alt="VueTube Extractor"
        />
     </picture>
@@ -356,18 +358,18 @@ Other VueTube repos
 **VueTube Translator** is a tool for translating fields of GitHub files like JSON or JS and export the result with the
 correct structure. It was created to help VueTube translators, but it can be used for any other purpose.
 
-<a href="https://github.com/VueTubeApp/vuetube-http">
+<a href="https://github.com/pixkk/vuetube-http">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http" 
         alt="VueTube Extractor"
        />
     </picture>

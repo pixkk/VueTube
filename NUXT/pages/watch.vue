@@ -1,6 +1,6 @@
 <template>
   <div id="watch-body" class="background">
-    <div id="player-container">
+    <div id="player-container" ref="playerContainer">
       <!-- // TODO: move component to default.vue -->
       <!-- // TODO: pass sources through vuex instead of props -->
       <player
@@ -200,7 +200,7 @@
       />
 
       <!-- Comments -->
-      <div v-if="loaded && video.commentData" @click="toggleComment">
+      <div v-if="loaded && video?.commentData?.commentCount?.runs && parseFloat(video.commentData?.commentCount?.runs[0]?.text.replace(',', '.')) >= 1" @click="toggleComment">
         <v-card
           v-ripple
           flat
@@ -225,11 +225,11 @@
           }"
         >
           <v-card-text class="comment-count keep-spaces px-0">
-            <template v-for="text in video.commentData.headerText.runs">
+            <template v-for="text in video.commentData?.headerText?.runs">
               <template v-if="text.bold">
-                <strong :key="text.text">{{ text.text }}</strong>
+                <strong :key="text.text">{{ text.text + "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</strong>
               </template>
-              <template v-else>{{ text.text }}</template>
+              <template v-else>{{ text.text }} {{ "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</template>
             </template>
           </v-card-text>
           <v-icon v-if="showComments" dense>mdi-unfold-less-horizontal</v-icon>
@@ -371,8 +371,12 @@ export default {
       this.$youtube.getVid(this.$route.query.v).then((result) => {
         // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
         this.sources = result.availableResolutionsAdaptive;
+        this.captions = result.captions;
         console.log("Video info data", result);
         this.video = result;
+        // this.video.endscreen = result.endscreen ? result.endscreen : null;
+        this.video.title = this.video.title ? this.video.title : "null";
+        this.video.channelName = this.video.channelName ? this.video.channelName : "null";
 
         //---   Content Stuff   ---//
         // NOTE: extractor likes are broken, using RYD likes instead
@@ -414,11 +418,22 @@ export default {
         this.interactions[0].value = data.likes.toLocaleString();
         this.interactions[1].value = data.dislikes.toLocaleString();
       });
+      if (!document.pictureInPictureEnabled) {
+        //this.interactions[this.interactions.length - 1].disabled = true;
+        //this.interactions[this.interactions.length - 1].hidden = true;
+      }
     },
     callMethodByName(name) {
       // Helper function needed because of issues when directly calling method
       // using item.action in the v-for loop
       this[name]();
+    },
+    async pip() {
+      if (document.pictureInPictureElement) {
+        // await document.exitPictureInPicture();
+      } else if (document.pictureInPictureEnabled) {
+        // await this.$refs.player.getPlayer().requestPictureInPicture();
+      }
     },
     async share() {
       // this.share = !this.share;
@@ -458,6 +473,7 @@ export default {
     },
 
     async initWatchTime() {
+
       await this.$youtube.saveApiStats(
         {
           cpn: this.cpn,
@@ -503,12 +519,12 @@ export default {
             actionName: "save",
             disabled: false,
           },
-          // {
-          //   name: "Quality",
-          //   icon: "mdi-high-definition",
-          //   actionName: "quality",
-          //   disabled: false,
-          // },
+          {
+            name: "PiP",
+            icon: "mdi-picture-in-picture-bottom-right",
+            actionName: "pip",
+            disabled: true,
+          },
           // {
           //   name: "Speed",
           //   icon: "mdi-speedometer",
@@ -520,6 +536,7 @@ export default {
         showComments: false,
         // share: false,
         sources: [],
+        captions: [],
         recommends: null,
         loaded: false,
         interval: null,

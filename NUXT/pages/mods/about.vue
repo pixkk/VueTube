@@ -72,7 +72,7 @@
           $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
         "
         :style="{ borderRadius: `${roundTweak / 2}rem` }"
-        @click="openExternal('https://github.com/Frontesque/VueTube')"
+        @click="openExternal('https://github.com/pixkk/VueTube')"
       >
         <v-icon x-large class="actionIcon">mdi-github</v-icon>
         {{ lang.github }}

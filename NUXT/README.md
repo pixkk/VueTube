@@ -29,11 +29,13 @@ For detailed explanation on how things work, check out the [documentation](https
 > `Ctrl(Cmd)` + `Shift` + `P` > Open Settings (JSON)
 
 ```json
-"editor.formatOnSave": true,
-"editor.codeActionsOnSave": {
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
+  },
+  "vetur.validation.template": false
 }
-"vetur.validation.template": false,
 ```
 
 ## Special Directories

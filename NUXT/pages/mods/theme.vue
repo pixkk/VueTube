@@ -1,6 +1,6 @@
 <template>
   <client-only>
-    <div class="container-max-height d-flex flex-column justify-end">
+    <div class="container-max-height d-flex flex-column">
       <!-- ----Color Picker (global, for both)---- -->
       <v-dialog
         v-model="pickerState"
