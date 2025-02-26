@@ -1,18 +1,12 @@
-
->[!TIP] 
->~~01.08.2024 - WE HAVE SOME PROBLEMS WITH VUETUBE DEVELOPMENT -> [https://github.com/pixkk/VueTube/issues/8  ](https://github.com/pixkk/VueTube/issues/8)~~
->
->**18.08.2024 - Problem resolved**
-
 <p align="center">
     <a href="https://pixkk.com/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/VueTubeApp/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
@@ -197,12 +191,12 @@ Progress
 
 <br>
 
-|                   **General**                    |              **Player**               | [**Extractor**](https://github.com/VueTubeApp/VueTube-Extractor) |
+|                   **General**                    |              **Player**               | [**Extractor**](https://github.com/pixkk/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
-|                🟡 Comments (90%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
+|                🟡 Comments (95%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
 |              🟢 Description (100%)               | 🟢 Tap to show / hide controls (100%) |                       🟢 Home page (100%)                        |
 |               🟢 Home Page (100%)                |      🟠 Seekbar / Scrubber (80%)      |                         🟢 Search (100%)                         |
-|            🟢 RYD Integration (100%)             |          🟠 Fullscreen (80%)          |                    🟠 Video Information (60%)                    |
+|            🟢 RYD Integration (100%)             |          🟠 Fullscreen (85%)          |                    🟠 Video Information (60%)                    |
 |                 🟢 Themes (100%)                 |      🟡 Resolution Picker (95%)       |                         🔴 Channels (0%)                         |
 |               🟢 Watch Page (100%)               |          🔴 Miniplayer (0%)           |                         🔴 Comments (0%)                         |
 |        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
@@ -213,11 +207,11 @@ Progress
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 Customizable UI (30%)             |                                       |                                                                  |
 |             🟠 Libraries Page (10%)              |                                       |                                                                  |
-|                 🟠 Replies (50%)                 |                                       |                                                                  |
+|                 🟡 Replies (90%)                 |                                       |                                                                  |
 |           🟠 Third Party Plugins (40%)           |                                       |                                                                  |
 |  🟠 VueTube Player (See progress to the right)   |                                       |                                                                  |
 | 🟠 VueTube Extractor (See progress to the right) |                                       |                                                                  |
-|           🔴 Local Watch History (0%)            |                                       |                                                                  |
+|           🟢 Local Watch History (100%)            |                                       |                                                                  |
 |            🔴 Subscriptions Page (0%)            |                                       |                                                                  |
 |          🔴 Other Platform Support (0%)          |                                       |                                                                  |
 
@@ -292,9 +286,8 @@ Donate
 VueTube is and always will be free and open source, but you can support our devs with a donation that will help to
 maintain the project and develop new features. Every kind of help is welcome! These are the donating options available:
 
-[Donate on Ko-Fi.com](https://ko-fi.com/vuetube) (Official)
-
-[Donate to PickleNik on GitHub](https://github.com/sponsors/PickleNik) (Maintainer)
+[Donate to Pixkk on Ko-Fi](https://ko-fi.com/W7W216PASY) (Pixkk)
+[Donate to PickleNik on GitHub](https://github.com/sponsors/PickleNik) (Maintainer from original VueTube)
 
 <h2 align="left">
 <sub>
@@ -326,18 +319,18 @@ Other VueTube repos
 
 <br>
 
-<a href="https://github.com/VueTubeApp/VueTube-Extractor">
+<a href="https://github.com/pixkk/VueTube-Extractor">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Extractor" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Extractor" 
         alt="VueTube Extractor"
        />
     </picture>
@@ -345,18 +338,18 @@ Other VueTube repos
 
 **VueTube Extractor** is a library designed to extract data from streaming services, designed for use in VueTube App.
 
-<a href="https://github.com/VueTubeApp/VueTube-Translator">
+<a href="https://github.com/pixkk/VueTube-Translator">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=VueTube-Translator" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=VueTube-Translator" 
         alt="VueTube Extractor"
        />
     </picture>
@@ -365,18 +358,18 @@ Other VueTube repos
 **VueTube Translator** is a tool for translating fields of GitHub files like JSON or JS and export the result with the
 correct structure. It was created to help VueTube translators, but it can be used for any other purpose.
 
-<a href="https://github.com/VueTubeApp/vuetube-http">
+<a href="https://github.com/pixkk/vuetube-http">
     <picture>
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=dark"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=dark"
         media="(prefers-color-scheme: dark)"
       />
       <source 
-        srcset="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http&theme=highcontrast"
+        srcset="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http&theme=highcontrast"
         media="(prefers-color-scheme: dark_colorblind)"
       />
       <img 
-        src="https://github-readme-stats.vercel.app/api/pin/?username=VueTubeApp&repo=vuetube-http" 
+        src="https://github-readme-stats.vercel.app/api/pin/?username=pixkk&repo=vuetube-http" 
         alt="VueTube Extractor"
        />
     </picture>
