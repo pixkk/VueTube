@@ -73,6 +73,14 @@ function secondsToVTTTime(seconds) {
 
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
 }
+// Function to convert miliseconds to VTT timestamp format
+function milisecondsToVttTime(milliseconds) {
+  const secs = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(secs/ 60);
+  const hours = Math.floor(minutes / 60);
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+}
 function decodeHtmlEntities(str) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<!doctype html><body>${str}`, 'text/html');
@@ -81,34 +89,63 @@ function decodeHtmlEntities(str) {
 
 // Function to parse transcript and convert to VTT
 function convertTranscriptToVTT(transcript) {
+  let isOkay = true;
   // transcript =JSON.parse(JSON.stringify(transcript)).data;
   // console.warn(transcript);
   // Extract <text> elements from the transcript
-  const textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
+  let textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
+if (textElements == null) {
+  isOkay = false;
+  textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)" wp="[\d.]+" ws="[\d.]+">([^<]+)<\/p>/g);
+  if (textElements == null) {
+    textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)">([^<]+)<\/p>/g);
+  }
+}
 
-  // console.warn(textElements);
   // Initialize VTT output with header
   let vttOutput = 'WEBVTT\n\n';
   for (let i = 0; i < textElements.length; i++) {
     let textElement = textElements[i];
-    const startMatch = textElement.match(/start="([\d.]+)"/);
-    const durMatch = textElement.match(/dur="([\d.]+)"/);
-    const contentMatch = textElement.match(/>([^<]+)<\/text>/);
+    let startMatch = textElement.match(/start="([\d.]+)"/);
+    if (startMatch == null) {
+      startMatch = textElement.match(/t="([\d.]+)"/)
+    }
+    let durMatch = textElement.match(/dur="([\d.]+)"/);
+
+    if (durMatch == null) {
+      durMatch = textElement.match(/d="([\d.]+)"/)
+    }
+    let contentMatch = textElement.match(/>([^<]+)<\/text>/);
+    if (contentMatch == null) {
+      contentMatch = textElement.match(/>([^<]+)<\/p>/)
+    }
 
     if (startMatch && durMatch && contentMatch) {
-      const start = parseFloat(startMatch[1]);
-      const duration = parseFloat(durMatch[1]);
-      const content = decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
+      let start = parseFloat(startMatch[1]);
+      let duration = parseFloat(durMatch[1]);
+      let content = decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
 
       let end;
       if (i+1 >= textElements.length) {
         end = start + duration;
       }
       else {
-        end = textElements[i+1].match(/start="([\d.]+)"/)[1];
+        end = textElements[i+1].match(/start="([\d.]+)"/);
+        if (end == null) {
+          end = textElements[i+1].match(/t="([\d.]+)"/);
+        }
+        end = end[1];
       }
-      const startTime = secondsToVTTTime(start);
-      const endTime = secondsToVTTTime(end);
+      let startTime;
+      let endTime;
+      if (isOkay) {
+        startTime = secondsToVTTTime(start);
+        endTime = secondsToVTTTime(end);
+      }
+      else {
+        startTime = milisecondsToVttTime(start);
+        endTime = milisecondsToVttTime(end);
+      }
 
       vttOutput += `${startTime} --> ${endTime}\n\n\n`; // margin bottom huh
       vttOutput += `${startTime} --> ${endTime}\n${content}\n\n`;
