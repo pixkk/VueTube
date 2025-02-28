@@ -113,7 +113,7 @@ module.exports = {
       clientVersion: ytApiVal.VERSION_WEB,
       osName: info.osName,
       osVersion: info.osVersion,
-      platform: "MOBILE",
+      platform: "TABLET",
       playerType: "UNIPLAYER",
       screenPixelDensity: "3",
       originalUrl: info.originalUrl,

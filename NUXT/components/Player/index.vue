@@ -675,9 +675,9 @@ export default {
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
       if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.aud.play();
         this.vid.play();
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.bufferingDetected = false;
 
         if (!this.isMusic) {
@@ -737,7 +737,7 @@ export default {
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 1000 / 1000) {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
 
         this.bufferingDetected = true;
         setTimeout(() => {
@@ -977,10 +977,10 @@ export default {
     fullscreenHandler(pressedFullscreenBtn) {
       // Prevent fullscreen button press from being handled twice
       // (once by pressing fullscreen button, another by the resulting rotation)
-      // if (this.midRotation) {
-      //   this.midRotation = false;
-      //   return;
-      // }
+      if (this.midRotation) {
+        this.midRotation = false;
+        return;
+      }
       // Toggle fullscreen state
       if (this.isFullscreen) {
         this.exitFullscreen(pressedFullscreenBtn);
