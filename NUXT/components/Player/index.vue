@@ -241,7 +241,7 @@
         <playpause
           v-if="$refs.player"
           :video="$refs.player"
-          :buffering="bufferingDetected"
+          :buffering="bufferingDetected || false"
           @play="$refs.player.play(), $refs.audio.play()"
           @pause="pauseHandler"
         />
@@ -675,10 +675,10 @@ export default {
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
       if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
+        this.bufferingDetected = false;
         this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.aud.play();
         this.vid.play();
-        this.bufferingDetected = false;
 
         if (!this.isMusic) {
           this.$refs.audio.playbackRate = this.$store.state.player.speed;
@@ -805,9 +805,9 @@ export default {
     waitingEvent() {
       // buffering detection & sync
       let threshold = 1000; //ms after which user perceives buffering
+      this.bufferingDetected = true;
       if (!this.$refs.player.paused) {
         setTimeout(() => {
-          this.bufferingDetected = true;
           this.$refs.audio.pause();
           //show buffering
         }, threshold);
