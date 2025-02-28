@@ -66,12 +66,7 @@ function parseEmoji(body) {
 
 // Function to convert seconds to VTT timestamp format
 function secondsToVTTTime(seconds) {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  const milliseconds = Math.round((seconds % 1) * 1000);
-
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+  return millisecondsToVttTime(seconds * 1000);
 }
 // Function to convert miliseconds to VTT timestamp format
 function millisecondsToVttTime(duration) {
