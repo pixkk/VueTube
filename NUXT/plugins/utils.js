@@ -74,12 +74,18 @@ function secondsToVTTTime(seconds) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
 }
 // Function to convert miliseconds to VTT timestamp format
-function milisecondsToVttTime(milliseconds) {
-  const secs = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(secs/ 60);
-  const hours = Math.floor(minutes / 60);
+function millisecondsToVttTime(duration) {
+  const hours = Math.floor(duration / (1000 * 60 * 60));
+  const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((duration % (1000 * 60)) / 1000);
+  const milliseconds = duration % 1000;
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+  const formattedHours = hours.toString().padStart(2, '0');
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+  const formattedSeconds = seconds.toString().padStart(2, '0');
+  const formattedMilliseconds = milliseconds.toString().padStart(3, '0');
+
+  return `${formattedHours}:${formattedMinutes}:${formattedSeconds}.${formattedMilliseconds}`;
 }
 function decodeHtmlEntities(str) {
   const parser = new DOMParser();
@@ -121,8 +127,16 @@ if (textElements == null) {
     }
 
     if (startMatch && durMatch && contentMatch) {
-      let start = parseFloat(startMatch[1]);
-      let duration = parseFloat(durMatch[1]);
+      let start;
+      let duration;
+      if (isOkay) {
+        start = parseFloat(startMatch[1]);
+        duration = parseFloat(durMatch[1]);
+      }
+      else {
+        start = parseInt(startMatch[1]);
+        duration = parseInt(durMatch[1]);
+      }
       let content = decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
 
       let end;
@@ -143,12 +157,13 @@ if (textElements == null) {
         endTime = secondsToVTTTime(end);
       }
       else {
-        startTime = milisecondsToVttTime(start);
-        endTime = milisecondsToVttTime(end);
+        startTime = millisecondsToVttTime(start);
+        endTime = millisecondsToVttTime(end);
       }
 
       vttOutput += `${startTime} --> ${endTime}\n\n\n`; // margin bottom huh
       vttOutput += `${startTime} --> ${endTime}\n${content}\n\n`;
+      // console.log(vttOutput);
     }
   }
   return vttOutput.trim();
