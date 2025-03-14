@@ -246,6 +246,7 @@
       <div
         v-if="loaded && video.commentData"
         :class="showComments ? 'comments-open' : ''"
+        :style="showComments ? '' : 'display: none'"
         class="scroll-y comments"
       >
         <mainCommentRenderer
