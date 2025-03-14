@@ -6,7 +6,7 @@
 // https://www.youtube.com/youtubei/v1
 
 import { Http } from "@capacitor-community/http";
-import { getBetweenStrings, delay } from "./utils";
+import {getBetweenStrings, delay, getCpn} from "./utils";
 import rendererUtils from "./renderers";
 import constants, { YT_API_VALUES } from "./constants";
 
@@ -557,6 +557,9 @@ class Innertube {
     let data = {
       context: {
         client: constants.INNERTUBE_VIDEO(this.context.client),
+        thirdParty: {
+          "embedUrl": "https://www.youtube.com/embed/" + id
+        }
       },
       videoId: id,
     };
@@ -580,46 +583,15 @@ class Innertube {
     }).catch((error) => error);
 
     this.pot = this.getPot(this.visitorData, 2);
-    let response = await Http.post({
-      url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-      data: {
-        ...data,
-        ...{
-          playerParams: this.playerParams,
-          contentCheckOk: false,
-          racyCheckOk: false,
-          // mwebCapabilities: {
-          //   mobileClientSupportsLivestream: true,
-          // },
+    let response = "";
 
-          serviceIntegrityDimensions: {
-            poToken: this.pot
-          },
-          playbackContext: {
-            contentPlaybackContext: {
-              currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
-              vis: 0,
-              splay: false,
-              autoCaptionsDefaultOn: false,
-              autonavState: "STATE_NONE",
-              html5Preference: "HTML5_PREF_WANTS",
-              signatureTimestamp: this.signatureTimestamp,
-              referer: "https://m.youtube.com/",
-              lactMilliseconds: "-1",
-              watchAmbientModeContext: {
-                watchAmbientModeEnabled: true,
-              },
-            },
-          },
-        },
-      },
-      // headers: constants.INNERTUBE_HEADER(this.context.client),
-      headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
-    }).catch((error) => error);
-
-    if (response.data.playabilityStatus.status === "UNPLAYABLE") {
-      data.context.client.clientName = "ANDROID_VR";
-      data.context.client.clientVersion = "1.37";
+    const clientConfigs  = constants.clientConfigs;
+    for (const config of clientConfigs) {
+      data.context.client.clientName = config.CLIENTNAME;
+      data.context.client.clientVersion = config.VERSION_WEB;
+      data.context.client.clientScreen = config.clientScreen;
+      console.warn("retrying with client config - ", data.context.client);
+      data.context.thirdParty = {};
       response = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
         data: {
@@ -628,10 +600,6 @@ class Innertube {
             playerParams: this.playerParams,
             contentCheckOk: false,
             racyCheckOk: false,
-            // mwebCapabilities: {
-            //   mobileClientSupportsLivestream: true,
-            // },
-
             serviceIntegrityDimensions: {
               poToken: this.pot
             },
@@ -653,12 +621,15 @@ class Innertube {
             },
           },
         },
-        // headers: constants.INNERTUBE_HEADER(this.context.client),
         headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
       }).catch((error) => error);
 
-    }
+      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
+        response?.data?.playabilityStatus !== "LOGIN_REQUIRED") {
+        break;
+      }
 
+    }
     if (response.error) {
 
       return {
@@ -924,7 +895,8 @@ class Innertube {
       );
     const responseInfo = response.data.output;
     const responseNext = response.data.outputNext;
-    const details = responseInfo.videoDetails;
+    let details = responseInfo.videoDetails;
+
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     // const columnUI =
@@ -942,7 +914,17 @@ class Innertube {
 
     const recommendations = columnUI?.contents.find(
       (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
-    ).itemSectionRenderer;
+    )?.itemSectionRenderer;
+
+    if (details.title == null) {
+      vidMetadata?.contents.forEach((content) => {
+          let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
+          if (text !== undefined) {
+            details.title = text;
+            return;
+          }
+        });
+    }
 
     const ownerData = vidMetadata.contents.find(
       (content) => content.slimOwnerRenderer
@@ -961,9 +943,9 @@ class Innertube {
         ownerData.navigationEndpoint.watchEndpoint.playerParams;
     } catch (e) {}
     // Deciphering urls
-    resolutions = resolutions.formats ? resolutions.formats.concat(resolutions.adaptiveFormats) : resolutions.adaptiveFormats;
+    resolutions = resolutions?.formats ? resolutions?.formats.concat(resolutions.adaptiveFormats) : resolutions?.adaptiveFormats;
     // console.warn(resolutions);
-    resolutions.forEach((source) => {
+    resolutions?.forEach((source) => {
       if (source.isLive) {
         isLive = true;
       }
@@ -986,17 +968,6 @@ class Innertube {
         }
 
 
-        function generateCPN() {
-          const CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
-          let cpn = '';
-          for (let i = 0; i < 16; i++) {
-            cpn += CPN_ALPHABET[Math.floor(Math.random() * 64)];
-          }
-          return cpn;
-        }
-
-        const cpn = generateCPN();
-        // console.log(cpn);
 
         var searchParams = new URLSearchParams(source.url);
 
@@ -1016,9 +987,7 @@ class Innertube {
         source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
-        source["url"] = source["url"] + "&cpn=" + generateCPN();
-        // console.log(this.visitorData);
-        // console.log(this.pot);
+        source["url"] = source["url"] + "&cpn=" + getCpn();
         source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
         // source["url"] = source["url"] + "&range=0-" + source.contentLength;
         if (searchParams.get("mime").indexOf("audio") < 0) {
@@ -1030,7 +999,7 @@ class Innertube {
       id: details.videoId,
       title: details.title,
       isLive: details.isLiveContent,
-      channelName: details.author,
+      channelName: ownerData?.title.runs[0].text,
       channelSubs: ownerData?.collapsedSubtitle?.runs[0]?.text,
       channelUrl: rendererUtils.getNavigationEndpoints(
         ownerData.navigationEndpoint
@@ -1077,7 +1046,7 @@ class Innertube {
           )?.expandableVideoDescriptionBodyRenderer || null,
         recommendations: recommendations,
         recommendationsContinuation:
-          recommendations.contents[recommendations.contents.length - 1]
+          recommendations?.contents[recommendations.contents.length - 1]
             .continuationItemRenderer?.continuationEndpoint.continuationCommand
             .token,
       },

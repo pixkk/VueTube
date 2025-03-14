@@ -11,7 +11,7 @@ const url = {
   VT_GITHUB: "https://api.github.com/repos/pixkk/VueTube",
 };
 
-const ytApiVal = {
+const androidApiVal = {
   // VERSION: "16.25",
   VERSION: "19.09",
   CLIENTNAME: "ANDROID",
@@ -21,14 +21,49 @@ const ytApiVal = {
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
+const androidVrApiVal = {
+  // VERSION: "16.25",
+  CLIENTNAME: "ANDROID_VR",
+  // VERSION_WEB: "2.20240628.01.00",
+  clientScreen: "EMBED",
+  VERSION_WEB: "1.37",
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+  CLIENT_WEB_M: 2,
+  CLIENT_WEB_D: 1,
+};
+const webEmbeddedApiVal = {
+  // VERSION: "16.25",
+  CLIENTNAME: "WEB_EMBEDDED_PLAYER",
+  clientScreen: "EMBED",
+  // VERSION_WEB: "2.20240628.01.00",
+  VERSION_WEB: "2.20250222.10.01",
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+  CLIENT_WEB_M: 2,
+  CLIENT_WEB_D: 1,
+};
+const tvApiVal = {
+  CLIENTNAME: "TVHTML5",
+  clientScreen: "WATCH",
+  VERSION_WEB: "7.20250212.16.00",
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+  CLIENT_WEB_M: 2,
+  CLIENT_WEB_D: 1,
+};
+
+const clientConfigs = [
+  webEmbeddedApiVal,
+  androidVrApiVal,
+  tvApiVal,
+];
 const filesystem = {
   plugins: "plugins/",
 };
 
 module.exports = {
   URLS: url,
-  YT_API_VALUES: ytApiVal,
+  YT_API_VALUES: androidApiVal,
   fs: filesystem,
+  clientConfigs: clientConfigs,
 
   INNERTUBE_HEADER: (info) => {
     return {
@@ -38,21 +73,21 @@ module.exports = {
       "content-type": "application/json",
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": ytApiVal.CLIENTNAME,
-      "x-youtube-client-version": ytApiVal.VERSION,
+      "x-youtube-client-name": androidApiVal.CLIENTNAME,
+      "x-youtube-client-version": androidApiVal.VERSION,
     };
   },
 
   INNERTUBE_NEW_HEADER: (info) => {
     return {
       accept: "*/*",
-      "user-agent": ytApiVal.USER_AGENT,
+      "user-agent": androidApiVal.USER_AGENT,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": ytApiVal.CLIENT_WEB_M,
-      "x-youtube-client-version": ytApiVal.VERSION,
+      "x-youtube-client-name": androidApiVal.CLIENT_WEB_M,
+      "x-youtube-client-version": androidApiVal.VERSION,
     };
   },
   INNERTUBE_CLIENT: (info) => {
@@ -63,9 +98,9 @@ module.exports = {
       // deviceMake: info.deviceMake,
       // deviceModel: info.deviceModel,
       deviceModel: "Nexus 5",
-      userAgent: ytApiVal.USER_AGENT,
-      clientName: ytApiVal.CLIENTNAME,
-      clientVersion: ytApiVal.VERSION,
+      userAgent: androidApiVal.USER_AGENT,
+      clientName: androidApiVal.CLIENTNAME,
+      clientVersion: androidApiVal.VERSION,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
@@ -82,9 +117,9 @@ module.exports = {
       hl: info.hl,
       deviceMake: "Generic",
       deviceModel: "Android 15.0",
-      userAgent: ytApiVal.USER_AGENT,
+      userAgent: androidApiVal.USER_AGENT,
       clientName: "MWEB",
-      clientVersion: ytApiVal.VERSION_WEB,
+      clientVersion: androidApiVal.VERSION_WEB,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
@@ -109,8 +144,8 @@ module.exports = {
       deviceMake: info.deviceMake,
       deviceModel: info.deviceModel,
       userAgent: info.userAgent,
-      clientName: "WEB_EMBEDDED_PLAYER",
-      clientVersion: ytApiVal.VERSION_WEB,
+      clientName: webEmbeddedApiVal.CLIENTNAME,
+      clientVersion: webEmbeddedApiVal.VERSION_WEB,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "TABLET",
@@ -133,7 +168,7 @@ module.exports = {
       utcOffsetMinutes: info.utcOffsetMinutes,
       userInterfaceTheme: "USER_INTERFACE_THEME_LIGHT",
       memoryTotalKbytes: "8000000",
-      clientScreen: "WATCH",
+      clientScreen: "EMBED",
       mainAppWebInfo: {
         webDisplayMode: "WEB_DISPLAY_MODE_BROWSER",
         isWebNativeShareAvailable: true,
