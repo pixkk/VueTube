@@ -64,7 +64,7 @@
         <track default kind="captions" id="captions" src=""/>
       </video>
       <endscreen
-        v-if="$refs.player?.videoHeight"
+        v-if="$refs.player?.videoHeight && isFullscreen"
         ref="endscrn"
         :endscreen="video.endscreen"
         :isFullscreen="isFullscreen"
