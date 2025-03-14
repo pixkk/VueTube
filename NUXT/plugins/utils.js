@@ -29,14 +29,13 @@ function rgbToHex(r, g, b) {
 }
 
 function getCpn() {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  let result = "";
-  for (let i = 16; i > 0; --i)
-    result += chars[Math.round(Math.random() * (chars.length - 1))];
-  return result;
+  const CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+  let cpn = '';
+  for (let i = 0; i < 16; i++) {
+    cpn += CPN_ALPHABET[Math.floor(Math.random() * 64)];
+  }
+  return cpn;
 }
-
 function getMutationByKey(key, mutations) {
   if (!key || !mutations) return undefined;
   return mutations.find((mutation) => mutation.entityKey === key).payload;
