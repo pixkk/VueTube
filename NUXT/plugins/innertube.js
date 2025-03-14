@@ -557,9 +557,6 @@ class Innertube {
     let data = {
       context: {
         client: constants.INNERTUBE_VIDEO(this.context.client),
-        thirdParty: {
-          "embedUrl": "https://www.youtube.com/embed/" + id
-        }
       },
       videoId: id,
     };
@@ -591,7 +588,11 @@ class Innertube {
       data.context.client.clientVersion = config.VERSION_WEB;
       data.context.client.clientScreen = config.clientScreen;
       console.warn("retrying with client config - ", data.context.client);
-      data.context.thirdParty = {};
+      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
+        data.context.thirdParty = {
+          "embedUrl": "https://www.youtube.com/embed/" + id,
+        }
+      }
       response = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
         data: {
