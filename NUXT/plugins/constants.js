@@ -93,7 +93,7 @@ module.exports = {
   INNERTUBE_CLIENT: (info) => {
     return {
       gl: info.gl,
-      hl: info.hl,
+      hl: localStorage.getItem("language") || "en",
       deviceMake: "Google",
       // deviceMake: info.deviceMake,
       // deviceModel: info.deviceModel,
@@ -114,7 +114,7 @@ module.exports = {
   INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
     return {
       gl: info.gl,
-      hl: info.hl,
+      hl: localStorage.getItem("language") || "en",
       deviceMake: "Generic",
       deviceModel: "Android 15.0",
       userAgent: androidApiVal.USER_AGENT,
@@ -140,7 +140,7 @@ module.exports = {
   INNERTUBE_VIDEO: (info) => {
     return {
       gl: info.gl,
-      hl: info.hl,
+      hl: localStorage.getItem("language") || "en",
       deviceMake: info.deviceMake,
       deviceModel: info.deviceModel,
       userAgent: info.userAgent,
