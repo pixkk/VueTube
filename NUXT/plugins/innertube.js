@@ -384,8 +384,6 @@ class Innertube {
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
-
-    console.log(args);
     let data = {
       context: {
         client: constants.INNERTUBE_CLIENT(this.context.client),
@@ -906,6 +904,10 @@ class Innertube {
     let resolutions = responseInfo.streamingData;
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
+    if (details.isPostLiveDvr) {
+      // hls = null;
+      // dash = null;
+    }
     // console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
@@ -926,6 +928,17 @@ class Innertube {
           }
         });
     }
+    let metadata = {};
+    vidMetadata?.contents.forEach((content) => {
+      let likesCount = content?.slimVideoActionBarRenderer?.buttons[0].slimMetadataButtonRenderer.button.segmentedLikeDislikeButtonViewModel.likeButtonViewModel.likeButtonViewModel.toggleButtonViewModel.toggleButtonViewModel.defaultButtonViewModel.buttonViewModel.accessibilityText;
+
+      if (likesCount !== undefined) {
+        likesCount = likesCount.replaceAll(/\D+/gm, "")
+        likesCount = parseInt(likesCount);
+        metadata.likes = likesCount.toLocaleString();
+        return;
+      }
+    });
 
     const ownerData = vidMetadata.contents.find(
       (content) => content.slimOwnerRenderer
@@ -1021,19 +1034,7 @@ class Innertube {
         viewCount: details.viewCount,
         lengthSeconds: details.lengthSeconds,
         isLive: isLive,
-        // likes: parseInt(
-        //   vidMetadata.contents
-        //     .find((content) => content.slimVideoActionBarRenderer)
-        //     .slimVideoActionBarRenderer.buttons.find(
-        //       (button) => button.slimMetadataToggleButtonRenderer.isLike
-        //     )
-        //     .slimMetadataToggleButtonRenderer.button.toggleButtonRenderer.defaultText.accessibility.accessibilityData.label.replace(
-        //       /\D/g,
-        //       ""
-        //     )
-        // ), // Yes. I know.
-        likes: "broken",
-        // NOTE: likes are pulled from RYD for now untill extractor is fixed
+        likes: metadata.likes,
       },
       renderedData: {
         description: responseNext.engagementPanels

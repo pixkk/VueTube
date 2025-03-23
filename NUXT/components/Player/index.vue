@@ -1043,7 +1043,7 @@ export default {
       );
     },
     setStartTime(startTime) {
-      console.warn(startTime);
+      // console.warn(startTime);
       if (startTime) {
         this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
         this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));

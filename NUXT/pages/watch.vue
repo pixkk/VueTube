@@ -380,9 +380,13 @@ export default {
         this.video.channelName = this.video.channelName ? this.video.channelName : "null";
 
         //---   Content Stuff   ---//
-        // NOTE: extractor likes are broken, using RYD likes instead
-        // this.likes = result.metadata.likes.toLocaleString();
         // this.interactions[0].value = result.metadata.likes.toLocaleString();
+        this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
+          this.likes = result.metadata.likes || data.likes.toLocaleString();
+          this.dislikes = data.dislikes.toLocaleString();
+          this.interactions[0].value = data.likes.toLocaleString();
+          this.interactions[1].value = data.dislikes.toLocaleString();
+        });
         this.loaded = true;
         this.recommends = result.renderedData.recommendations;
         console.log("recommendations:", this.recommends);
@@ -413,12 +417,7 @@ export default {
         }
       });
 
-      this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
-        this.likes = data.likes.toLocaleString();
-        this.dislikes = data.dislikes.toLocaleString();
-        this.interactions[0].value = data.likes.toLocaleString();
-        this.interactions[1].value = data.dislikes.toLocaleString();
-      });
+
       if (!document.pictureInPictureEnabled) {
         //this.interactions[this.interactions.length - 1].disabled = true;
         //this.interactions[this.interactions.length - 1].hidden = true;
