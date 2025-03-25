@@ -9,6 +9,7 @@ import { Http } from "@capacitor-community/http";
 import {getBetweenStrings, delay, getCpn} from "./utils";
 import rendererUtils from "./renderers";
 import constants, { YT_API_VALUES } from "./constants";
+import {h} from "vue";
 
 class Innertube {
   //--- Initiation ---//
@@ -56,6 +57,7 @@ class Innertube {
 
     if (isMatch) {
       const firstPart = isMatch[0];
+      // console.warn(firstPart);
 
       if (
         /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
@@ -103,11 +105,34 @@ class Innertube {
           baseJs.data
         );
       }
-      else {
+      else if (/{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
+        baseJs.data
+      )){
         // 16.01.2025
         isMatch = /{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
           baseJs.data
         );
+      }
+      else {
+        let helpDecipher = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
+          baseJs.data
+        );
+          // 25.03.2025 - new update: additional array with some values.
+         //var ****="',(\";\u00ae{reverse{*****{;[)/({...".split("{")
+          if (helpDecipher) {
+            // var ****
+            let secretArrayName = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+            if (secretArrayName) {
+              let array = /var [A-z0-9$]+="(.*)".split\("(.*)"\)/.exec(baseJs.data);
+              let splitSymbol = array[2];
+              let splitDataFromSecretArray = array[1].split(splitSymbol)
+              let regex = /([A-z0-9$]+)\[([0-9]+)\]/gm;
+              isMatch[0] = helpDecipher[0];
+              isMatch[0] = isMatch[0].replace(regex, (match, varName, index) => {
+                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`] +  '"';
+              });
+            }
+          }
       }
       if (!isMatch) {
         console.warn(
@@ -131,10 +156,8 @@ class Innertube {
 
       const secondPart =
         "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
-      // console.warn(secondPart);
       let decodeFunction = firstPart + secondPart;
       let decodeUrlFunction = new Function(decodeFunction);
-      // console.warn(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
       let signatureIntValue = /.sts="[0-9]+";/.exec(baseJs.data);
       // Get signature timestamp
@@ -152,7 +175,7 @@ class Innertube {
      * Convertation of EOM_VISITOR_DATA || VISITOR_DATA to Uint8Array
      * @type {RegExpExecArray}
      */
-    let firstFunction = /[A-Za-z0-9]+=function\([A-Za-z0-9]+\)\{for\([^)]*\)\{[^}]*\}return [A-Za-z0-9]+\};/gm.exec(baseJs.data);
+    let firstFunction = /[A-Za-z0-9$]+=function\([A-Za-z0-9$]+\)\{for\([^)]*\)\{[^}]*\}return [A-Za-z0-9$]+\};/gm.exec(baseJs.data);
     let firstFunctionName = "";
 
     /**
@@ -174,7 +197,7 @@ class Innertube {
 
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._]+\([0-9]+,"[^"]*"\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._$]+\([0-9]+,"[^"]*"\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9]+\.[A-Za-z0-9]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
@@ -211,7 +234,6 @@ class Innertube {
 
         const fullCode =
           "var getPot=" + resultF + " return getPot;";
-        // console.error(fullCode);
 
         let getPot = new Function(fullCode);
         this.getPot = getPot();
@@ -260,24 +282,31 @@ class Innertube {
         challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(challenge_name[0]);
       }
 
-      // challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
       challenge_name = /^.*?=\s*\[(.*)\];/gm.exec(challenge_name[0])[1];
-
-      // challenge_name = new RegExp(
-      //   `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
-      // console.warn(challenge_name);
-      //
-      // challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
-      // console.warn(challenge_name);
 
       challenge_name = challenge_name.replace("$", "\\$");
 
-      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(""\\)}`, 'g').exec(baseJs.data);
+      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`, 'g').exec(baseJs.data);
 
+      let helpDecipher = /return [A-Za-z]\.join\(.*\)}/.exec(
+        res[0]
+      );
+      if (helpDecipher) {
+        let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+        console.warn(secretArray);
+        if (secretArray) {
+          let array = /var [A-z0-9$]+="(.*)".split\("(.*)"\)/.exec(baseJs.data);
+          let splitSymbol = array[2];
+          let splitted = array[1].split(splitSymbol)
+          let regex = new RegExp(`${secretArray[1]}\\[([0-9]+)\\]`, 'g');
+          let result = res[0].replace(regex, (match, p1) => {
+            return '"' + splitted[parseInt(p1)] + '"';
+          });
+          res[0] = result;
+        }
+      }
 
       challenge_name = res[0];
-
-
       const match = challenge_name.match(/function\s*\(([^)]+)\)/);
 
       if (match) {
@@ -297,7 +326,7 @@ class Innertube {
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
-
+    console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -585,7 +614,7 @@ class Innertube {
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       data.context.client.clientScreen = config.clientScreen;
-      console.warn("retrying with client config - ", data.context.client);
+      console.warn("Trying with client config - ", data.context.client);
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
           "embedUrl": "https://www.youtube.com/embed/" + id,
