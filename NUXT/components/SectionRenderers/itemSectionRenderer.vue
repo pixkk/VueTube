@@ -1,7 +1,7 @@
 <template>
   <div class="fill-width">
     <v-list-item
-      v-for="(video, index) in render.contents"
+      v-for="(video, index) in render?.contents"
       :key="index"
       class="pa-0 min-height-0"
     >
@@ -14,8 +14,8 @@
     </v-list-item>
     <div
       v-if="
-        render.separatorDetails &&
-        render.separatorDetails.hasBottomSeparator &&
+        render?.separatorDetails &&
+        render?.separatorDetails.hasBottomSeparator &&
         !($store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0)
       "
       class="separator-bottom background"

@@ -135,12 +135,12 @@ export default {
 
     findContinuation(newResponses) {
       const continuationItemParent = newResponses.find(
-        (item) => item.continuationItemRenderer
+        (item) => item?.continuationItemRenderer
       );
 
       const newContinuation =
-        continuationItemParent?.continuationItemRenderer.continuationEndpoint
-          .continuationCommand.token;
+        continuationItemParent?.continuationItemRenderer?.continuationEndpoint
+          ?.continuationCommand?.token;
 
       return newContinuation;
     },

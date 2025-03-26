@@ -64,7 +64,7 @@
         <track default kind="captions" id="captions" src=""/>
       </video>
       <endscreen
-        v-if="$refs.player?.videoHeight"
+        v-if="$refs.player?.videoHeight && isFullscreen"
         ref="endscrn"
         :endscreen="video.endscreen"
         :isFullscreen="isFullscreen"
@@ -241,7 +241,7 @@
         <playpause
           v-if="$refs.player"
           :video="$refs.player"
-          :buffering="bufferingDetected"
+          :buffering="bufferingDetected || false"
           @play="$refs.player.play(), $refs.audio.play()"
           @pause="pauseHandler"
         />
@@ -675,10 +675,10 @@ export default {
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
       if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
+        this.bufferingDetected = false;
+        this.$refs.audio.currentTime = this.$refs.player.currentTime;
         this.aud.play();
         this.vid.play();
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
-        this.bufferingDetected = false;
 
         if (!this.isMusic) {
           this.$refs.audio.playbackRate = this.$store.state.player.speed;
@@ -737,7 +737,7 @@ export default {
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 1000 / 1000) {
+      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
 
         this.bufferingDetected = true;
         setTimeout(() => {
@@ -805,9 +805,9 @@ export default {
     waitingEvent() {
       // buffering detection & sync
       let threshold = 1000; //ms after which user perceives buffering
+      this.bufferingDetected = true;
       if (!this.$refs.player.paused) {
         setTimeout(() => {
-          this.bufferingDetected = true;
           this.$refs.audio.pause();
           //show buffering
         }, threshold);
@@ -977,10 +977,10 @@ export default {
     fullscreenHandler(pressedFullscreenBtn) {
       // Prevent fullscreen button press from being handled twice
       // (once by pressing fullscreen button, another by the resulting rotation)
-      // if (this.midRotation) {
-      //   this.midRotation = false;
-      //   return;
-      // }
+      if (this.midRotation) {
+        this.midRotation = false;
+        return;
+      }
       // Toggle fullscreen state
       if (this.isFullscreen) {
         this.exitFullscreen(pressedFullscreenBtn);
@@ -1043,7 +1043,7 @@ export default {
       );
     },
     setStartTime(startTime) {
-      console.warn(startTime);
+      // console.warn(startTime);
       if (startTime) {
         this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));
         this.$refs.player.currentTime = parseInt(startTime.replace(/[^0-9]/g, ''));

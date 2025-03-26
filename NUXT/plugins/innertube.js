@@ -5,10 +5,10 @@
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
-import { Http } from "@capacitor-community/http";
-import { getBetweenStrings, delay } from "./utils";
+import {Http} from "@capacitor-community/http";
+import {delay, getBetweenStrings, getCpn} from "./utils";
 import rendererUtils from "./renderers";
-import constants, { YT_API_VALUES } from "./constants";
+import constants from "./constants";
 
 class Innertube {
   //--- Initiation ---//
@@ -56,6 +56,7 @@ class Innertube {
 
     if (isMatch) {
       const firstPart = isMatch[0];
+      // console.warn(firstPart);
 
       if (
         /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
@@ -103,11 +104,37 @@ class Innertube {
           baseJs.data
         );
       }
-      else {
+      else if (/{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
+        baseJs.data
+      )){
         // 16.01.2025
         isMatch = /{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
           baseJs.data
         );
+      }
+      else {
+        let helpDecipher = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
+          baseJs.data
+        );
+          // 25.03.2025 - new update: additional array with some values.
+         //var ****="',(\";\u00ae{reverse{*****{;[)/({...".split("{")
+          if (helpDecipher) {
+            // var ****
+            let secretArrayName = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+            if (secretArrayName) {
+              let array = new RegExp(`var ${secretArrayName[1]}="(.*)".split\\("(.*)"\\)`, 'g').exec(baseJs.data);
+              if (array == null) {
+                array = new RegExp(`var ${secretArrayName[1]}='(.*)'.split\\("(.*)"\\)`, 'g').exec(baseJs.data);
+              }
+              let splitSymbol = array[2];
+              let splitDataFromSecretArray = array[1].split(splitSymbol);
+              let regex = /([A-z0-9$]+)\[([0-9]+)\]/gm;
+              isMatch[0] = helpDecipher[0];
+              isMatch[0] = isMatch[0].replace(regex, (match, varName, index) => {
+                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
+              });
+            }
+          }
       }
       if (!isMatch) {
         console.warn(
@@ -131,10 +158,8 @@ class Innertube {
 
       const secondPart =
         "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
-      // console.warn(secondPart);
       let decodeFunction = firstPart + secondPart;
       let decodeUrlFunction = new Function(decodeFunction);
-      // console.warn(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
       let signatureIntValue = /.sts="[0-9]+";/.exec(baseJs.data);
       // Get signature timestamp
@@ -152,7 +177,7 @@ class Innertube {
      * Convertation of EOM_VISITOR_DATA || VISITOR_DATA to Uint8Array
      * @type {RegExpExecArray}
      */
-    let firstFunction = /[A-Za-z0-9]+=function\([A-Za-z0-9]+\)\{for\([^)]*\)\{[^}]*\}return [A-Za-z0-9]+\};/gm.exec(baseJs.data);
+    let firstFunction = /[A-Za-z0-9$]+=function\([A-Za-z0-9$]+\)\{for\([^)]*\)\{[^}]*\}return [A-Za-z0-9$]+\};/gm.exec(baseJs.data);
     let firstFunctionName = "";
 
     /**
@@ -174,7 +199,7 @@ class Innertube {
 
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._]+\([0-9]+,"[^"]*"\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._$]+\([0-9]+,"[^"]*"\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9]+\.[A-Za-z0-9]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
@@ -211,7 +236,6 @@ class Innertube {
 
         const fullCode =
           "var getPot=" + resultF + " return getPot;";
-        // console.error(fullCode);
 
         let getPot = new Function(fullCode);
         this.getPot = getPot();
@@ -260,30 +284,35 @@ class Innertube {
         challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(challenge_name[0]);
       }
 
-      // challenge_name = challenge_name[0].replace(/^.*?=\s*(\w+)\s*\[.*$/, "$1");
       challenge_name = /^.*?=\s*\[(.*)\];/gm.exec(challenge_name[0])[1];
-
-      // challenge_name = new RegExp(
-      //   `var ${challenge_name}=[[A-Za-z0-9$]+];`).exec(baseJs.data)[0];
-      // console.warn(challenge_name);
-      //
-      // challenge_name = challenge_name.replace(/^[^\[]*\[|\][^\]]*$/g, '')
-      // console.warn(challenge_name);
 
       challenge_name = challenge_name.replace("$", "\\$");
 
-      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(""\\)}`, 'g').exec(baseJs.data);
+      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`, 'g').exec(baseJs.data);
 
+      let helpDecipher = /return [A-Za-z]\.join\(.*\)}/.exec(
+        res[0]
+      );
+      // 25.03.2025 - new update: additional array with some values.
+      if (helpDecipher) {
+        let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+        if (secretArray) {
+          let array = new RegExp(`;var ${secretArray[1]}=["|'](.*)["|'].split\\("(.*)"\\),`, 'g').exec(baseJs.data);
+          let splitSymbol = array[2];
+          let splitted = array[1].split(splitSymbol)
+          let regex = new RegExp(`${secretArray[1]}\\[([0-9]+)\\]`, 'g');
+          res[0] = res[0].replace(regex, (match, p1) => {
+            return '"' + splitted[parseInt(p1)].replace(/(["'\\])/g, '\\$1') + '"';
+          });
+        }
+      }
 
       challenge_name = res[0];
-
-
       const match = challenge_name.match(/function\s*\(([^)]+)\)/);
 
       if (match) {
         functionArg = match[1].trim();
       }
-
 
       var startIndex = challenge_name.indexOf('{');
 
@@ -297,7 +326,7 @@ class Innertube {
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
-
+    // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -312,7 +341,7 @@ class Innertube {
       constants.URLS.YT_MOBILE +
       getBetweenStrings(html.data, '"jsUrl":"', '","');
     // const baseJsUrl =
-    //   "https://m.youtube.com//s//player//5bdfe6d5//player-plasma-ias-tablet-ru_RU.vflset//base.js";
+    //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
     // Get base.js content
     const baseJs = await Http.get({
       url: baseJsUrl,
@@ -384,8 +413,6 @@ class Innertube {
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
-
-    console.log(args);
     let data = {
       context: {
         client: constants.INNERTUBE_CLIENT(this.context.client),
@@ -580,46 +607,19 @@ class Innertube {
     }).catch((error) => error);
 
     this.pot = this.getPot(this.visitorData, 2);
-    let response = await Http.post({
-      url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-      data: {
-        ...data,
-        ...{
-          playerParams: this.playerParams,
-          contentCheckOk: false,
-          racyCheckOk: false,
-          // mwebCapabilities: {
-          //   mobileClientSupportsLivestream: true,
-          // },
+    let response = "";
 
-          serviceIntegrityDimensions: {
-            poToken: this.pot
-          },
-          playbackContext: {
-            contentPlaybackContext: {
-              currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
-              vis: 0,
-              splay: false,
-              autoCaptionsDefaultOn: false,
-              autonavState: "STATE_NONE",
-              html5Preference: "HTML5_PREF_WANTS",
-              signatureTimestamp: this.signatureTimestamp,
-              referer: "https://m.youtube.com/",
-              lactMilliseconds: "-1",
-              watchAmbientModeContext: {
-                watchAmbientModeEnabled: true,
-              },
-            },
-          },
-        },
-      },
-      // headers: constants.INNERTUBE_HEADER(this.context.client),
-      headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
-    }).catch((error) => error);
-
-    if (response.data.playabilityStatus.status === "UNPLAYABLE") {
-      data.context.client.clientName = "ANDROID_VR";
-      data.context.client.clientVersion = "1.37";
+    const clientConfigs  = constants.clientConfigs;
+    for (const config of clientConfigs) {
+      data.context.client.clientName = config.CLIENTNAME;
+      data.context.client.clientVersion = config.VERSION_WEB;
+      data.context.client.clientScreen = config.clientScreen;
+      console.warn("Trying with client config - ", data.context.client);
+      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
+        data.context.thirdParty = {
+          "embedUrl": "https://www.youtube.com/embed/" + id,
+        }
+      }
       response = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
         data: {
@@ -628,10 +628,6 @@ class Innertube {
             playerParams: this.playerParams,
             contentCheckOk: false,
             racyCheckOk: false,
-            // mwebCapabilities: {
-            //   mobileClientSupportsLivestream: true,
-            // },
-
             serviceIntegrityDimensions: {
               poToken: this.pot
             },
@@ -653,12 +649,15 @@ class Innertube {
             },
           },
         },
-        // headers: constants.INNERTUBE_HEADER(this.context.client),
         headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
       }).catch((error) => error);
 
-    }
+      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
+        response?.data?.playabilityStatus !== "LOGIN_REQUIRED") {
+        break;
+      }
 
+    }
     if (response.error) {
 
       return {
@@ -924,7 +923,8 @@ class Innertube {
       );
     const responseInfo = response.data.output;
     const responseNext = response.data.outputNext;
-    const details = responseInfo.videoDetails;
+    let details = responseInfo.videoDetails;
+
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     // const columnUI =
@@ -933,6 +933,10 @@ class Innertube {
     let resolutions = responseInfo.streamingData;
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
+    if (details.isPostLiveDvr) {
+      // hls = null;
+      // dash = null;
+    }
     // console.warn(hls)
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
@@ -942,7 +946,28 @@ class Innertube {
 
     const recommendations = columnUI?.contents.find(
       (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
-    ).itemSectionRenderer;
+    )?.itemSectionRenderer;
+
+    if (details.title == null) {
+      vidMetadata?.contents.forEach((content) => {
+          let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
+          if (text !== undefined) {
+            details.title = text;
+            return;
+          }
+        });
+    }
+    let metadata = {};
+    vidMetadata?.contents.forEach((content) => {
+      let likesCount = content?.slimVideoActionBarRenderer?.buttons[0].slimMetadataButtonRenderer.button.segmentedLikeDislikeButtonViewModel.likeButtonViewModel.likeButtonViewModel.toggleButtonViewModel.toggleButtonViewModel.defaultButtonViewModel.buttonViewModel.accessibilityText;
+
+      if (likesCount !== undefined) {
+        likesCount = likesCount.replaceAll(/\D+/gm, "")
+        likesCount = parseInt(likesCount);
+        metadata.likes = likesCount.toLocaleString();
+        return;
+      }
+    });
 
     const ownerData = vidMetadata.contents.find(
       (content) => content.slimOwnerRenderer
@@ -961,9 +986,9 @@ class Innertube {
         ownerData.navigationEndpoint.watchEndpoint.playerParams;
     } catch (e) {}
     // Deciphering urls
-    resolutions = resolutions.formats ? resolutions.formats.concat(resolutions.adaptiveFormats) : resolutions.adaptiveFormats;
+    resolutions = resolutions?.formats ? resolutions?.formats.concat(resolutions.adaptiveFormats) : resolutions?.adaptiveFormats;
     // console.warn(resolutions);
-    resolutions.forEach((source) => {
+    resolutions?.forEach((source) => {
       if (source.isLive) {
         isLive = true;
       }
@@ -986,17 +1011,6 @@ class Innertube {
         }
 
 
-        function generateCPN() {
-          const CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
-          let cpn = '';
-          for (let i = 0; i < 16; i++) {
-            cpn += CPN_ALPHABET[Math.floor(Math.random() * 64)];
-          }
-          return cpn;
-        }
-
-        const cpn = generateCPN();
-        // console.log(cpn);
 
         var searchParams = new URLSearchParams(source.url);
 
@@ -1016,9 +1030,7 @@ class Innertube {
         source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
-        source["url"] = source["url"] + "&cpn=" + generateCPN();
-        // console.log(this.visitorData);
-        // console.log(this.pot);
+        source["url"] = source["url"] + "&cpn=" + getCpn();
         source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
         // source["url"] = source["url"] + "&range=0-" + source.contentLength;
         if (searchParams.get("mime").indexOf("audio") < 0) {
@@ -1030,7 +1042,7 @@ class Innertube {
       id: details.videoId,
       title: details.title,
       isLive: details.isLiveContent,
-      channelName: details.author,
+      channelName: ownerData?.title.runs[0].text,
       channelSubs: ownerData?.collapsedSubtitle?.runs[0]?.text,
       channelUrl: rendererUtils.getNavigationEndpoints(
         ownerData.navigationEndpoint
@@ -1051,19 +1063,7 @@ class Innertube {
         viewCount: details.viewCount,
         lengthSeconds: details.lengthSeconds,
         isLive: isLive,
-        // likes: parseInt(
-        //   vidMetadata.contents
-        //     .find((content) => content.slimVideoActionBarRenderer)
-        //     .slimVideoActionBarRenderer.buttons.find(
-        //       (button) => button.slimMetadataToggleButtonRenderer.isLike
-        //     )
-        //     .slimMetadataToggleButtonRenderer.button.toggleButtonRenderer.defaultText.accessibility.accessibilityData.label.replace(
-        //       /\D/g,
-        //       ""
-        //     )
-        // ), // Yes. I know.
-        likes: "broken",
-        // NOTE: likes are pulled from RYD for now untill extractor is fixed
+        likes: metadata.likes,
       },
       renderedData: {
         description: responseNext.engagementPanels
@@ -1077,7 +1077,7 @@ class Innertube {
           )?.expandableVideoDescriptionBodyRenderer || null,
         recommendations: recommendations,
         recommendationsContinuation:
-          recommendations.contents[recommendations.contents.length - 1]
+          recommendations?.contents[recommendations.contents.length - 1]
             .continuationItemRenderer?.continuationEndpoint.continuationCommand
             .token,
       },

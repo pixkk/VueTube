@@ -34,7 +34,7 @@
       class="background background--text text-center px-4"
       :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
     >
-      {{ $store.state.channel.descriptionPreview }}
+      {{ $store.state.channel.descriptionPreview.slice(0, $store.state.channel.descriptionPreview.indexOf(".") || 100) }}...
       <v-icon
         class="background--text"
         :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
