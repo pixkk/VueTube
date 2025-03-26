@@ -5,11 +5,10 @@
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
-import { Http } from "@capacitor-community/http";
-import {getBetweenStrings, delay, getCpn} from "./utils";
+import {Http} from "@capacitor-community/http";
+import {delay, getBetweenStrings, getCpn} from "./utils";
 import rendererUtils from "./renderers";
-import constants, { YT_API_VALUES } from "./constants";
-import {h} from "vue";
+import constants from "./constants";
 
 class Innertube {
   //--- Initiation ---//
@@ -123,13 +122,16 @@ class Innertube {
             // var ****
             let secretArrayName = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
             if (secretArrayName) {
-              let array = /var [A-z0-9$]+="(.*)".split\("(.*)"\)/.exec(baseJs.data);
+              let array = new RegExp(`var ${secretArrayName[1]}="(.*)".split\\("(.*)"\\)`, 'g').exec(baseJs.data);
+              if (array == null) {
+                array = new RegExp(`var ${secretArrayName[1]}='(.*)'.split\\("(.*)"\\)`, 'g').exec(baseJs.data);
+              }
               let splitSymbol = array[2];
-              let splitDataFromSecretArray = array[1].split(splitSymbol)
+              let splitDataFromSecretArray = array[1].split(splitSymbol);
               let regex = /([A-z0-9$]+)\[([0-9]+)\]/gm;
               isMatch[0] = helpDecipher[0];
               isMatch[0] = isMatch[0].replace(regex, (match, varName, index) => {
-                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`] +  '"';
+                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
               });
             }
           }
@@ -291,18 +293,17 @@ class Innertube {
       let helpDecipher = /return [A-Za-z]\.join\(.*\)}/.exec(
         res[0]
       );
+      // 25.03.2025 - new update: additional array with some values.
       if (helpDecipher) {
         let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-        console.warn(secretArray);
         if (secretArray) {
-          let array = /var [A-z0-9$]+="(.*)".split\("(.*)"\)/.exec(baseJs.data);
+          let array = new RegExp(`;var ${secretArray[1]}=["|'](.*)["|'].split\\("(.*)"\\),`, 'g').exec(baseJs.data);
           let splitSymbol = array[2];
           let splitted = array[1].split(splitSymbol)
           let regex = new RegExp(`${secretArray[1]}\\[([0-9]+)\\]`, 'g');
-          let result = res[0].replace(regex, (match, p1) => {
-            return '"' + splitted[parseInt(p1)] + '"';
+          res[0] = res[0].replace(regex, (match, p1) => {
+            return '"' + splitted[parseInt(p1)].replace(/(["'\\])/g, '\\$1') + '"';
           });
-          res[0] = result;
         }
       }
 
@@ -312,7 +313,6 @@ class Innertube {
       if (match) {
         functionArg = match[1].trim();
       }
-
 
       var startIndex = challenge_name.indexOf('{');
 
@@ -326,7 +326,7 @@ class Innertube {
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
-    console.warn(fullCode);
+    // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
   }
@@ -341,7 +341,7 @@ class Innertube {
       constants.URLS.YT_MOBILE +
       getBetweenStrings(html.data, '"jsUrl":"', '","');
     // const baseJsUrl =
-    //   "https://m.youtube.com//s//player//5bdfe6d5//player-plasma-ias-tablet-ru_RU.vflset//base.js";
+    //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
     // Get base.js content
     const baseJs = await Http.get({
       url: baseJsUrl,
