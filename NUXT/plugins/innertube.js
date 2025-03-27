@@ -27,7 +27,35 @@ class Innertube {
   checkErrorCallback() {
     return typeof this.ErrorCallback === "function";
   }
-
+  getSecretArray(secretArrayName, rootPageBody) {
+    let array = new RegExp(`var ${secretArrayName}="(.*)".split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+    if (array == null) {
+      array = new RegExp(`var ${secretArrayName}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+    }
+    if (array == null) {
+      array = new RegExp(`var ${secretArrayName}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
+    }
+    if (array) {
+      let returnSecretArray = new Function(array[0] + "; return " + secretArrayName + ";");
+      return returnSecretArray();
+    }
+  }
+  decodeFunctionWithSecretArray(functionBody, secretArray, secretArrayName) {
+    let regex = new RegExp(`(${secretArrayName})\\[([0-9]+)\\]`, 'gm');
+    functionBody = functionBody.replace(regex, (match, varName, index) => {
+      return  '"' + secretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
+    });
+    return functionBody;
+  }
+  processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
+    let res;
+    let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+    if (secretArray) {
+      let splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
+      return res;
+    }
+  }
   async makeDecipherFunction(baseJs) {
     // Example:
     //;var IF={k4:function(a,b){var c=a[0];a[0]=a[b%a.length];a[b%a.length]=c},
@@ -119,28 +147,16 @@ class Innertube {
           // 25.03.2025 - new update: additional array with some values.
          //var ****="',(\";\u00ae{reverse{*****{;[)/({...".split("{")
           if (helpDecipher) {
-            // var ****
-            let secretArrayName = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-            if (secretArrayName) {
-              let array = new RegExp(`var ${secretArrayName[1]}="(.*)".split\\("(.*)"\\)`, 'g').exec(baseJs.data);
-              if (array == null) {
-                array = new RegExp(`var ${secretArrayName[1]}='(.*)'.split\\("(.*)"\\)`, 'g').exec(baseJs.data);
-              }
-              let splitSymbol = array[2];
-              let splitDataFromSecretArray = array[1].split(splitSymbol);
-              let regex = /([A-z0-9$]+)\[([0-9]+)\]/gm;
-              isMatch[0] = helpDecipher[0];
-              isMatch[0] = isMatch[0].replace(regex, (match, varName, index) => {
-                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
-              });
-            }
+            isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
           }
       }
+
       if (!isMatch) {
         console.warn(
           "The second part of decipher string does not match the regex pattern."
         );
       }
+
       // Example:
       // {a=a.split("");IF.k4(a,4);IF.VN(a,68);IF.DW(a,2);IF.VN(a,66);IF.k4(a,19);IF.DW(a,2);IF.VN(a,36);IF.DW(a,2);IF.k4(a,41);return a.join("")};
 
@@ -295,16 +311,7 @@ class Innertube {
       );
       // 25.03.2025 - new update: additional array with some values.
       if (helpDecipher) {
-        let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-        if (secretArray) {
-          let array = new RegExp(`;var ${secretArray[1]}=["|'](.*)["|'].split\\("(.*)"\\),`, 'g').exec(baseJs.data);
-          let splitSymbol = array[2];
-          let splitted = array[1].split(splitSymbol)
-          let regex = new RegExp(`${secretArray[1]}\\[([0-9]+)\\]`, 'g');
-          res[0] = res[0].replace(regex, (match, p1) => {
-            return '"' + splitted[parseInt(p1)].replace(/(["'\\])/g, '\\$1') + '"';
-          });
-        }
+          res[0] = this.processFunctionWithSecretArray(helpDecipher, res[0], baseJs.data);
       }
 
       challenge_name = res[0];
@@ -325,7 +332,7 @@ class Innertube {
     let fullCode =
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
-    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
     // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
