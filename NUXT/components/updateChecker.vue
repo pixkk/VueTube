@@ -36,7 +36,7 @@ export default {
     const releases = await this.$vuetube.checkForUpdates();
     const appVersion = process.env.version;
     const appChannel = process.env.channel;
-    if (appVersion !== releases[0].tag_name && appVersion !== "dev-local" && appChannel !== "Unstable") {
+    if (appVersion !== releases[0]?.tag_name && appVersion !== "dev-local" && appChannel !== "Unstable") {
       this.updateSnackbar = true;
     }
   },
