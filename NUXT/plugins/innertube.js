@@ -28,12 +28,13 @@ class Innertube {
     return typeof this.ErrorCallback === "function";
   }
   getSecretArray(secretArrayName, rootPageBody) {
-    let array = new RegExp(`var ${secretArrayName}="(.*)".split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+    let array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\)`, 'gm').exec(rootPageBody);
     if (array == null) {
-      array = new RegExp(`var ${secretArrayName}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+      array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+      console.warn('var' + secretArrayName + '=\'(.*)\'.split\\("(.*)"\\)');
     }
     if (array == null) {
-      array = new RegExp(`var ${secretArrayName}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
+      array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
     }
     if (array) {
       let returnSecretArray = new Function(array[0] + "; return " + secretArrayName + ";");
@@ -41,7 +42,7 @@ class Innertube {
     }
   }
   decodeFunctionWithSecretArray(functionBody, secretArray, secretArrayName) {
-    let regex = new RegExp(`(${secretArrayName})\\[([0-9]+)\\]`, 'gm');
+    let regex = new RegExp(`(${secretArrayName.replace("$", "\\$")})\\[([0-9]+)\\]`, 'gm');
     functionBody = functionBody.replace(regex, (match, varName, index) => {
       return  '"' + secretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
     });
@@ -216,8 +217,8 @@ class Innertube {
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
         optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._$]+\([0-9]+,"[^"]*"\);/g, '');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9]+\([^)]*\);/g, '');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9]+\.[A-Za-z0-9]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9$]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9$]+\.[A-Za-z0-9$]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9]+)\=[A-z0-9]+\(([A-z0-9]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
@@ -344,7 +345,7 @@ class Innertube {
       params: { hl: "en" },
     }).catch((error) => error);
     // Get url of base.js file
-    const baseJsUrl =
+    let baseJsUrl =
       constants.URLS.YT_MOBILE +
       getBetweenStrings(html.data, '"jsUrl":"', '","');
     // const baseJsUrl =
