@@ -201,11 +201,11 @@ class Innertube {
      * Modification result from firstFunction
      * @type {RegExpExecArray}
      */
-    let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9]+\}/m.exec(baseJs.data);
+    let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9$]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9$]+\}/m.exec(baseJs.data);
     let secondFunctionName = "";
 
-    let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
-    let fourthFunction = /[A-z0-9]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
+    let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9$]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
+    let fourthFunction = /[A-z0-9$]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
 
     let resultF = "";
     if (firstFunction) {
@@ -215,13 +215,13 @@ class Innertube {
         let optimizedSecondFunc = secondFunction[0];
 
 
-        optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9$]+)=([A-z0-9$]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
         optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._$]+\([0-9]+,"[^"]*"\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9$]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9$]+\.[A-Za-z0-9$]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
 
-        optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9]+)\=[A-z0-9]+\(([A-z0-9]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9$]+)\=[A-z0-9$]+\(([A-z0-9$]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
 
         secondFunctionName = optimizedSecondFunc.match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
@@ -230,7 +230,7 @@ class Innertube {
         if (thirdFunction) {
           let functionNameForInserting = /[A-z0-9$]+\(\)/.exec(thirdFunction[0])[0];
 
-          let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
+          let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9$]+\]\=[A-z0-9$]+/)[1];
 
           let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
 
@@ -242,13 +242,8 @@ class Innertube {
           modifiedThirdFunction = modifiedThirdFunction.replace("var "+fourthFunctionKeyValue+"=null;\n", "var "+fourthFunctionKeyValue+"=null;\n");
           resultF = modifiedThirdFunction;
         }
-
-
         else {
-
-        }
-        const match = resultF.match(/function\s*\(([^)]+)\)/);
-        if (match) {
+          console.error("The third part of POT function does not match the regex pattern.");
         }
 
         const fullCode =
