@@ -7,7 +7,27 @@ module.exports = {
     library: "المكتبة",
     restart: "إعادة",
     later: "لاحقًا",
-    settingRestart: "تعديل هذا الخيار يُلزم التطبيق بأن يعاد تشغيله لتطبيق التغيرات"
+    settingRestart: "تعديل هذا الخيار يُلزم التطبيق بأن يعاد تشغيله لتطبيق التغيرات",
+	okay: "حسنا",
+  },
+
+  pages: {
+    index: "",
+    home: "الرئيسية",
+    library: "المكتبة",
+    search: "البحث",
+    settings: "الإعدادات",
+    subscriptions: "الإشتراكات",
+    watch: "شاهد",
+    about: "حول",
+    developer: "مطوّر",
+    general: "عام",
+    player: "مشغّل",
+    plugins: "الإضافات",
+    startup: "بدء التشغيل",
+    theme: "الثيمات",
+    tweaks: "التعديلات",
+    updates: "التحديثات",
   },
 
   index: {
@@ -32,6 +52,11 @@ module.exports = {
   mods: {
     general: {
       language: "اللغة",
+	  backup: "النسخ الإحتياطي",
+      backupinfo: "انسخ أو استعد إعدادات التطبيق",
+      restore: "الإستعادة",
+      personalizedrecommendations: "اقتراحات مخصّصة",
+      personalizedrecommendationsinfo: "تلقّ اقتراحات مخصصة على حساب إرسال بيانات وقت المشاهدة.",
     },
     theme: {
       normal: "عادي",
@@ -48,12 +73,24 @@ module.exports = {
       roundedcorners: "حواف مدورة",
       roundthumbnails: "صور مصغرة مدورة",
       roundwatchpagecomponents: "موارد صفحة المشاهدة مدورة",
-      radius: "كمية التدوير",
+      radius: "مدى التدوير",
+	  launchscreen: "Launch Screen",
+      centeredlayout: "واجهة منتصفة",
+      fullscreenlayout: "واجهة شاشة كاملة",
+      themedicon: "أيقونات بلون الخلفية",
+      bottomnavigation: "شريط التنقل السفلي",
+      shift: "أزح",
+      showlabels: "اعرض المسميات",
+      mdi: "MDI",
+      materialsymbols: "رموز Material",
+      fluentuiicons: "أيقونات FluentUI",
+      ibmcarbonicons: "أيقونات IBM Carbon",
     },
     startup: {
       defaultpage: "الصفحة الافتراضية",
     },
     updates: {
+	  updating: "يتم التنزيل",
       checking: "يتم التحقق من التحديثات",
       available: "تحديث متوفر",
       noupdate: "لا يتوفر تحديثات",
@@ -61,8 +98,13 @@ module.exports = {
 
       installed: "النسخة المثبتة",
       latest: "أحدث نسخة",
+	  
+	  published: "رُفعت",
+      users: "مستخدمين",
+      size: "حجم التحديث",
 
       okay: "حسنا",
+	  refresh: "تحقق ثانية",
       update: "تحديث",
       later: "لاحقا",
     },
@@ -80,6 +122,20 @@ module.exports = {
       emulator: "المحاكي",
       github: "جيتهب",
       discord: "ديسكورد",
+    },
+	developer: {
+      registryeditor: "محرر السجل",
+      registrywarning: "تغيير القيم قد يؤدي إلى تعطيل التطبيق!",
+      createentry: "أنشئ إدخال",
+      createentryfull: "أنشئ إدخال سجل",
+      cancel: "ألغ",
+      create: "أنشئ",
+      key: "المفتاح",
+      value: "القيمة",
+      confirmdelete: "أكّد الإزالة",
+      areyousure: "هل أنت متأكد من أنك تريد الإزالة؟",
+      delete: "أزِل",
+      change: "غيّر",
     },
   },
 
