@@ -73,7 +73,7 @@ module.exports = {
       roundedcorners: "حواف مدورة",
       roundthumbnails: "صور مصغرة مدورة",
       roundwatchpagecomponents: "موارد صفحة المشاهدة مدورة",
-      radius: "مدى التدوير",
+      radius: "نصف قطر التدوير",
 	  launchscreen: "Launch Screen",
       centeredlayout: "واجهة منتصفة",
       fullscreenlayout: "واجهة شاشة كاملة",
