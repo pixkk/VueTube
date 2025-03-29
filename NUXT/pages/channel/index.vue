@@ -45,6 +45,7 @@
     <div>
       <compact-video-renderer
         v-for="videoExample in $store.state.channel.videoExample"
+        :key="Math.random() * 10000"
         :video="
         videoExample.elementRenderer.newElement.type.componentType.model
           .videoWithContextModel

@@ -38,6 +38,7 @@
         >
           <v-list-item-group
             v-for="src in captions"
+            :key="src.name.runs[0].text"
             >
             <v-list-item
               @click="(sheet = false), $emit('captionsHandler', src)">

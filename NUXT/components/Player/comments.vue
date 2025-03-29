@@ -4,7 +4,7 @@
     <v-bottom-sheet
       v-model="sheet"
       :attach="$parent.$refs.vidcontainer"
-      style="z-index: 777777"
+      style="z-index: 777777;"
       scrollable
     >
       <template #activator="{ on, attrs }">
@@ -48,7 +48,10 @@
       <v-card class="background"
               v-touch="{
             down: () => (sheet = false),
-          }">
+          }"
+      :style="{
+            minHeight: 60 + 'vh',}"
+      >
         <v-subheader
           v-touch="{
 // <!--            down: () => (sheet = false),-->
