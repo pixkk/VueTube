@@ -8,9 +8,9 @@
         <strong>Replies</strong>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn icon @click="$emit('closeComments')">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
+<!--      <v-btn icon @click="$emit('closeComments')">-->
+<!--        <v-icon>mdi-close</v-icon>-->
+<!--      </v-btn>-->
     </template>
     <template>
       <comment-thread-renderer :comment="parentComment" />
@@ -68,6 +68,7 @@ export default {
   },
   methods: {
     paginate() {
+      // console.warn(this.parentComment);
       if (this.defaultContinuation) {
         this.loading = true;
         this.$youtube
