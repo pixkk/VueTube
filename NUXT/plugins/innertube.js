@@ -201,7 +201,10 @@ class Innertube {
      * Modification result from firstFunction
      * @type {RegExpExecArray}
      */
-    let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9$]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9$]+\}/m.exec(baseJs.data);
+    // let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9$]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9$]+\}/m.exec(baseJs.data);
+    let secondFunction = /;[A-z0-9$]+\.prototype\.[A-z0-9$]+=function(?:\([A-z0-9]+\)|\(\))\{var [A-z0-9]+=.*return [A-z0-9$]+\};var/m.exec(baseJs.data);
+
+    console.warn(secondFunction);
     let secondFunctionName = "";
 
     let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9$]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
@@ -212,7 +215,8 @@ class Innertube {
       firstFunctionName = firstFunction[0].match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
       if (secondFunction) {
-        let optimizedSecondFunc = secondFunction[0];
+        let optimizedSecondFunc = secondFunction[0].substring(1, secondFunction[0].length - 4);
+        console.warn(optimizedSecondFunc);
 
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9$]+)=([A-z0-9$]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
@@ -223,24 +227,34 @@ class Innertube {
 
         optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9$]+)\=[A-z0-9$]+\(([A-z0-9$]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
 
+        console.warn(optimizedSecondFunc);
         secondFunctionName = optimizedSecondFunc.match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
+        console.warn(secondFunctionName);
 
 
+        console.warn(thirdFunction);
         if (thirdFunction) {
+          console.warn(fourthFunction);
           let functionNameForInserting = /[A-z0-9$]+\(\)/.exec(thirdFunction[0])[0];
 
+          console.warn(functionNameForInserting);
           let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9$]+\]\=[A-z0-9$]+/)[1];
 
+          console.warn(inFFKV);
           let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
 
+          console.warn(fourthFunctionKeyValue);
           let modifiedThirdFunction = thirdFunction[0].replace(functionNameForInserting, "var "+ inFFKV +"={};\nvar "+fourthFunctionKeyValue+"=null;\n"+"var "+optimizedSecondFunc+";\n"+fourthFunction[0]+"\n"+functionNameForInserting+";\n");
 
+          console.warn(modifiedThirdFunction);
           let fourthFunctionTwoKeyValue = modifiedThirdFunction.match(/[A-Za-z0-9$]+\[[A-Za-z0-9$]+\]=[A-Za-z0-9$]+;/)[0].split('[')[0];
 
+          console.warn(fourthFunctionTwoKeyValue);
           modifiedThirdFunction = modifiedThirdFunction.replace(functionNameForInserting+";\n", functionNameForInserting+";\nvar "+fourthFunctionTwoKeyValue+"="+secondFunctionName+"("+fourthFunctionTwoKeyValue+")\n");
           modifiedThirdFunction = modifiedThirdFunction.replace("var "+fourthFunctionKeyValue+"=null;\n", "var "+fourthFunctionKeyValue+"=null;\n");
           resultF = modifiedThirdFunction;
+          console.warn(resultF);
         }
         else {
           console.error("The third part of POT function does not match the regex pattern.");
@@ -354,7 +368,7 @@ class Innertube {
     console.warn("one");
     await this.getNFunction(baseJs);
     console.warn("two");
-    await this.getPOTFunction(baseJs);
+    // await this.getPOTFunction(baseJs);
     console.warn("three");
 
     try {
@@ -609,7 +623,7 @@ class Innertube {
       headers: constants.INNERTUBE_HEADER(this.context.client),
     }).catch((error) => error);
 
-    this.pot = this.getPot(this.visitorData, 2);
+    // this.pot = this.getPot(this.visitorData, 2);
     let response = "";
 
     const clientConfigs  = constants.clientConfigs;
@@ -631,9 +645,9 @@ class Innertube {
             playerParams: this.playerParams,
             contentCheckOk: false,
             racyCheckOk: false,
-            serviceIntegrityDimensions: {
-              poToken: this.pot
-            },
+            // serviceIntegrityDimensions: {
+            //   poToken: this.pot
+            // },
             playbackContext: {
               contentPlaybackContext: {
                 currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
@@ -1034,7 +1048,7 @@ class Innertube {
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
         source["url"] = source["url"] + "&cpn=" + getCpn();
-        source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+        // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
         // source["url"] = source["url"] + "&range=0-" + source.contentLength;
         if (searchParams.get("mime").indexOf("audio") < 0) {
           // source["url"] = source["url"] + "&range=0-";
