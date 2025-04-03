@@ -299,8 +299,11 @@
         <quality
           v-if="$refs.player && $refs.player.currentSrc && (!hls || !dash)"
           :sources="sources"
+          :audioSources="audioSources"
           :current-source="$refs.player"
+          :current-audio-source="$refs.audio"
           @quality="qualityHandler($event)"
+          @qualityAudio="audioQualityHandler($event)"
         />
         <speed
           v-if="$refs.player"
@@ -442,6 +445,7 @@ export default {
   },
   data() {
     return {
+      audioSources: [],
       isPIP: false,
       isFullscreen: false,
       fullscreenLock: false,
@@ -558,6 +562,7 @@ export default {
     let displayInfo = getPreferredQuality();
     let indexOfPreferredQuality = 0;
     // console.warn(displayInfo);
+    console.warn(this.sources.length);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       // console.log(this.sources[i].mimeType.toLowerCase());
@@ -583,7 +588,26 @@ export default {
           indexOfPreferredQuality = i;
         }
         if (this.sources[i]?.audioQuality && this.sources[i]?.audioQuality === "AUDIO_QUALITY_MEDIUM") {
-          this.audSrc = this.sources[i].url;
+          // this.audSrc = this.sources[i].url;
+        }
+      }
+    }
+
+    // Make separate array with audio only
+    for (let i = 0; i < this.sources.length; i++) {
+      if (this.sources[i].mimeType.indexOf("audio") > -1) {
+        if (this.sources[i]?.audioTrack !== undefined) {
+          if (this.sources[i].audioQuality !== "AUDIO_QUALITY_LOW") {
+            this.audioSources.push(this.sources[i]);
+          }
+          if (this.sources[i].audioTrack?.audioIsDefault === Boolean("true")) {
+            if (localStorage.getItem("audioTrackId") === undefined && localStorage.getItem("audioTrackId") === null) {
+              localStorage.setItem("audioTrackId", this.sources[i].audioTrack.id);
+            }
+          }
+        }
+        else {
+          this.audioSources.push(this.sources[i]);
         }
       }
     }
@@ -596,17 +620,44 @@ export default {
         }
       }
     }
+// Sort by bitrate audio
+    if (this.audioSources[0]?.audioTrack === undefined) {
+      this.audioSources = this.audioSources.sort((a, b) => b?.bitrate - a?.bitrate);
+      console.warn(this.audioSources);
+      for (let i = 0; i < this.audioSources.length; i++) {
+        if (this.audioSources[i]?.audioQuality && this.audioSources[i]?.audioQuality !== "AUDIO_QUALITY_LOW") {
+          this.audSrc = this.audioSources[i].url;
+          break;
+        }
+      }
+    }
 
     this.vidSrc = this.sources[indexOfPreferredQuality].url;
     // console.warn(this.vidSrc);
     // this.$refs.player.type = this.sources[indexOfPreferredQuality].mimeType;
     // this.prebuffer(this.sources[indexOfPreferredQuality].url);
 
-    this.sources.forEach((source) => {
-      if (source.mimeType.indexOf("audio") > -1 && !this.audSrc) {
+    this.audioSources.sort((a, b) => a?.audioTrack?.displayName?.localeCompare(b?.audioTrack?.displayName));
+
+    this.audioSources.forEach((source) => {
         // this.audSrc = source.url;
-        // this.$refs.audio.type = source.mimeType;
+      // console.log(source.audioTrack?.audioIsDefault);
+      if (source?.audioTrack !== undefined) {
+        if (localStorage.getItem("audioTrackId") !== undefined) {
+          if (source.audioTrack?.id === localStorage.getItem("audioTrackId")) {
+            this.audSrc = source.url;
+          }
+        }
+        else {
+          if (source.audioTrack.audioIsDefault === Boolean("true")) {
+            this.audSrc = source.url;
+          }
+        }
       }
+      else {
+      //   Nothing.
+      }
+
     });
 
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
@@ -929,7 +980,41 @@ export default {
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-      this.aud = this.audSrc;
+      // this.aud = this.audSrc;
+    },
+    audioQualityHandler(q) {
+      console.log(q);
+      let time = this.$refs.player.currentTime;
+      let speed = this.$refs.player.playbackRate;
+      this.$refs.player.pause();
+      this.$refs.audio.src = '';
+      this.$refs.player.load();
+      this.$refs.audio.src = q;
+      this.$refs.audio.currentTime = time;
+      this.$refs.player.currentTime = time;
+      this.$refs.player.playbackRate = speed;
+      this.$refs.audio.playbackRate = speed;
+      this.hls = false;
+      this.dash = false;
+      this.hlsStream = null;
+      this.audioSources.forEach((source) => {
+        if (source.url === q && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
+          localStorage.setItem("audioTrackId", source.audioTrack.id);
+        }
+      });
+
+      let interval = setInterval(() => {
+        console.log(this.aud.readyState);
+        if (this.aud.readyState < 3) {
+          this.$refs.player.pause();
+          this.bufferingDetected = true;
+        }
+        else {
+          this.bufferingDetected = false;
+          this.$refs.player.play();
+          clearInterval(interval);
+        }
+      }, 1000);
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {

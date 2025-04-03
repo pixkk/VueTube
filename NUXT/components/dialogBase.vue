@@ -3,6 +3,7 @@
     <div
       class="toolbar-container d-flex flex-column background"
       style="flex-direction: column !important"
+      v-if="$slots.header"
     >
       <v-toolbar color="background" style="position: sticky; top: 0" flat>
         <slot name="header"></slot>

@@ -200,42 +200,48 @@
       />
 
       <!-- Comments -->
-      <div v-if="loaded && video?.commentData?.commentCount?.runs && parseFloat(video.commentData?.commentCount?.runs[0]?.text.replace(',', '.')) >= 1" @click="toggleComment">
-        <v-card
-          v-ripple
-          flat
-          tile
-          class="comment-renderer px-3 background"
-          :class="
-            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
-                ? 'background lighten-1'
-                : 'background darken-1'
-              : ''
-          "
-          :style="{
-            borderRadius: $store.state.tweaks.roundWatch
-              ? `${$store.state.tweaks.roundTweak / 2}rem !important`
-              : '0',
-            margin:
-              $store.state.tweaks.roundWatch &&
-              $store.state.tweaks.roundTweak > 0
-                ? '1rem'
-                : '0',
-          }"
-        >
-          <v-card-text class="comment-count keep-spaces px-0">
-            <template v-for="text in video.commentData?.headerText?.runs">
-              <template v-if="text.bold">
-                <strong :key="text.text">{{ text.text + "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</strong>
-              </template>
-              <template v-else>{{ text.text }} {{ "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</template>
-            </template>
-          </v-card-text>
-          <v-icon v-if="showComments" dense>mdi-unfold-less-horizontal</v-icon>
-          <v-icon v-else dense>mdi-unfold-more-horizontal</v-icon>
-        </v-card>
-      </div>
+
+      <comments
+        v-if="$refs.player && loaded && video?.commentData?.commentCount?.runs && parseFloat(video.commentData?.commentCount?.runs[0]?.text.replace(',', '.')) >= 1"
+        :commentsContinuations="video.commentContinuation"
+        :comments="video?.commentData"
+      />
+<!--      <div v-if="loaded && video?.commentData?.commentCount?.runs && parseFloat(video.commentData?.commentCount?.runs[0]?.text.replace(',', '.')) >= 1" @click="toggleComment">-->
+<!--        <v-card-->
+<!--          v-ripple-->
+<!--          flat-->
+<!--          tile-->
+<!--          class="comment-renderer px-3 background"-->
+<!--          :class="-->
+<!--            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0-->
+<!--              ? $vuetify.theme.dark-->
+<!--                ? 'background lighten-1'-->
+<!--                : 'background darken-1'-->
+<!--              : ''-->
+<!--          "-->
+<!--          :style="{-->
+<!--            borderRadius: $store.state.tweaks.roundWatch-->
+<!--              ? `${$store.state.tweaks.roundTweak / 2}rem !important`-->
+<!--              : '0',-->
+<!--            margin:-->
+<!--              $store.state.tweaks.roundWatch &&-->
+<!--              $store.state.tweaks.roundTweak > 0-->
+<!--                ? '1rem'-->
+<!--                : '0',-->
+<!--          }"-->
+<!--        >-->
+<!--          <v-card-text class="comment-count keep-spaces px-0">-->
+<!--            <template v-for="text in video.commentData?.headerText?.runs">-->
+<!--              <template v-if="text.bold">-->
+<!--                <strong :key="text.text">{{ text.text + "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</strong>-->
+<!--              </template>-->
+<!--              <template v-else>{{ text.text }} {{ "(" + video.commentData?.commentCount?.runs[0]?.text + ")" }}</template>-->
+<!--            </template>-->
+<!--          </v-card-text>-->
+<!--          <v-icon v-if="showComments" dense>mdi-unfold-less-horizontal</v-icon>-->
+<!--          <v-icon v-else dense>mdi-unfold-more-horizontal</v-icon>-->
+<!--        </v-card>-->
+<!--      </div>-->
 
       <v-divider
         v-if="
@@ -313,9 +319,11 @@ import mainCommentRenderer from "~/components/Comments/mainCommentRenderer.vue";
 import SlimVideoDescriptionRenderer from "~/components/UtilRenderers/slimVideoDescriptionRenderer.vue";
 
 import backType from "~/plugins/classes/backType";
+import Comments from "../components/Player/comments.vue";
 
 export default {
   components: {
+    Comments,
     player,
     VidLoadRenderer,
     ItemSectionRenderer,

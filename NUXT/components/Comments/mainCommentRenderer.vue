@@ -1,19 +1,19 @@
 <template>
   <dialog-base>
-    <template v-slot:header>
-      <v-toolbar-title>
-        <template v-for="text in commentData?.headerText?.runs">
-          <template v-if="text.bold">
-            <strong :key="text.text">{{ text.text + "(" + commentData?.commentCount?.runs[0]?.text + ")" }}</strong>
-          </template>
-          <template v-else>{{ text.text }} {{ "(" + commentData?.commentCount?.runs[0]?.text + ")" }}</template>
-        </template>
-      </v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn icon @click="$emit('changeState', false)">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </template>
+<!--    <template v-slot:header>-->
+<!--      <v-toolbar-title>-->
+<!--        <template v-for="text in commentData?.headerText?.runs">-->
+<!--          <template v-if="text.bold">-->
+<!--            <strong :key="text.text">{{ text.text + "(" + commentData?.commentCount?.runs[0]?.text + ")" }}</strong>-->
+<!--          </template>-->
+<!--          <template v-else>{{ text.text }} {{ "(" + commentData?.commentCount?.runs[0]?.text + ")" }}</template>-->
+<!--        </template>-->
+<!--      </v-toolbar-title>-->
+<!--      <v-spacer></v-spacer>-->
+<!--      <v-btn icon @click="$emit('changeState', false)">-->
+<!--        <v-icon>mdi-close</v-icon>-->
+<!--      </v-btn>-->
+<!--    </template>-->
 
     <div
       v-for="(comment, index) in comments"

@@ -27,7 +27,36 @@ class Innertube {
   checkErrorCallback() {
     return typeof this.ErrorCallback === "function";
   }
-
+  getSecretArray(secretArrayName, rootPageBody) {
+    let array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\)`, 'gm').exec(rootPageBody);
+    if (array == null) {
+      array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
+      console.warn('var' + secretArrayName + '=\'(.*)\'.split\\("(.*)"\\)');
+    }
+    if (array == null) {
+      array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
+    }
+    if (array) {
+      let returnSecretArray = new Function(array[0] + "; return " + secretArrayName + ";");
+      return returnSecretArray();
+    }
+  }
+  decodeFunctionWithSecretArray(functionBody, secretArray, secretArrayName) {
+    let regex = new RegExp(`(${secretArrayName.replace("$", "\\$")})\\[([0-9]+)\\]`, 'gm');
+    functionBody = functionBody.replace(regex, (match, varName, index) => {
+      return  '"' + secretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
+    });
+    return functionBody;
+  }
+  processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
+    let res;
+    let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+    if (secretArray) {
+      let splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
+      return res;
+    }
+  }
   async makeDecipherFunction(baseJs) {
     // Example:
     //;var IF={k4:function(a,b){var c=a[0];a[0]=a[b%a.length];a[b%a.length]=c},
@@ -119,28 +148,16 @@ class Innertube {
           // 25.03.2025 - new update: additional array with some values.
          //var ****="',(\";\u00ae{reverse{*****{;[)/({...".split("{")
           if (helpDecipher) {
-            // var ****
-            let secretArrayName = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-            if (secretArrayName) {
-              let array = new RegExp(`var ${secretArrayName[1]}="(.*)".split\\("(.*)"\\)`, 'g').exec(baseJs.data);
-              if (array == null) {
-                array = new RegExp(`var ${secretArrayName[1]}='(.*)'.split\\("(.*)"\\)`, 'g').exec(baseJs.data);
-              }
-              let splitSymbol = array[2];
-              let splitDataFromSecretArray = array[1].split(splitSymbol);
-              let regex = /([A-z0-9$]+)\[([0-9]+)\]/gm;
-              isMatch[0] = helpDecipher[0];
-              isMatch[0] = isMatch[0].replace(regex, (match, varName, index) => {
-                return  '"' + splitDataFromSecretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
-              });
-            }
+            isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
           }
       }
+
       if (!isMatch) {
         console.warn(
           "The second part of decipher string does not match the regex pattern."
         );
       }
+
       // Example:
       // {a=a.split("");IF.k4(a,4);IF.VN(a,68);IF.DW(a,2);IF.VN(a,66);IF.k4(a,19);IF.DW(a,2);IF.VN(a,36);IF.DW(a,2);IF.k4(a,41);return a.join("")};
 
@@ -184,54 +201,63 @@ class Innertube {
      * Modification result from firstFunction
      * @type {RegExpExecArray}
      */
-    let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9]+\}/m.exec(baseJs.data);
+    // let secondFunction = /[A-z0-9]+\.prototype\.[A-z0-9$]+=function\([A-z0-9]+\)\{var [A-z0-9]+=[A-z0-9]+\(\);[^}]*return [A-z0-9$]+\}/m.exec(baseJs.data);
+    let secondFunction = /;[A-z0-9$]+\.prototype\.[A-z0-9$]+=function(?:\([A-z0-9]+\)|\(\))\{var [A-z0-9]+=.*return [A-z0-9$]+\};var/m.exec(baseJs.data);
+
+    console.warn(secondFunction);
     let secondFunctionName = "";
 
-    let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
-    let fourthFunction = /[A-z0-9]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
+    let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9$]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
+    let fourthFunction = /[A-z0-9$]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
 
     let resultF = "";
     if (firstFunction) {
       firstFunctionName = firstFunction[0].match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
       if (secondFunction) {
-        let optimizedSecondFunc = secondFunction[0];
+        let optimizedSecondFunc = secondFunction[0].substring(1, secondFunction[0].length - 4);
+        console.warn(optimizedSecondFunc);
 
 
-        optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9]+)=([A-z0-9]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var\s+([A-z0-9$]+)=([A-z0-9$]+)\(\);/g, firstFunction[0]+'\nvar $1='+firstFunctionName+'($2);');
         optimizedSecondFunc = optimizedSecondFunc.replace(/if\([^)]*\)throw new [A-Za-z0-9._$]+\([0-9]+,"[^"]*"\);/g, '');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9]+\([^)]*\);/g, '');
-        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9]+\.[A-Za-z0-9]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.logger\.[A-Za-z0-9$]+\([^)]*\);/g, '');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/this\.[A-Za-z0-9$]+\.[A-Za-z0-9$]+\([^)]*\);/g, '');
         optimizedSecondFunc = optimizedSecondFunc.replace(/^.*?prototype\./, '');
 
-        optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9]+)\=[A-z0-9]+\(([A-z0-9]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
+        optimizedSecondFunc = optimizedSecondFunc.replace(/var ([A-z0-9$]+)\=[A-z0-9$]+\(([A-z0-9$]+)\)/, 'var $1='+firstFunctionName+'($2)\n');
 
+        console.warn(optimizedSecondFunc);
         secondFunctionName = optimizedSecondFunc.match(/^([a-zA-Z0-9_$]+)\s*=\s*function/)[1];
 
+        console.warn(secondFunctionName);
 
 
+        console.warn(thirdFunction);
         if (thirdFunction) {
+          console.warn(fourthFunction);
           let functionNameForInserting = /[A-z0-9$]+\(\)/.exec(thirdFunction[0])[0];
 
-          let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9]+\]\=[A-z0-9]+/)[1];
+          console.warn(functionNameForInserting);
+          let inFFKV = fourthFunction[0].match(/([A-z0-9$]+)\[[A-z0-9$]+\]\=[A-z0-9$]+/)[1];
 
+          console.warn(inFFKV);
           let fourthFunctionKeyValue = fourthFunction[0].match(/if\(\![A-z0-9$]+\)/)[0].replace("if(!", "").replace(")", "");
 
+          console.warn(fourthFunctionKeyValue);
           let modifiedThirdFunction = thirdFunction[0].replace(functionNameForInserting, "var "+ inFFKV +"={};\nvar "+fourthFunctionKeyValue+"=null;\n"+"var "+optimizedSecondFunc+";\n"+fourthFunction[0]+"\n"+functionNameForInserting+";\n");
 
+          console.warn(modifiedThirdFunction);
           let fourthFunctionTwoKeyValue = modifiedThirdFunction.match(/[A-Za-z0-9$]+\[[A-Za-z0-9$]+\]=[A-Za-z0-9$]+;/)[0].split('[')[0];
 
+          console.warn(fourthFunctionTwoKeyValue);
           modifiedThirdFunction = modifiedThirdFunction.replace(functionNameForInserting+";\n", functionNameForInserting+";\nvar "+fourthFunctionTwoKeyValue+"="+secondFunctionName+"("+fourthFunctionTwoKeyValue+")\n");
           modifiedThirdFunction = modifiedThirdFunction.replace("var "+fourthFunctionKeyValue+"=null;\n", "var "+fourthFunctionKeyValue+"=null;\n");
           resultF = modifiedThirdFunction;
+          console.warn(resultF);
         }
-
-
         else {
-
-        }
-        const match = resultF.match(/function\s*\(([^)]+)\)/);
-        if (match) {
+          console.error("The third part of POT function does not match the regex pattern.");
         }
 
         const fullCode =
@@ -295,16 +321,7 @@ class Innertube {
       );
       // 25.03.2025 - new update: additional array with some values.
       if (helpDecipher) {
-        let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-        if (secretArray) {
-          let array = new RegExp(`;var ${secretArray[1]}=["|'](.*)["|'].split\\("(.*)"\\),`, 'g').exec(baseJs.data);
-          let splitSymbol = array[2];
-          let splitted = array[1].split(splitSymbol)
-          let regex = new RegExp(`${secretArray[1]}\\[([0-9]+)\\]`, 'g');
-          res[0] = res[0].replace(regex, (match, p1) => {
-            return '"' + splitted[parseInt(p1)].replace(/(["'\\])/g, '\\$1') + '"';
-          });
-        }
+          res[0] = this.processFunctionWithSecretArray(helpDecipher, res[0], baseJs.data);
       }
 
       challenge_name = res[0];
@@ -325,7 +342,7 @@ class Innertube {
     let fullCode =
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
-    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
     // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
@@ -337,7 +354,7 @@ class Innertube {
       params: { hl: "en" },
     }).catch((error) => error);
     // Get url of base.js file
-    const baseJsUrl =
+    let baseJsUrl =
       constants.URLS.YT_MOBILE +
       getBetweenStrings(html.data, '"jsUrl":"', '","');
     // const baseJsUrl =
@@ -351,7 +368,7 @@ class Innertube {
     console.warn("one");
     await this.getNFunction(baseJs);
     console.warn("two");
-    await this.getPOTFunction(baseJs);
+    // await this.getPOTFunction(baseJs);
     console.warn("three");
 
     try {
@@ -606,7 +623,7 @@ class Innertube {
       headers: constants.INNERTUBE_HEADER(this.context.client),
     }).catch((error) => error);
 
-    this.pot = this.getPot(this.visitorData, 2);
+    // this.pot = this.getPot(this.visitorData, 2);
     let response = "";
 
     const clientConfigs  = constants.clientConfigs;
@@ -628,9 +645,9 @@ class Innertube {
             playerParams: this.playerParams,
             contentCheckOk: false,
             racyCheckOk: false,
-            serviceIntegrityDimensions: {
-              poToken: this.pot
-            },
+            // serviceIntegrityDimensions: {
+            //   poToken: this.pot
+            // },
             playbackContext: {
               contentPlaybackContext: {
                 currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
@@ -1031,7 +1048,7 @@ class Innertube {
         // source["url"] = source["url"] + "&ump=1";
         // source["url"] = source["url"] + "&srfvp=1";
         source["url"] = source["url"] + "&cpn=" + getCpn();
-        source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+        // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
         // source["url"] = source["url"] + "&range=0-" + source.contentLength;
         if (searchParams.get("mime").indexOf("audio") < 0) {
           // source["url"] = source["url"] + "&range=0-";

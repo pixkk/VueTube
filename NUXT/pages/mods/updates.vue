@@ -46,7 +46,7 @@
         {{ installedVersion.substring(0, 7) || "Unknown" }}
         {{ installedChannel.toLowerCase() === "unstable" ? "(unstable)" : "" }}
       </div>
-      <div>{{ lang.latest }}: {{ latestVersion.tag_name }}</div>
+      <div>{{ lang.latest }}: {{ latestVersion?.tag_name }}</div>
 
       <div
         style="margin-top: 1em"
@@ -55,18 +55,18 @@
       >
         <div>
           {{ lang.published }}:
-          {{ new Date(latestVersion.assets[0].created_at).toLocaleString() }}
+          {{ new Date(latestVersion?.assets[0].created_at).toLocaleString() }}
         </div>
         <div>
           {{ lang.size }}:
           {{
             require("~/plugins/utils").humanFileSize(
-              latestVersion.assets[0].size
+              latestVersion?.assets[0].size
             )
           }}
         </div>
         <div>
-          {{ lang.users }}: {{ latestVersion.assets[0].download_count }}
+          {{ lang.users }}: {{ latestVersion?.assets[0].download_count }}
         </div>
       </div>
 
@@ -77,7 +77,7 @@
       >
         <b>Changelog</b>
       </div>
-      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion.body).replace(/\[![A-Za-z0-9]+\]/i, '')">
+      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion?.body)?.replace(/\[![A-Za-z0-9]+\]/i, '')">
       </div>
 
       <v-progress-linear
@@ -160,8 +160,8 @@ export default {
 
       //---   Put all strings into 1 array   ---//
       let downloads = new Array();
-      for (const i in this.latestVersion.assets) {
-        const asset = this.latestVersion.assets[i];
+      for (const i in this.latestVersion?.assets) {
+        const asset = this.latestVersion?.assets[i];
         downloads.push(asset.browser_download_url);
       }
 
@@ -173,8 +173,8 @@ export default {
       }
 
       //---   Set Update As Full Data   ---//
-      for (const i in this.latestVersion.assets) {
-        const asset = this.latestVersion.assets[i];
+      for (const i in this.latestVersion?.assets) {
+        const asset = this.latestVersion?.assets[i];
         if (asset.browser_download_url == this.update) {
           return (this.update = asset);
         }
@@ -195,7 +195,7 @@ export default {
       await this.getUpdate();
 
       //---   Kick Off Update Notice   ---//
-      if (this.latestVersion.tag_name !== this.installedVersion) {
+      if (this.latestVersion?.tag_name !== this.installedVersion) {
         this.status = "available";
       } else {
         this.status = "latest";
@@ -204,7 +204,7 @@ export default {
 
     async install() {
       this.downloading = true;
-      await this.$update(this.latestVersion.assets[0].url).catch(() => {
+      await this.$update(this.latestVersion?.assets[0].url).catch(() => {
         this.downloading = false;
       });
       //window.open(this.update.browser_download_url, '_blank');

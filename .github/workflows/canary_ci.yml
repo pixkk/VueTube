@@ -63,7 +63,7 @@ jobs:
       - name: Update native platform
         run: npx cap update android
       - name: Set App Version in build.gradle
-        working-directory: android
+        working-directory: android/app
         run: sed -i 's/dev-local/${{ inputs.versionNumber }}/' build.gradle;
       - name: Build with Gradle
         working-directory: android
