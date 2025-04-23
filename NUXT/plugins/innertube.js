@@ -22,22 +22,35 @@ class Innertube {
     this.visitorData = "";
     this.getPot = "";
     this.pot = "";
+    this.secretArrayName = "";
   }
 
   checkErrorCallback() {
     return typeof this.ErrorCallback === "function";
   }
   getSecretArray(secretArrayName, rootPageBody) {
-    let array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\)`, 'gm').exec(rootPageBody);
+    let array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\),\\n`, 'gm').exec(rootPageBody);
+    // console.warn(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\),\\n`);
     if (array == null) {
+      // console.warn(0)
       array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
-      console.warn('var' + secretArrayName + '=\'(.*)\'.split\\("(.*)"\\)');
+      // console.warn(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`);
     }
     if (array == null) {
+      // console.warn(1)
+      array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\\n.*)\\n.*\\]`, 'g').exec(rootPageBody);
+      // console.warn(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\\n.*)\\n.*\\]`);
+    }
+    if (array == null) {
+      // console.warn(2)
       array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
+      // console.warn(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`);
     }
     if (array) {
-      let returnSecretArray = new Function(array[0] + "; return " + secretArrayName + ";");
+      array[0] = array[0] + "; return " + secretArrayName + ";"
+      array[0] = array[0].replace("),\n; return ", ") \n; return ");
+      // console.log(array[0])
+      let returnSecretArray = new Function(array[0]);
       return returnSecretArray();
     }
   }
@@ -50,12 +63,29 @@ class Innertube {
   }
   processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
     let res;
+    // console.warn(helpDecipher)
     let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+    // console.warn(secretArray)
+    let splitDataFromSecretArray;
     if (secretArray) {
-      let splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      try {
+        splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      }
+      catch (e) {
+        secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+        splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      }
+      this.secretArrayName = secretArray[1];
       res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
       return res;
     }
+  }
+  processFunctionWithKnownSecretArray(functionBody, rootDocumentBody) {
+    let splitDataFromSecretArray;
+    splitDataFromSecretArray = this.getSecretArray(this.secretArrayName, rootDocumentBody);
+
+      let res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, this.secretArrayName);
+      return res;
   }
   async makeDecipherFunction(baseJs) {
     // Example:
@@ -82,11 +112,10 @@ class Innertube {
           baseJs.data
         );
     }
-
     if (isMatch) {
-      const firstPart = isMatch[0];
+      let firstPart = isMatch[0];
       // console.warn(firstPart);
-
+      let helpDecipher;
       if (
         /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
           baseJs.data
@@ -141,8 +170,10 @@ class Innertube {
           baseJs.data
         );
       }
-      else {
-        let helpDecipher = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
+      else if (/{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
+        baseJs.data
+      )) {
+        helpDecipher = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
           baseJs.data
         );
           // 25.03.2025 - new update: additional array with some values.
@@ -150,6 +181,16 @@ class Innertube {
           if (helpDecipher) {
             isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
           }
+        // console.log(isMatch);
+      }
+      else {
+        helpDecipher = /{[A-Za-z]=[A-Za-z]\[[A-Za-z$]+\[[0-9]+\]\]\([A-Za-z$]+\[[0-9]+\]\).*/.exec(
+          baseJs.data
+        );
+        if (helpDecipher) {
+          isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
+        }
+        // console.log(isMatch);
       }
 
       if (!isMatch) {
@@ -166,8 +207,16 @@ class Innertube {
       // console.warn(isMatch[0]);
 
       let functionArg = "";
+      // console.warn(isMatch)
+      if (helpDecipher) {
+        isMatch[0] = isMatch[0].replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
+        firstPart = this.processFunctionWithKnownSecretArray(firstPart, baseJs.data);
+        firstPart = firstPart.replace(/([A-z0-9$])\["([A-z0-9$]+)"\]/g, '$1.$2');
+        firstPart = firstPart.replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
+      }
       const match = isMatch[0].match(/(\w+)\.join\(\s*""\s*\)/);
 
+      // console.warn(match)
       if (match) {
         functionArg = match[1];
       }
@@ -176,6 +225,7 @@ class Innertube {
       const secondPart =
         "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
       let decodeFunction = firstPart + secondPart;
+      // console.warn(decodeFunction)
       let decodeUrlFunction = new Function(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
       let signatureIntValue = /.sts="[0-9]+";/.exec(baseJs.data);
@@ -304,26 +354,37 @@ class Innertube {
       if (challenge_name === null) {
         console.warn("NFunction - 2 error");
         challenge_name = /\nvar [A-z0-9_$]+=\[[A-z0-9_$]+\];/i.exec(baseJs.data);
+        // console.warn(challenge_name);
       }
       else {
         console.warn("NFunction - success");
         challenge_name = /[A-z0-9$]=[A-Za-z0-9]+\[0\]\([A-z0-9$]\)/i.exec(challenge_name[0]);
       }
+      // console.warn(challenge_name);
 
       challenge_name = /^.*?=\s*\[(.*)\];/gm.exec(challenge_name[0])[1];
 
       challenge_name = challenge_name.replace("$", "\\$");
 
-      let res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`, 'g').exec(baseJs.data);
+      // console.warn(challenge_name);
+      let res = null;
 
+      // console.warn(res);
+      res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\[[0-9]+\\]\\)};`, 'g').exec(baseJs.data);
+      if (res == null) {
+        res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)};`, 'g').exec(baseJs.data);
+        console.log(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`);
+      }
+      // console.warn(res[0]);
       let helpDecipher = /return [A-Za-z]\.join\(.*\)}/.exec(
         res[0]
       );
+      // console.warn(res[0]);
+      // console.warn(helpDecipher);
       // 25.03.2025 - new update: additional array with some values.
       if (helpDecipher) {
           res[0] = this.processFunctionWithSecretArray(helpDecipher, res[0], baseJs.data);
       }
-
       challenge_name = res[0];
       const match = challenge_name.match(/function\s*\(([^)]+)\)/);
 
@@ -342,7 +403,15 @@ class Innertube {
     let fullCode =
       "var getN=function("+functionArg+"){" + challenge_name + "}; return getN;";
 
+    fullCode = this.processFunctionWithKnownSecretArray(fullCode, baseJs.data);
+    // console.warn(fullCode);
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+    // console.warn(fullCode);
+    let modify = /([A-z0-9$])\[\"([A-z0-9$]+)\"\]/g.exec(fullCode);
+    if (modify) {
+      fullCode = fullCode.replace(/([A-z0-9$])\["([A-z0-9$]+)"\]/g, '$1.$2');
+      fullCode = fullCode.replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
+    }
     // console.warn(fullCode);
     let getN = new Function(fullCode);
     this.nfunction = getN();
@@ -359,6 +428,8 @@ class Innertube {
       getBetweenStrings(html.data, '"jsUrl":"', '","');
     // const baseJsUrl =
     //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
+    // baseJsUrl =
+    //   "https://www.youtube.com/s/player/ac290d0b/player_ias.vflset/ru_RU/base.js";
     // Get base.js content
     const baseJs = await Http.get({
       url: baseJsUrl,
