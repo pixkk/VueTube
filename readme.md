@@ -51,6 +51,22 @@
 
 <h2 align="left">
 <sub>
+<img  src="resources/readme_icon_community.png"
+      height="30"
+      width="30">
+</sub>
+    Star History Chart
+</h2>
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=pixkk/VueTube&type=Date)](https://www.star-history.com/#pixkk/VueTube&Date)
+
+</div>
+
+
+
+<h2 align="left">
+<sub>
 <img  src="resources/readme_icon_features.png"
       height="30"
       width="30">
