@@ -22,7 +22,7 @@
 , <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>
 , <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>
 , <a href="https://github.com/tired6488">@tired6488</a>, <a href="https://github.com/DARKDRAGON532">@DARKDRAGON532</a>
-, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a></sub> and <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
+, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a></sub>, <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a> and <a href="https://github.com/pixkk">@pixkk</a>
 
 </details>
 
@@ -78,6 +78,7 @@ Features
 
 - 🎨 **Themes:** Light, dark, OLED and all the colors of the rainbow! Set the accent and background color according to
   your preferences.
+- 🗞️ **Local watch history:** Get your last viewed videos without logging in.
 - 🖌️ **Customizable UI:** Customize buttons, corners and disable parts of the UI that you don't use to get an optimal
   experience.
 - ⬆️ **Auto updates:** Be notified when an update is available, download through the app and downgrade if you don't like
@@ -134,7 +135,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
-(Apple does not officially support sideloading except in Europen Union, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices if you live outside Europe)
+(Apple does not officially support sideloading (except in Europen Union)[https://support.apple.com/en-us/117767], i.e. the installation of applications with just the file without them being uploaded to the Apple App Store. It is necessary to use third party software to install VueTube on iPhone / iPad devices if you live outside Europe)
 
 
 <h2 align="left">
@@ -149,7 +150,6 @@ Plans
 <img src="./resources/Plans.svg" alt="VueTube icon" height="100"/>
 
 - 🔍 **Advanced search:** Sort results by date, duration, likes or any other factor.
-- 🗞️ **Local watch history:** Get your last viewed videos without logging in.
 - ✂️ **YouTube Shorts:** Small vertical videos that last anywhere from 15 to 60 seconds.
 - 🧑 **Signing in with your Google account**: Login to have a full experience by voting and commenting on videos and
   subscribing to channels.

@@ -2,11 +2,11 @@
     <a href="https://pixkk.com/">
     <picture>
       <source 
-        srcset="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/dark/VueTube.svg"
+        srcset="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/dark/VueTube.svg"
         media="(prefers-color-scheme: dark)"
       />
       <img 
-        src="https://raw.githubusercontent.com/pixkk/.github/main/readme_assets/light/VueTube.svg" 
+        src="https://raw.githubusercontent.com/pixkk/github-from-vuetubeapp/4f99a137953834cef13fb8576918234f8d7d2d4b/readme_assets/light/VueTube.svg" 
         alt="VueTube icon"
         width="500"
        />
@@ -33,11 +33,27 @@ Disebut View Tube (<code>/ˈvjuːˌtjuːb/</code>)
   <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/Vuetube"></img></a>
   <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
   <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
-  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
+  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (dahulunya Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
 
   </p>
 
 **Baca halaman ini dalam bahasa lain**: [English,](readme.md) [Español,](/readme/readme.es.md) [简体中文,](/readme/readme.zh-hans.md) [繁體中文,](/readme/readme.zh-hant.md) [日本語,](/readme/readme.ja.md) [עִברִית,](/readme/readme.he.md) [Nederlands,](/readme/readme.nl.md) [தமிழ்,](/readme/readme.ta.md) [Bahasa Melayu,](/readme/readme.ms.md) [Македонски,](/readme/readme.mk.md) [Français,](/readme/readme.fr.md) [Português Brasileiro,](/readme/readme.pt-br.md) [Bahasa Indonesia,](/readme/readme.id.md) [Polski,](/readme/readme.pl.md) [Български,](/readme/readme.bg.md) [Italiano,](/readme/readme.it.md) [Magyar,](/readme/readme.hu.md) [한국어,](/readme/readme.kr.md) [Tiếng Việt,](/readme/readme.vi.md) [Română,](/readme/readme.ro.md) [Українська](/readme/readme.ua.md), [Türkçe,](/readme/readme.tr.md/) [Русский](/readme/readme.ru.md)
+
+<h2 align="left">
+<sub>
+<img  src="resources/readme_icon_community.png"
+      height="30"
+      width="30">
+</sub>
+    Star History Chart
+</h2>
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=pixkk/VueTube&type=Date)](https://www.star-history.com/#pixkk/VueTube&Date)
+
+</div>
+
+
 
 <h2 align="left">
 <sub>
@@ -51,7 +67,8 @@ Ciri-ciri
 <img src="/resources/readme-ms/Features.ms.svg" alt="VueTube icon" height="100"/>
 
 - 🎨 **Tema:** Cerah, Gelap, OLED, dan semua warna pelangi! Tetapkan warna aksen dan latar belakang mengikut pilihan anda.
-- 🖌️ **UI yang diboleh suaikan:** Sesuaikan butang, sudut dan nyahdayakan beberapa bahagian UI yang anda tidak gunakan untuk mendapat pengalaman optimum.
+- 🗞️ **Sejarah tontonan tempatan:** Dapatkan semula video tontonan terakhir anda tanpa log masuk.
+- 🖌️ **UI yang diboleh suaikan:** Sesuaikan butang, bucu dan nyahdayakan beberapa bahagian UI yang tidak diperlukan untuk mendapat pengalaman optimum.
 - ⬆️ **Kemaskini Auto:** Anda akan dimaklumkan apabila kemas kini tersedia, muat turun melalui aplikasi dan kembali ke versi lama jika anda tidak menyukainya!
 - 👁️ **Perlindungan Penjejak:** Tiada telemetri (maklumat peribadi) dihantar daripada peranti anda secara piawai dan kami tidak menggunakan API luaran. Privasi adalah satu keperluan!
 - 📺 **Pemain video tersuai:** Pemain video yang diintegrasikan dalam aplikasi dengan semua yang anda perlukan untuk bergembira, seperti kelajuan 16x.
@@ -70,7 +87,7 @@ Pasang
 
 <img src="/resources/readme-ms/Install.ms.svg" alt="VueTube icon" height="100"/>
 
-Untuk memasang aplikasi VueTube, sila lawati www.vuetube.app/install
+Untuk memasang aplikasi VueTube, sila lihat di bawah untuk versi VueTube yang tersedia.
 
 
 
@@ -100,7 +117,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
-(Apple tidak menyokong _sideloading_ secara rasmi kecuali di Kesatuan Eropah}, iaitu pemasangan aplikasi dengan hanya fail aplikasi tanpa dimuat naik ke Apple App Store. Anda perlu menggunakan kaedah lanjutan untuk memasang VueTube pada iPhone / iPad jika anda tinggal di luar Eropah)
+(Apple tidak menyokong _sideloading_ secara rasmi (kecuali di Kesatuan Eropah)[https://support.apple.com/en-us/117767], iaitu pemasangan aplikasi dengan hanya fail aplikasi tanpa dimuat naik ke Apple App Store. Anda perlu menggunakan perisian pihak ketiga untuk memasang VueTube pada iPhone / iPad jika anda tinggal di luar Eropah)
 
 <h2 align="left">
 <sub>
@@ -113,8 +130,7 @@ Perancangan
 
 <img src="/resources/readme-ms/Plans.ms.svg" alt="VueTube icon" height="100"/>
 
-- 🔍 **Carian lanjutan:** Susun hasil mengikut tarikh, tempoh, sukaan atau apa-apa faktor lain.
-- 🗞️ **Sejarah tontonan tempatan:** Dapatkan semula video tontonan terakhir anda tanpa log masuk.
+- 🔍 **Carian mendalam:** Susun hasil mengikut tarikh, tempoh, sukaan atau apa-apa faktor lain.
 - ✂️ **YouTube Shorts:** Video pendek yang berdurasi dari 15 hingga 60 saat.
 - 🧑 **Log masuk dengan akaun Google anda:** Log masuk untuk mendapatkan pengalaman penuh dengan mengundi dan komen pada video dan melanggan saluran.
 - 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain.
@@ -176,24 +192,24 @@ Kemajuan
 |                   **Umum**                    |              **Pemain**               | [**Extractor**](https://github.com/pixkk/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
 |                🟡 Komen (95%)                |        🟢 Main / Jeda (100%)         |                  🟢 Search Autocomplete (100%)                   |
-|              🟢 Huraian (description) (100%)               | 🟢 Ketik untuk tunjuk / sorok kawalan video (100%) |                       🟢 Laman utama (100%)                        |
+|          🟢 Huraian (description) (100%)          | 🟢 Ketik untuk tunjuk / sorok kawalan video (100%) |             🟢 Laman utama (100%)                       |
 |               🟢 Laman utama (100%)                |      🟠 _Seekbar / Scrubber_ (80%)      |                         🟢 Search (100%)                         |
 |            🟢 Pengintegrasian RYD (100%)             |          🟠 Skrin penuh (85%)          |                    🟠 Maklumat video (60%)                    |
 |                 🟡 Tema (100%)                 |      🟡 Pemilih Resolusi (95%)       |                         🔴 Saluran (0%)                         |
 |               🟢 Halaman Tonton (100%)               |          🔴 Pemain mini (0%)           |                         🔴 Komen (0%)                         |
-|        🟡 Pengintegrasian Sponsorblock (90%)         |        🔴 Main video di latar belakang (0%)        |                        🔴 Sembang Langsung (0%)                         |
-|               🟠 Kemaskini Auto (50%)               |      🔴 Gambar dalam gambar (0%)       |                     🔴 Kandungan sohor kini (0%)                     |
+|        🟡 Pengintegrasian Sponsorblock (90%)         |        🔴 Main video di latar belakang (0%)        |                🔴 Sembang Langsung (0%)              |
+|               🟠 Kemaskini Auto (50%)               |      🔴 Gambar dalam gambar (0%)       |                  🔴 Kandungan sohor kini (0%)                     |
 |              🟡 Halaman Saluran (60%)               |           🟡 Sarikata (95%)            |                       🔴 Interaksi (0%)                       |
-|             🟡 Hantaran Komuniti (90%)             |             🔴 Kad (0%)             |                        🔴 Senarai main (0%)                         |
-|         🟠 UI Shorts yang boleh diubahsuai (10%)          |                                       |                      🔴 Notifications (0%)                       |
-|        🟠 UI YT Music yang boleh diubahsuai (10%)         |                                       |                          🔴 Login (0%)                           |
-|             🟠 UI yang boleh diubahsuai (30%)             |                                       |                                                                  |
+|             🟡 Hantaran Komuniti (90%)             |             🟠 Kad (10%)            |                        🔴 Senarai main (0%)                         |
+|         🟠 UI Shorts yang boleh diubahsuai (10%)          |                                    |                  🔴 Pemberitahuan (0%)                       |
+|        🟠 UI YT Music yang boleh diubahsuai (10%)         |                                       |                     🔴 Login (0%)                           |
+|             🟠 UI yang boleh diubahsuai (30%)             |                                       |                                                            |
 |             🟠 Halaman Pustaka (10%)              |                                       |                                                                  |
 |                 🟡 Balasan (90%)                 |                                       |                                                                  |
 |           🟠 _Plugin_ Pihak Ketiga (40%)           |                                       |                                                                  |
-|  🟠 Pemain VueTube (Lihat kemajuan di sebelah kanan)   |                                       |                                                                  |
-| 🟠 _VueTube Extractor_ (Lihat kemajuan di sebelah kanan) |                                       |                                                                  |
-|           🟢 Sejarah Tontonan Tempatan (100%)            |                                       |                                                                  |
+|  🟠 Pemain VueTube (Lihat di lajur kanan)   |                                       |                                                               |
+| 🟠 _VueTube Extractor_ (Lihat di lajur kanan) |                                       |                                                             |
+|           🟢 Sejarah Tontonan Tempatan (100%)            |                                       |                                                             |
 |            🔴 Halaman Langganan (0%)            |                                       |                                                                  |
 |          🔴 Sokongan Platform Lain (0%)          |                                       |                                                                  |
   
@@ -212,7 +228,7 @@ Kemajuan
 
 ### Mengapa kami melakukan ini?
 
-VueTube dibuat dengan tujuan untuk menyediakan sebuah alternatif yang percuma, sumber terbuka dan merentas platform kepada **_Big Tech_**, dengan pilihan yang dibolehsuaikan dan log masuk tersedia. Projek ini telah berkembang dan menarik perhatian ribuan pengguna dan penyumbang dari seluruh dunia. Anda boleh sertai kami dan menyumbang kepada projek ini dalam apa-apa cara...
+VueTube dibuat dengan tujuan untuk menyediakan sebuah alternatif yang percuma, sumber terbuka dan merentas platform kepada **_Big Tech_**, dengan pilihan yang dibolehsuaikan dan log masuk tersedia. Projek ini telah berkembang dan menarik perhatian ribuan pengguna dan penyumbang dari seluruh dunia. Anda boleh sertai kami dan menyumbang kepada projek ini dalam pelbagai cara...
 
 ### Berminat untuk menyumbang?
 
@@ -273,7 +289,7 @@ VueTube adalah dan sentiasa akan percuma dan sumber terbuka, tetapi anda boleh m
 Penafian
 </h2>
 
-Projek VueTube dan kandungannya tidak bersekutu dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh didapati di [www.youtube.com](https://www.youtube.com).
+Projek VueTube dan kandungannya tidak bersekutu dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh diakses di [www.youtube.com](https://www.youtube.com).
 
 Sebarang tanda dagangan, tanda perkhidmatan, nama dagangan atau hak harta intelek lain yang digunakan dalam projek VueTube dimiliki oleh pemilik masing-masing.
 
