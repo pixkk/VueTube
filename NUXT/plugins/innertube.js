@@ -64,17 +64,17 @@ class Innertube {
   processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
     let res;
     // console.warn(helpDecipher)
-    let secretArray = /([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
+    let secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]+\]/.exec(helpDecipher[0]);
     // console.warn(secretArray)
     let splitDataFromSecretArray;
     if (secretArray) {
-      try {
+      // try {
         splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
-      }
-      catch (e) {
-        secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]\]/.exec(helpDecipher[0]);
-        splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
-      }
+      // }
+      // catch (e) {
+        // secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]+\]/.exec(helpDecipher[0]);
+        // splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
+      // }
       this.secretArrayName = secretArray[1];
       res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
       return res;
@@ -429,7 +429,7 @@ class Innertube {
     // const baseJsUrl =
     //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
     // baseJsUrl =
-    //   "https://www.youtube.com/s/player/ac290d0b/player_ias.vflset/ru_RU/base.js";
+    //   "https://m.youtube.com/s/player/22f02d3d/player_ias.vflset/uk_UA/base.js";
     // Get base.js content
     const baseJs = await Http.get({
       url: baseJsUrl,
