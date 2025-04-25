@@ -131,7 +131,7 @@ Perancangan
 <img src="/resources/readme-ms/Plans.ms.svg" alt="VueTube icon" height="100"/>
 
 - 🔍 **Carian mendalam:** Susun hasil mengikut tarikh, tempoh, sukaan atau apa-apa faktor lain.
-- ✂️ **YouTube Shorts:** Video pendek yang berdurasi dari 15 hingga 60 saat.
+- ✂️ **YouTube Shorts:** Video pendek yang berdurasi dari 15 saat hingga 3 minit.
 - 🧑 **Log masuk dengan akaun Google anda:** Log masuk untuk mendapatkan pengalaman penuh dengan mengundi dan komen pada video dan melanggan saluran.
 - 🖼️ **Mod gambar dalam gambar:** Membolehkan anda menonton video dalam tetingkap terapung apabila menggunakan aplikasi lain.
 - 🧩 **Plugin:** Pasang _plugin_ pihak ketiga yang dibuat oleh komuniti dengan ciri-ciri yang berguna!
@@ -260,10 +260,10 @@ Penyumbang-penyumbang GitHub
 Penghargaan
 </h2>
 
-- Emoji oleh pasukan [Twemoji](https://twemoji.twitter.com/), Dilesenkan di bawah [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+- Emoji oleh pasukan [Twemoji](https://twemoji.twitter.com/). Dilesenkan di bawah [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 - Logo VueTube oleh [@afnzmn](https://github.com/afnzmn)
-- Data kiraan _dislike_ YouTube awam disediakan oleh [Return YouTube Dislike](https://returnyoutubedislike.com)
-- Ajay & Komuniti kerana menyediakan [API SponsorBlock](https://sponsor.ajay.app), Dilesenkan di bawah [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+- Data kiraan _dislike_ YouTube awam disediakan oleh [Return YouTube Dislike](https://returnyoutubedislike.com). Dilesenkan di bawah [GNU GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text)
+- Ajay & Komuniti kerana menyediakan [API SponsorBlock](https://sponsor.ajay.app). Dilesenkan di bawah [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
 <h2 align="left">
 <sub>
@@ -289,9 +289,9 @@ VueTube adalah dan sentiasa akan percuma dan sumber terbuka, tetapi anda boleh m
 Penafian
 </h2>
 
-Projek VueTube dan kandungannya tidak bersekutu dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana sekutu dan anak syarikatnya. Laman web rasmi YouTube boleh diakses di [www.youtube.com](https://www.youtube.com).
+Projek VueTube dan kandungannya tidak bersekutu dengan, dibiayai, diizinkan, disokong oleh, atau dalam apa jua cara dikaitkan dengan YouTube, Google LLC atau mana-mana rakan dagang dan anak syarikatnya. Laman web rasmi YouTube boleh diakses di [www.youtube.com](https://www.youtube.com).
 
-Sebarang tanda dagangan, tanda perkhidmatan, nama dagangan atau hak harta intelek lain yang digunakan dalam projek VueTube dimiliki oleh pemilik masing-masing.
+Sebarang cap dagangan, cap perkhidmatan, nama dagangan atau hak harta intelek lain yang digunakan dalam projek VueTube dimiliki oleh pemilik masing-masing.
 
 <h2 align="left">
 <sub>
