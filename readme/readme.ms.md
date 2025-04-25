@@ -18,7 +18,7 @@
   <summary>Tunjukkan kredit Readme</summary>
   
 <sub>Logo oleh <a href="https://github.com/afnzmn">@afnzmn</a></sub></br>
-<sub>Penyumbang-penyumbang Readme Bahasa Melayu: <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
+<sub>Penyumbang-penyumbang Readme Bahasa Melayu: <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a></sub>
 </details>
 
 <p align="center">
