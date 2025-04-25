@@ -85,6 +85,7 @@ export default {
       return this.$router.replace("/activities/update");
 
     //---   Start Innertube Connection   ---//
+    // await this.$youtube.getAPI();
     try {
       // throw "e";
       await this.$youtube.getAPI();
