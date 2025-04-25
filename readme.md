@@ -135,7 +135,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
-(Apple does not officially support sideloading (except in Europen Union)[https://support.apple.com/en-us/117767], i.e. the installation of applications with just the file without them being uploaded to the Apple App Store. It is necessary to use third party software to install VueTube on iPhone / iPad devices if you live outside Europe)
+(Apple does not officially support sideloading [except in the Europen Union](https://support.apple.com/en-us/117767), i.e. the installation of applications with just the file without them being uploaded to the Apple App Store. It is necessary to use third party software to install VueTube on iPhone / iPad devices if you live outside Europe)
 
 
 <h2 align="left">

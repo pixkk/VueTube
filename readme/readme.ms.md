@@ -117,7 +117,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
-(Apple tidak menyokong _sideloading_ secara rasmi (kecuali di Kesatuan Eropah)[https://support.apple.com/en-us/117767], iaitu pemasangan aplikasi dengan hanya fail aplikasi tanpa dimuat naik ke Apple App Store. Anda perlu menggunakan perisian pihak ketiga untuk memasang VueTube pada iPhone / iPad jika anda tinggal di luar Eropah)
+(Apple tidak menyokong _sideloading_ secara rasmi [kecuali di Kesatuan Eropah](https://support.apple.com/en-us/117767), iaitu pemasangan aplikasi dengan hanya fail aplikasi tanpa dimuat naik ke Apple App Store. Anda perlu menggunakan perisian pihak ketiga untuk memasang VueTube pada iPhone / iPad jika anda tinggal di luar Eropah)
 
 <h2 align="left">
 <sub>
