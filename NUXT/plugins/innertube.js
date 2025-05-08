@@ -675,21 +675,24 @@ class Innertube {
       },
       videoId: id,
     };
+    let dataForNext = {
+      context: {
+        client: {
+          ...constants.INNERTUBE_VIDEO(this.context.client),
+          clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
+          clientVersion: constants.YT_API_VALUES.VERSION_WEB,
+          gl: this.context.client.gl,
+          hl: this.context.client.hl,
+          remoteHost: this.context.client.remoteHost,
+        },
+      },
+      videoId: id,
+    };
+    console.error(dataForNext);
     const responseNext = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
       data: {
-        ...data,
-        ...{
-          context: {
-            client: {
-              clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
-              clientVersion: constants.YT_API_VALUES.VERSION_WEB,
-              gl: this.context.client.gl,
-              hl: this.context.client.hl,
-              remoteHost: this.context.client.remoteHost,
-            },
-          },
-        },
+        ...dataForNext,
       },
       headers: constants.INNERTUBE_HEADER(this.context.client),
     }).catch((error) => error);

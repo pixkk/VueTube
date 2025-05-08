@@ -11,27 +11,27 @@
     />
 
     <!-- channel-tabs -->
-    <v-tabs
-      v-if="$route.path.includes('/channel') && !search"
-      mobile-breakpoint="0"
-      style="
-        position: fixed;
-        top: calc(4rem + env(safe-area-inset-top));
-        z-index: 696969;
-      "
-      background-color="background"
-      :color="$vuetify.theme.dark ? 'white' : 'black'"
-    >
-      <v-tab
-        v-for="tab in channelTabs"
-        :key="tab.name"
-        :to="tab.to"
-        exact
-        :v-ripple="false"
-      >
-        {{ tab.name }}
-      </v-tab>
-    </v-tabs>
+<!--    <v-tabs-->
+<!--      v-if="$route.path.includes('/channel') && !search"-->
+<!--      mobile-breakpoint="0"-->
+<!--      style="-->
+<!--        position: fixed;-->
+<!--        top: calc(4rem + env(safe-area-inset-top));-->
+<!--        z-index: 696969;-->
+<!--      "-->
+<!--      background-color="background"-->
+<!--      :color="$vuetify.theme.dark ? 'white' : 'black'"-->
+<!--    >-->
+<!--      <v-tab-->
+<!--        v-for="tab in channelTabs"-->
+<!--        :key="tab.name"-->
+<!--        :to="tab.to"-->
+<!--        exact-->
+<!--        :v-ripple="false"-->
+<!--      >-->
+<!--        {{ tab.name }}-->
+<!--      </v-tab>-->
+<!--    </v-tabs>-->
 
     <div
       style="
@@ -39,10 +39,7 @@
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       "
       :style="{
-        paddingTop:
-          $route.path.includes('/channel') && !search
-            ? 'calc(7rem + env(safe-area-inset-top))'
-            : 'calc(4rem + env(safe-area-inset-top))',
+        paddingTop: 'calc(4rem + env(safe-area-inset-top))',
       }"
     >
       <div v-show="!search" style="height: 100%">
@@ -90,6 +87,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { mapState } from "vuex";
 import { linkParser } from "~/plugins/utils";
 import backType from "~/plugins/classes/backType";
+import TopNavigation from "../components/topNavigation.vue";
 
 function fromBinary(str) {
   // Going backwards: from bytestream, to percent-encoding, to original string.
@@ -104,6 +102,7 @@ function fromBinary(str) {
 }
 
 export default {
+  components: {TopNavigation},
   data: () => ({
     search: false,
     response: [],

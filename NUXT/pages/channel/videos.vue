@@ -6,8 +6,8 @@
   * -->
   <div>
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="channelData.contents && channelData.contents.length == 0" :count="10" />
-    <div v-if="channelData.contents" v-for="(section, index) in channelData.contents" :key="index">
+    <vid-load-renderer v-if="videos.contents && videos.contents.length == 0" :count="10" />
+    <div v-if="videos.contents" v-for="(section, index) in videos.contents" :key="index">
       <compact-video-renderer
         v-if="section.richItemRenderer?.content?.compactVideoRenderer?.videoId"
         :video="section.richItemRenderer?.content?.compactVideoRenderer"
@@ -21,7 +21,7 @@
     </div>
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="channelData.contents && channelData.contents.length > 0"
+      v-else-if="videos.contents && videos.contents.length > 0"
       @intersect="paginate"
     />
   </div>
@@ -30,9 +30,15 @@
 <script>
 import VidLoadRenderer from "~/components/vidLoadRenderer.vue";
 import Observer from "~/components/observer.vue";
-import VideoWithContextRenderer from "@/components/gridRenderers/videoWithContextRenderer.vue";
+import VideoWithContextRenderer from "~/components/gridRenderers/videoWithContextRenderer.vue";
+import CompactVideoRenderer from "../../components/CompactRenderers/compactVideoRenderer.vue";
 export default {
-  components: { VideoWithContextRenderer, VidLoadRenderer, Observer },
+  components: {CompactVideoRenderer, VideoWithContextRenderer, VidLoadRenderer, Observer },
+
+  props: [
+    "videos",
+    "isShorts"
+  ],
   data: () => ({
     loading: false,
     title: "",
@@ -40,22 +46,23 @@ export default {
   }),
 
   computed: {
-    channelData: {
-      get() {
-        return { ...this.$store.state.channel.totalData };
-      },
-      set(val) {
-        this.$store.commit("updateChannelData", val);
-      },
-    },
+    // channelData: {
+    //   get() {
+    //     return { ...this.$store.state.channel.totalData };
+    //   },
+    //   set(val) {
+    //     this.$store.commit("updateChannelData", val);
+    //   },
+    // },
   },
 
   mounted() {
+    console.warn("Mounted")
     // console.log(this.$store.state.channel.channelData);
   },
   methods: {
     paginate() {
-      let recommends = this.channelData;
+      let recommends = this.videos;
       this.loading = true;
       const continuationCode =
         recommends.contents[recommends.contents.length - 1]
@@ -66,12 +73,18 @@ export default {
           .recommendContinuationForChannel(continuationCode, "browse")
           .then((result) => {
             this.loading = false;
-            this.channelData = { ...this.channelData };
-            this.channelData.contents = this.channelData.contents.concat(
+            this.videos = { ...this.videos };
+            this.videos.contents = this.videos.contents.concat(
               result.contents
             );
-            this.channelData.continuations =
-              this.channelData.continuations.concat(result.continuations);
+            this.videos.continuations =
+              this.videos.continuations.concat(result.continuations);
+            if (!this.isShorts) {
+              this.$store.state.channel.videoData = this.videos;
+            }
+            else {
+              this.$store.state.channel.shortsVideoData = this.videos;
+            }
           });
       } else {
         this.loading = false;

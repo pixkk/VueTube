@@ -176,6 +176,10 @@ const innertubeModule = {
       }
     }
   },
+  async getChannelTab(url, continuation = null) {
+    const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
+    return response.data;
+  },
   async getChannelHtml(channel_url) {
     return await InnertubeAPI.getChannelHtml(channel_url);
   },

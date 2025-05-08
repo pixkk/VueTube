@@ -8,6 +8,8 @@ export const state = () => {
     subscribe: null,
     subscribeAlt: null,
     descriptionPreview: null,
+    arrayWithContinuations: null,
+    channelRequest: null,
     fullChannelInfo: null,
     subscribers: null,
     videosCount: null,
@@ -32,13 +34,15 @@ export const mutations = {
     state.subscribe = channelData.subscribe;
     state.subscribeAlt = channelData.subscribeAlt;
     state.descriptionPreview = channelData.descriptionPreview;
+    state.arrayWithContinuations = channelData.arrayWithContinuations;
     state.fullChannelInfo = channelData.fullChannelInfo;
     state.subscribers = channelData.subscribers;
     state.videosCount = channelData.videosCount;
     state.featuredChannels = channelData.featuredChannels;
     state.videoExample = channelData.videoExample;
     state.videoList = channelData.videoList;
-    // state.channelData = channelData;
+    state.channelRequest = channelData.channelRequest;
+    state.channelData = channelData;
     state.totalData = channelData.totalData;
     state.community = channelData.community;
   },
@@ -59,6 +63,7 @@ export const actions = {
     let channel;
     let aboutChannelInfo;
     let fullChannelInfo;
+    let arrayWithContinuations;
     let videoList;
     let community;
     let videos;
@@ -75,11 +80,24 @@ export const actions = {
       }
       commit("setLoading", true);
       channel = await this.$youtube.getChannel(channelRequest, "main");
-      community = await this.$youtube.getChannel(channelRequest, "community");
-      videos = await this.$youtube.getChannel(channelRequest, "videos");
-      aboutChannelInfo = await this.$youtube.getChannel(channelRequest, "aboutChannelInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns ? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns[0]?.onTap?.innertubeCommand?.showEngagementPanelEndpoint?.engagementPanel?.engagementPanelSectionListRenderer?.content?.sectionListRenderer?.contents[0]?.itemSectionRenderer.contents[0]?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token : channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
-      fullChannelInfo = aboutChannelInfo.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems[0].aboutChannelRenderer.metadata.aboutChannelViewModel;
-      videoList = await this.$youtube.channelVideos(videos);
+
+      // console.warn(channel);
+      arrayWithContinuations = [];
+      let pageInfo;
+      for(let i = 0; i < channel?.contents?.singleColumnBrowseResultsRenderer?.tabs?.length-1; i++) {
+        pageInfo = [];
+        let tab = channel.contents?.singleColumnBrowseResultsRenderer?.tabs[i];
+        if (tab?.tabRenderer) {
+          pageInfo.push(tab?.tabRenderer?.title, tab?.tabRenderer?.content?.sectionListRenderer?.continuations[0]?.reloadContinuationData?.continuation);
+          arrayWithContinuations.push(pageInfo);
+        }
+      }
+      arrayWithContinuations.push(["About Channel", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns ? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns[0]?.onTap?.innertubeCommand?.showEngagementPanelEndpoint?.engagementPanel?.engagementPanelSectionListRenderer?.content?.sectionListRenderer?.contents[0]?.itemSectionRenderer.contents[0]?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token : channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token]);
+      // community = await this.$youtube.getChannel(channelRequest, "community");
+      // videos = await this.$youtube.getChannel(channelRequest, "videos");
+      // aboutChannelInfo = await this.$youtube.getChannel(channelRequest, "aboutChannelInfo", channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns ? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.attribution?.attributionViewModel?.suffix?.commandRuns[0]?.onTap?.innertubeCommand?.showEngagementPanelEndpoint?.engagementPanel?.engagementPanelSectionListRenderer?.content?.sectionListRenderer?.contents[0]?.itemSectionRenderer.contents[0]?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token : channel.header.pageHeaderRenderer.content.pageHeaderViewModel.description.descriptionPreviewViewModel.rendererContext.commandContext.onTap.innertubeCommand.showEngagementPanelEndpoint.engagementPanel.engagementPanelSectionListRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents[0].continuationItemRenderer.continuationEndpoint.continuationCommand.token);
+      // fullChannelInfo = aboutChannelInfo.onResponseReceivedEndpoints[0].appendContinuationItemsAction.continuationItems[0].aboutChannelRenderer.metadata.aboutChannelViewModel;
+      videoList = await this.$youtube.channelVideos(channel);
     }
     catch (error) {
       commit("setError", error);
@@ -119,6 +137,9 @@ export const actions = {
             ?.text) : (channel.header.pageHeaderRenderer.content.pageHeaderViewModel.metadata.contentMetadataViewModel.metadataRows[1].metadataParts[1] ? channel.header.pageHeaderRenderer.content.pageHeaderViewModel.metadata.contentMetadataViewModel.metadataRows[1].metadataParts[1].text.content : "" )
            || "null",
         featuredChannels: null, // You can set this value as per your data structure
+        arrayWithContinuations: arrayWithContinuations,
+        channelRequest: channelRequest,
+        videoList: videoList,
         // videoExample:
         //   channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer
         //     .content.sectionListRenderer.contents[0].shelfRenderer.content
@@ -138,10 +159,10 @@ export const actions = {
         //     .content.sectionListRenderer.contents[0].shelfRenderer.content
         //     .verticalListRenderer.items,
        // videoExample: channel.contents.singleColumnBrowseResultsRenderer.tabs[0].tabRenderer.content.sectionListRenderer.contents[0].itemSectionRenderer.contents,
-        totalData: videoList,
+       //  totalData: videoList,
         // community section is second from the end of the list (in 90% of cases)
-        community: community != null ? community.contents.singleColumnBrowseResultsRenderer.tabs[community.contents.singleColumnBrowseResultsRenderer.tabs.length - 2].tabRenderer
-         .content.sectionListRenderer : null,
+        // community: community != null ? community.contents.singleColumnBrowseResultsRenderer.tabs[community.contents.singleColumnBrowseResultsRenderer.tabs.length - 2].tabRenderer
+        //  .content.sectionListRenderer : null,
       };
       commit("setChannelData", channelData);
       commit("setLoading", false);
