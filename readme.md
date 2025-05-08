@@ -22,7 +22,7 @@
 , <a href="https://github.com/Frontesque">@Frontesque</a>, <a href="https://github.com/gayolGate">@gayolGate</a>
 , <a href="https://github.com/ThatOneCalculator">@ThatOneCalculator</a>, <a href="https://github.com/afnzmn">@afnzmn</a>
 , <a href="https://github.com/tired6488">@tired6488</a>, <a href="https://github.com/DARKDRAGON532">@DARKDRAGON532</a>
-, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a></sub> and <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a>
+, <a href="https://github.com/PickleNik">@PickleNik</a>, <a href="https://github.com/Zyborg777">@Zyborg777</a>, <a href="https://github.com/AdamIskandarAI">@AdamIskandarAI</a> and <a href="https://github.com/pixkk">@pixkk</a></sub>
 
 </details>
 
@@ -78,6 +78,7 @@ Features
 
 - 🎨 **Themes:** Light, dark, OLED and all the colors of the rainbow! Set the accent and background color according to
   your preferences.
+- 🗞️ **Local watch history:** Get your last viewed videos without logging in.
 - 🖌️ **Customizable UI:** Customize buttons, corners and disable parts of the UI that you don't use to get an optimal
   experience.
 - ⬆️ **Auto updates:** Be notified when an update is available, download through the app and downgrade if you don't like
@@ -134,7 +135,7 @@ iOS
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
-(Apple does not officially support sideloading except in Europen Union, i.e. the installation of applications with just the file without them being uploaded to the company's official shop. It is necessary to use advanced methods to install VueTube on iPhone / iPad devices if you live outside Europe)
+(Apple does not officially support sideloading [except in the European Union](https://support.apple.com/en-us/117767), i.e. the installation of applications with just the file without them being uploaded to the Apple App Store. It is necessary to use third party software to install VueTube on iPhone / iPad devices if you live outside Europe)
 
 
 <h2 align="left">
@@ -149,8 +150,7 @@ Plans
 <img src="./resources/Plans.svg" alt="VueTube icon" height="100"/>
 
 - 🔍 **Advanced search:** Sort results by date, duration, likes or any other factor.
-- 🗞️ **Local watch history:** Get your last viewed videos without logging in.
-- ✂️ **YouTube Shorts:** Small vertical videos that last anywhere from 15 to 60 seconds.
+- ✂️ **YouTube Shorts:** Small vertical videos that last anywhere from 15 seconds to 3 minutes.
 - 🧑 **Signing in with your Google account**: Login to have a full experience by voting and commenting on videos and
   subscribing to channels.
 - 🖼️ **Picture-in-Picture mode (PiP):** Allows you to watch videos in a floating window when using another app.
@@ -256,7 +256,7 @@ Thank you for being interested on contributing! Please read our website on how t
 so: [pixkk.com/contributing](https://www.pixkk.com/contributing).
 
 If you want to translate the app, [click here](/NUXT/plugins/languages) and read the instructions. If GitHub is hard or
-uncomfortable to you, you can also send the fields translated in a text file on
+uncomfortable for you, you can also send the fields translated in a text file on
 our [Discord](https://pixkk.com/discord) and we will implement them. Don't worry!
 
 <h2 align="left">
@@ -283,12 +283,10 @@ GitHub contributors
 Acknowledgements
 </h2>
 
-- Emojis by the [Twemoji team](https://twemoji.twitter.com/), Licensed
-  under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Emojis by the [Twemoji team](https://twemoji.twitter.com/). Licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - VueTube Logo by [@afnzmn](https://github.com/afnzmn).
-- Public YouTube dislike data provided by [Return Youtube Dislike](https://returnyoutubedislike.com).
-- Ajay & Community for providing the [Sponsorblock API](https://sponsor.ajay.app), Licensed
-  under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+- Public YouTube dislike data provided by [Return Youtube Dislike](https://returnyoutubedislike.com). Licensed under [GNU GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text)
+- Ajay & Community for providing the [Sponsorblock API](https://sponsor.ajay.app). Licensed under [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 
 <h2 align="left">
 <sub>
