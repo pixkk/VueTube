@@ -10,28 +10,8 @@
       @scroll-to-top="$refs.pgscroll.scrollTop = 0"
     />
 
-    <!-- channel-tabs -->
-<!--    <v-tabs-->
-<!--      v-if="$route.path.includes('/channel') && !search"-->
-<!--      mobile-breakpoint="0"-->
-<!--      style="-->
-<!--        position: fixed;-->
-<!--        top: calc(4rem + env(safe-area-inset-top));-->
-<!--        z-index: 696969;-->
-<!--      "-->
-<!--      background-color="background"-->
-<!--      :color="$vuetify.theme.dark ? 'white' : 'black'"-->
-<!--    >-->
-<!--      <v-tab-->
-<!--        v-for="tab in channelTabs"-->
-<!--        :key="tab.name"-->
-<!--        :to="tab.to"-->
-<!--        exact-->
-<!--        :v-ripple="false"-->
-<!--      >-->
-<!--        {{ tab.name }}-->
-<!--      </v-tab>-->
-<!--    </v-tabs>-->
+    <!-- channel-tabs (deprecated) -->
+    <!--    -->
 
     <div
       style="

@@ -38,7 +38,7 @@
                 v-for="src in sources"
                 :key="src.url"
                 two-line
-                @click="(sheet = false), $emit('quality', src.url)"
+                @click="handleQualityClick(src)"
               >
                 <v-list-item-avatar>
                   <v-icon
@@ -66,7 +66,7 @@
                   v-for="src in audioSources"
                   :key="src.url"
                   two-line
-                  @click="(sheet = false), $emit('qualityAudio', src.url)"
+                  @click="handleAudioQualityClick(src)"
                 >
                   <v-list-item-avatar>
                     <v-icon
@@ -107,7 +107,7 @@ export default {
       required: true,
     },
   },
-  emits: ["quality", "qualityAudio"],
+  emits: ["qualityAudioInfo", "qualityInfo"],
   data: () => ({
     sheet: false,
     tab: 0,
@@ -118,6 +118,15 @@ export default {
     },
     prevTab() {
       if (this.tab > 0) this.tab--;
+    },
+
+    handleAudioQualityClick(src) {
+      this.sheet = false;
+      this.$emit('qualityAudioInfo', src);
+    },
+    handleQualityClick(src) {
+      this.sheet = false;
+      this.$emit('qualityInfo', src)
     },
   },
 };

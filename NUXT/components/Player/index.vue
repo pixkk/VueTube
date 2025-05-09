@@ -302,8 +302,8 @@
           :audioSources="audioSources"
           :current-source="$refs.player"
           :current-audio-source="$refs.audio"
-          @quality="qualityHandler($event)"
-          @qualityAudio="audioQualityHandler($event)"
+          @qualityInfo="qualityInfoHandler($event)"
+          @qualityAudioInfo="audioQualityInfoHandler($event)"
         />
         <speed
           v-if="$refs.player"
@@ -560,9 +560,10 @@ export default {
 
     // TODO: this.$store.state.player.quality, check if exists and select the closest one
     let displayInfo = getPreferredQuality();
-    let indexOfPreferredQuality = 0;
+    let indexOfPreferredQuality = -1;
+    let indexOfPreferredQualityAuto = -1;
+    let indexOfPreferredAudioQuality = -1;
     // console.warn(displayInfo);
-    console.warn(this.sources.length);
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       // console.log(this.sources[i].mimeType.toLowerCase());
@@ -576,6 +577,10 @@ export default {
       }
     }
     this.sources.splice(0, 1);
+
+    let videoSFromStorage = localStorage.getItem("videoQuality") || null;
+    let videoCodecFromStorage = localStorage.getItem("videoCodec") || null;
+
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       else {
@@ -585,13 +590,54 @@ export default {
           this.sources[i].height <= displayInfo[1] &&
           this.sources[i].mimeType.includes("video")
         ) {
-          indexOfPreferredQuality = i;
+          indexOfPreferredQualityAuto = i;
         }
-        if (this.sources[i]?.audioQuality && this.sources[i]?.audioQuality === "AUDIO_QUALITY_MEDIUM") {
-          // this.audSrc = this.sources[i].url;
+        // if (this.sources[i]?.audioQuality && this.sources[i]?.audioQuality === "AUDIO_QUALITY_MEDIUM") {
+        //   // this.audSrc = this.sources[i].url;
+        // }
+        if ((videoSFromStorage || videoCodecFromStorage) && this.sources[i].mimeType.includes("video")) {
+          if (this.sources[i].mimeType.includes(videoCodecFromStorage) && this.sources[i].qualityLabel.includes(videoSFromStorage)){
+            indexOfPreferredQuality = i;
+          }
         }
       }
     }
+
+
+    if (indexOfPreferredQuality === -1) {
+      for (let i = this.sources.length; i > 0; i--) {
+        if (i === this.sources.length) continue;
+        else {
+          if ((videoSFromStorage || videoCodecFromStorage) && this.sources[i].mimeType.includes("video")) {
+            let ql = videoSFromStorage.split("p");
+            if (this.sources[i].mimeType.includes(videoCodecFromStorage) && this.sources[i].qualityLabel.includes(ql[0])){
+              indexOfPreferredQuality = i;
+            }
+          }
+        }
+      }
+    }
+    if (indexOfPreferredQuality === -1) {
+      for (let i = this.sources.length; i > 0; i--) {
+        if (i === this.sources.length) continue;
+        else {
+          if ((videoSFromStorage || videoCodecFromStorage) && this.sources[i].mimeType.includes("video")) {
+            let ql = videoSFromStorage.split("p");
+            if (this.sources[i].qualityLabel.includes(ql[0])){
+              indexOfPreferredQuality = i;
+            }
+          }
+        }
+      }
+    }
+
+    if (indexOfPreferredQuality === -1) {
+      // indexOfPreferredQuality = indexOfPreferredQualityAuto;
+      indexOfPreferredQuality = 0;
+    }
+
+
+    // let audioCodecFromStorage = localStorage.getItem("audioCodec");
 
     // Make separate array with audio only
     for (let i = 0; i < this.sources.length; i++) {
@@ -620,15 +666,27 @@ export default {
         }
       }
     }
+    let audioSFromStorage = localStorage.getItem("audioQuality") || null;
+    let audioCodecFromStorage = localStorage.getItem("audioQualityCodec") || null;
 // Sort by bitrate audio
     if (this.audioSources[0]?.audioTrack === undefined) {
       this.audioSources = this.audioSources.sort((a, b) => b?.bitrate - a?.bitrate);
       console.warn(this.audioSources);
       for (let i = 0; i < this.audioSources.length; i++) {
         if (this.audioSources[i]?.audioQuality && this.audioSources[i]?.audioQuality !== "AUDIO_QUALITY_LOW") {
-          this.audSrc = this.audioSources[i].url;
-          break;
+
+          // let audioCodecFromStorage = localStorage.getItem("audioCodec");
+          if (audioSFromStorage) {
+            if (audioSFromStorage === this.audioSources[i].itag.toString()) {
+              this.audSrc = this.audioSources[i].url;
+              indexOfPreferredAudioQuality = i;
+              break;
+            }
+          }
         }
+      }
+      if (indexOfPreferredAudioQuality === -1) {
+        this.audSrc = this.audioSources[0].url;
       }
     }
 
@@ -965,14 +1023,34 @@ export default {
               }
             }, 250);
     },
-    qualityHandler(q) {
-      console.log(q);
+    getCodecName(codec) {
+      if (codec.includes("av01")) {
+        return "av01";
+      }
+      else if (codec.includes("avc1")) {
+        return "avc1";
+      }
+      else if (codec.includes("opus")) {
+        return "opus";
+      }
+      else if (codec.includes("mp4a")) {
+        return "mp4a";
+      }
+      else {
+        return "vp9";
+      }
+    },
+    qualityInfoHandler(q) {
+      let src = q.url;
+      localStorage.setItem("videoQuality", q.qualityLabel);
+      let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
+      localStorage.setItem("videoCodec", this.getCodecName(codec));
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
       this.$refs.player.src = '';
       this.$refs.player.load();
-      this.$refs.player.src = q;
+      this.$refs.player.src = src;
       this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
@@ -982,14 +1060,17 @@ export default {
       this.hlsStream = null;
       // this.aud = this.audSrc;
     },
-    audioQualityHandler(q) {
-      console.log(q);
+    audioQualityInfoHandler(q) {
+      let src = q.url;
+      localStorage.setItem("audioQuality", q.itag);
+      let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
+      localStorage.setItem("audioCodec", this.getCodecName(codec));
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
       this.$refs.audio.src = '';
       this.$refs.player.load();
-      this.$refs.audio.src = q;
+      this.$refs.audio.src = src;
       this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
@@ -998,7 +1079,7 @@ export default {
       this.dash = false;
       this.hlsStream = null;
       this.audioSources.forEach((source) => {
-        if (source.url === q && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
+        if (source.url === src && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
           localStorage.setItem("audioTrackId", source.audioTrack.id);
         }
       });

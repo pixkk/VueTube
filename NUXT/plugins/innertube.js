@@ -688,7 +688,7 @@ class Innertube {
       },
       videoId: id,
     };
-    console.error(dataForNext);
+
     const responseNext = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
       data: {
