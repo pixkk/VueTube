@@ -205,7 +205,7 @@
     <div>
       <h3 class="ml-8 mt-8">
         <v-icon class="mb-1 mr-1">mdi-play-network-outline</v-icon>
-        Quality
+        {{ lang.quality }}
         <!--        <b class="ml-1">&middot;</b> 1080p-->
       </h3>
 
@@ -233,8 +233,7 @@
         >
           <div>
             <div>
-              <v-icon class="mb-1 mr-1" v-text="'mdi-video-outline'" />Remove
-              video codec
+              <v-icon class="mb-1 mr-1" v-text="'mdi-video-outline'" /> {{langPlayer.removevp9}}
             </div>
             <div
               class="background--text pr-4"
@@ -262,10 +261,10 @@
               <v-tabs v-model="selectedTab">
                 <v-tab
                   v-for="tab in tabs"
-                  :id="tab.label"
+                  :id="tab.value.toString()"
                   :key="tab.id"
                   :class="{
-                    active: preferedCodecValue === tab.label,
+                    active: removeCodecValue === tab.value,
                   }"
                   @click="handleVideoCodecTabClick($event)"
                 >
@@ -430,18 +429,22 @@ export default {
         icon: "mdi-volume-off",
       },
     ],
-    preferedCodecValue: "avc and av01",
+    removeCodecValue: false,
     tabs: [
       {
-        label: "avc and av01",
+        label: "no",
         id: 0,
+        value: false,
       },
       {
-        label: "vp9",
+        label: "yes",
         id: 1,
+        value: true,
       },
     ],
     selectedTab: 0,
+    lang: {},
+    langPlayer: {},
   }),
   computed: {
     quality() {
@@ -494,14 +497,16 @@ export default {
         this.$store.commit("player/setPreloadUpTo", value);
       },
     },
-    preferedCodec() {
-      return this.$store.state.player.preferedCodec;
-    },
   },
   mounted() {
-    this.preferedCodecValue = localStorage.getItem("preferedCodec");
+    this.lang = this.$lang("global");
+    this.tabs[0].label = this.lang.no;
+    this.tabs[1].label = this.lang.yes;
+    this.langPlayer = this.$lang("mods").player;
+
+    this.removeCodecValue = localStorage.getItem("removeVP9Codec") === "true";
     const vpTab = this.tabs.find(
-      (tab) => tab.label === this.preferedCodecValue
+      (tab) => tab.value === this.removeCodecValue
     );
     if (vpTab) {
       this.selectedTab = vpTab.id;
@@ -510,8 +515,8 @@ export default {
   methods: {
     handleVideoCodecTabClick(event) {
       const value = event.target.id;
-      this.preferedCodecValue = value;
-      this.$store.commit("player/setPreferedCodec", value.toLowerCase());
+      this.removeCodecValue = value;
+      this.$store.commit("player/setAvailiablityOfVP9Codec", value.toLowerCase().toString());
     },
   },
 };

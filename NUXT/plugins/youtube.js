@@ -76,7 +76,7 @@ const searchModule = {
       return createHash("sha256").update(content).digest("hex");
     }
 
-    let hashedVideoId = sha256(id).slice(0, 4);
+    let hashedVideoId = sha256(id).slice(0, 6);
     Http.request({
       method: "GET",
       url:
@@ -175,6 +175,10 @@ const innertubeModule = {
         console.error(error)
       }
     }
+  },
+  async getChannelTab(url, continuation = null) {
+    const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
+    return response.data;
   },
   async getChannelHtml(channel_url) {
     return await InnertubeAPI.getChannelHtml(channel_url);

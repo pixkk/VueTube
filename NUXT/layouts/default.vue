@@ -10,28 +10,8 @@
       @scroll-to-top="$refs.pgscroll.scrollTop = 0"
     />
 
-    <!-- channel-tabs -->
-    <v-tabs
-      v-if="$route.path.includes('/channel') && !search"
-      mobile-breakpoint="0"
-      style="
-        position: fixed;
-        top: calc(4rem + env(safe-area-inset-top));
-        z-index: 696969;
-      "
-      background-color="background"
-      :color="$vuetify.theme.dark ? 'white' : 'black'"
-    >
-      <v-tab
-        v-for="tab in channelTabs"
-        :key="tab.name"
-        :to="tab.to"
-        exact
-        :v-ripple="false"
-      >
-        {{ tab.name }}
-      </v-tab>
-    </v-tabs>
+    <!-- channel-tabs (deprecated) -->
+    <!--    -->
 
     <div
       style="
@@ -39,10 +19,7 @@
         padding-bottom: calc(4rem + env(safe-area-inset-bottom));
       "
       :style="{
-        paddingTop:
-          $route.path.includes('/channel') && !search
-            ? 'calc(7rem + env(safe-area-inset-top))'
-            : 'calc(4rem + env(safe-area-inset-top))',
+        paddingTop: 'calc(4rem + env(safe-area-inset-top))',
       }"
     >
       <div v-show="!search" style="height: 100%">
@@ -90,6 +67,7 @@ import { App as CapacitorApp } from "@capacitor/app";
 import { mapState } from "vuex";
 import { linkParser } from "~/plugins/utils";
 import backType from "~/plugins/classes/backType";
+import TopNavigation from "../components/topNavigation.vue";
 
 function fromBinary(str) {
   // Going backwards: from bytestream, to percent-encoding, to original string.
@@ -104,6 +82,7 @@ function fromBinary(str) {
 }
 
 export default {
+  components: {TopNavigation},
   data: () => ({
     search: false,
     response: [],
@@ -115,6 +94,7 @@ export default {
       { name: "Channels", to: "/channel/channels" },
       { name: "About", to: "/channel/about" },
     ],
+    lang: {}
   }),
 
   computed: {
@@ -130,8 +110,26 @@ export default {
         case this.$route.path.includes("mods/sponsorblock"):
           pageName = "SponsorBlock";
           break;
+        case this.$route.path.includes("mods/theme"):
+          pageName = this.lang.theme;
+          break;
+        case this.$route.path.includes("mods/player"):
+          pageName = this.lang.player;
+          break;
+        case this.$route.path.includes("home"):
+          pageName = this.lang.home;
+          break;
+        case this.$route.path.includes("subscriptions"):
+          pageName = this.lang.subscriptions;
+          break;
+        case this.$route.path.includes("library"):
+          pageName = this.lang.library;
+          break;
+        case this.$route.path.includes("settings"):
+          pageName = this.lang.settings;
+          break;
       }
-      //     console.log(pageName);
+          console.log(pageName);
       return pageName || "Home";
     },
   },
@@ -150,6 +148,8 @@ export default {
   mounted() {
     if (!process.browser) this.$vuetube.resetBackActions();
 
+    const lang = this.$lang("pages");
+    this.lang = lang;
     // ---   External URL Handling   --- //
     CapacitorApp.addListener("appUrlOpen", (event) => {
       // We only push to the route if there is a url present

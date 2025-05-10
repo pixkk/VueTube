@@ -5,7 +5,7 @@
         class="background--text w-50"
         :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
-        Local Playlists
+        {{ library.localplaylists }}
       </h4>
       <v-btn text tile elevation="0" class="w-5-0" @click="dialog = true">
         <v-icon>mdi-plus</v-icon>
@@ -47,7 +47,7 @@
           class=".icon"
         >mdi-history</v-icon
         >
-        Full history
+        {{ library.fullhistory }} ({{historyVideos.length}})
       </v-btn>
     </div>
 
@@ -79,18 +79,18 @@
           $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
-        <v-card-title class="text-h5">Create Playlist</v-card-title>
+        <v-card-title class="text-h5"> {{library.createplaylist}}</v-card-title>
         <v-card-text>
-          <v-text-field v-model="playlistName" label="Playlist Name" solo />
+          <v-text-field v-model="playlistName" :label="library.playlistname" solo />
         </v-card-text>
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="dialog = false">
-            {{ lang.cancel }}
+            {{ langDev.cancel }}
           </v-btn>
           <v-btn color="primary" text @click="createPlaylist()">
-            {{ lang.create }}
+            {{ langDev.create }}
           </v-btn>
         </v-card-actions>
       </v-card></v-dialog
@@ -105,7 +105,8 @@ export default {
   data() {
     return {
       dialog: false,
-      lang: {},
+      library: {},
+      langDev: {},
       playlistName: null,
     };
   },
@@ -120,7 +121,8 @@ export default {
   },
   mounted() {
     const lang = this.$lang();
-    this.lang = lang.mods.developer;
+    this.library = lang.mods.library;
+    this.langDev = lang.mods.developer;
   },
   methods: {
     createPlaylist: function () {

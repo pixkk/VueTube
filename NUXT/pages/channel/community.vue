@@ -2,7 +2,7 @@
   <div>
 
 <!--    <vid-load-renderer v-if="communityData.contents.length == 0" :count="10" />-->
-    <div v-if="communityData?.contents[0]?.itemSectionRenderer?.contents[0]" v-for="(section, index) in communityData.contents[0].itemSectionRenderer.contents" :key="index">
+    <div v-if="community?.contents[0]?.itemSectionRenderer?.contents[0]" v-for="(section, index) in community.contents[0].itemSectionRenderer.contents" :key="index">
 <!--        {{-->
 <!--        section.backstagePostThreadRenderer.post.backstagePostRenderer}}-->
       <community-card
@@ -30,7 +30,7 @@
 
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="communityData?.contents[0]?.itemSectionRenderer?.contents.length > 0"
+      v-else-if="community?.contents[0]?.itemSectionRenderer?.contents.length > 0"
       @intersect="paginate"
     />
   </div>
@@ -49,19 +49,20 @@ export default {
     title: "",
     subtitle: "",
   }),
+  props: ["community"],
   computed: {
-    communityData: {
-      get() {
-        return { ...this.$store.state.channel.community };
-      },
-      set(val) {
-        this.$store.commit("updateCommunityData", val);
-      },
-    },
+    // communityData: {
+    //   get() {
+    //     return { ...this.$store.state.channel.community };
+    //   },
+    //   set(val) {
+    //     this.$store.commit("updateCommunityData", val);
+    //   },
+    // },
   },
   methods: {
     paginate() {
-      let recommends = this.communityData;
+      let recommends = this.community;
       this.loading = true;
       const continuationCode =
           recommends?.contents[0]?.itemSectionRenderer?.contents[recommends?.contents[0]?.itemSectionRenderer?.contents.length - 1]
@@ -72,12 +73,13 @@ export default {
           .recommendContinuationForChannel(continuationCode, "browse")
           .then((result) => {
             this.loading = false;
-            this.communityData = { ...this.communityData };
-            this.communityData.contents[0].itemSectionRenderer.contents = this.communityData.contents[0]?.itemSectionRenderer?.contents.concat(
+            this.community = { ...this.community };
+            this.community.contents[0].itemSectionRenderer.contents = this.community.contents[0]?.itemSectionRenderer?.contents.concat(
               result.contents
             );
-            this.communityData.contents[0].itemSectionRenderer.continuations =
-              this.communityData.contents[0]?.itemSectionRenderer?.continuations.concat(result.continuations);
+            this.community.contents[0].itemSectionRenderer.continuations =
+              this.community.contents[0]?.itemSectionRenderer?.continuations.concat(result.continuations);
+            this.$store.state.channel.community = this.community;
           });
       } else {
         this.loading = false;
