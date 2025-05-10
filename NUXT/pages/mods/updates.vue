@@ -219,7 +219,7 @@ export default {
       //   dev update
         const releases = await this.$vuetube.checkForUpdates(true);
         console.warn(releases);
-        this.latestVersion.tag_name = "unstable";
+        this.latestVersion.tag_name = releases.details.head_sha;
 
         let newUrl =
           "<a onclick=openExternal('https://github.com/pixkk/VueTube/commit/"+ releases.details.head_sha +"')>(Click here)</a>";
