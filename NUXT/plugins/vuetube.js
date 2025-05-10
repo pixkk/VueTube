@@ -23,9 +23,61 @@ const module = {
     window.open(url, "_blank");
   },
 
+  async getGithubWorkflowRun(url) {
+    let run = new Promise((resolve, reject) => {
+      Http.request({
+        method: "GET",
+        url: `${url}`,
+        params: {},
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+        .then((res) => {
+          resolve(res.data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    })
+    return run;
+  },
   //---   Get GitHub Commits   ---//
   // releases: await checkForUpdates(),
-  async checkForUpdates() {
+  async checkForUpdates(isUnstable=false) {
+    if (isUnstable) {
+      //
+      let resp = new Promise((resolve, reject) => {
+        Http.request({
+          method: "GET",
+          url: `${constants.URLS.VT_BETA_UPDATES}`,
+          params: {},
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
+          .then((res) => {
+            resolve(res.data);
+          })
+          .catch((err) => {
+            reject(err);
+          });
+      })
+      let runs = await resp;
+      let details;
+      console.log(runs.workflow_runs.length);
+      for (let i = 0; i < runs.workflow_runs.length; i++) {
+      // for (let wr in runs.workflow_runs) {
+        let wr = runs.workflow_runs[i];
+        details = wr;
+        if (wr.path === ".github/workflows/ci.yml") {
+          return {artifacts: await this.getGithubWorkflowRun(wr.artifacts_url),
+            details: wr}
+        }
+      }
+      return {artifacts: await this.getGithubWorkflowRun(runs.workflow_runs[0].artifacts_url),
+        details: details};
+    }
     return new Promise((resolve, reject) => {
       Http.request({
         method: "GET",

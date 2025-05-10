@@ -115,14 +115,20 @@
 <script>
 import { Device } from "@capacitor/device";
 import showdown from "showdown";
+import constants from "../../plugins/constants";
 
 export default {
   layout: "empty",
+  created() {
+    window.openExternal = this.openExternal;
+  },
   data() {
     return {
       installedVersion: process.env.version,
       installedChannel: process.env.channel,
-      latestVersion: "",
+      latestVersion: {
+        assets: []
+      },
       mkdwn: null,
       lang: {},
       status: "checking",
@@ -130,6 +136,7 @@ export default {
         created_at: "",
       },
       downloading: false,
+      unstableUrl: null
     };
   },
   computed: {
@@ -147,6 +154,9 @@ export default {
   },
 
   methods: {
+    openExternal(url) {
+      this.$vuetube.openExternal(url);
+    },
     navigateBack() {
       if (window.history.length > 2) {
         this.$router.go(-1);
@@ -182,31 +192,85 @@ export default {
     },
 
     async getLatest() {
+      const device = await Device.getInfo();
+      const platform = device.platform;
       //---   Get Latest Version   ---//
       this.status = "checking";
-      const releases = await this.$vuetube.checkForUpdates();
-      this.latestVersion = releases[0];
+      let currentVersion = localStorage.getItem("lastRunVersion");
+      if (currentVersion === "canary" || currentVersion === "release") {
+        const releases = await this.$vuetube.checkForUpdates();
+        this.latestVersion = releases[0];
 
-      //---   Wait like 2 seconds because if people don't see loading, they think it didn't refresh properly   ---//
-      if (!this.$route.query.nowait)
-        await require("~/plugins/utils").delay(2000);
+        //---   Wait like 2 seconds because if people don't see loading, they think it didn't refresh properly   ---//
+        if (!this.$route.query.nowait)
+          await require("~/plugins/utils").delay(2000);
 
-      //---   Get Proper File   ---//
-      await this.getUpdate();
+        //---   Get Proper File   ---//
+        await this.getUpdate();
 
-      //---   Kick Off Update Notice   ---//
-      if (this.latestVersion?.tag_name !== this.installedVersion) {
-        this.status = "available";
-      } else {
-        this.status = "latest";
+        //---   Kick Off Update Notice   ---//
+        if (this.latestVersion?.tag_name !== this.installedVersion) {
+          this.status = "available";
+        } else {
+          this.status = "latest";
+        }
+      }
+      else {
+      //   dev update
+        const releases = await this.$vuetube.checkForUpdates(true);
+        console.warn(releases);
+        this.latestVersion.tag_name = "unstable";
+
+        let newUrl =
+          "<a onclick=openExternal('https://github.com/pixkk/VueTube/commit/"+ releases.details.head_sha +"')>(Click here)</a>";
+        this.latestVersion.body = releases.details.display_title + "\n\nFull changelog here ->" + newUrl;
+        let urlWithZip = "";
+        for (let i = 0; i < releases.artifacts.artifacts.length; i++) {
+          let rel = releases.artifacts.artifacts[i];
+          console.warn(rel)
+          // if (platform == "ios") {
+          //   if (rel.name === "VueTube") {
+          //     urlWithZip = rel.archive_download_url;
+          //   }
+          // } else {
+          //   if (rel.name === "app-release") {
+          //     urlWithZip = rel.archive_download_url;
+          //   }
+          // }
+          // this.unstableUrl = urlWithZip;
+          this.unstableUrl = releases.details.html_url;
+
+          this.latestVersion.assets = [
+            {
+              created_at: rel.created_at,
+              download_count: "-",
+              size: rel.size_in_bytes
+            }
+          ]
+        }
+        console.warn(this.latestVersion)
+        if (this.latestVersion?.tag_name !== this.installedVersion) {
+          this.status = "available";
+        } else {
+          this.status = "latest";
+        }
       }
     },
 
     async install() {
       this.downloading = true;
-      await this.$update(this.latestVersion?.assets[0].url).catch(() => {
+      if (!this.unstableUrl) {
+        await this.$update(this.latestVersion?.assets[0].url).catch(() => {
+          this.downloading = false;
+        });
+      }
+      else {
+        openExternal(this.unstableUrl);
         this.downloading = false;
-      });
+        // await this.$update(this.unstableUrl).catch(() => {
+        //   this.downloading = false;
+        // });
+      }
       //window.open(this.update.browser_download_url, '_blank');
     },
   },

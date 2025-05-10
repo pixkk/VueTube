@@ -9,6 +9,7 @@ const url = {
   // YT_SUGGESTIONS: "https://suggestqueries.google.com/complete",
   YT_SUGGESTIONS: "https://suggestqueries-clients6.youtube.com/complete",
   VT_GITHUB: "https://api.github.com/repos/pixkk/VueTube",
+  VT_BETA_UPDATES: "https://api.github.com/repos/pixkk/VueTube/actions/runs"
 };
 
 const androidApiVal = {
