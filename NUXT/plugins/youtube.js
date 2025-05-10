@@ -76,7 +76,7 @@ const searchModule = {
       return createHash("sha256").update(content).digest("hex");
     }
 
-    let hashedVideoId = sha256(id).slice(0, 4);
+    let hashedVideoId = sha256(id).slice(0, 6);
     Http.request({
       method: "GET",
       url:
