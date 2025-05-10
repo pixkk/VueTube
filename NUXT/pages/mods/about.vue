@@ -123,7 +123,7 @@ export default {
     try {
       this.ua = await UserAgent.get();
     }catch (e) {
-      this.ua = "-"
+      this.ua.userAgent = "-"
     }
 
   },
