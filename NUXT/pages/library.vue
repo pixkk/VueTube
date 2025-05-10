@@ -47,7 +47,7 @@
           class=".icon"
         >mdi-history</v-icon
         >
-        Full history
+        {{ library.fullhistory }} ({{historyVideos.length}})
       </v-btn>
     </div>
 
@@ -87,10 +87,10 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" text @click="dialog = false">
-            {{ lang.cancel }}
+            {{ langDev.cancel }}
           </v-btn>
           <v-btn color="primary" text @click="createPlaylist()">
-            {{ lang.create }}
+            {{ langDev.create }}
           </v-btn>
         </v-card-actions>
       </v-card></v-dialog
@@ -105,7 +105,8 @@ export default {
   data() {
     return {
       dialog: false,
-      lang: {},
+      library: {},
+      langDev: {},
       playlistName: null,
     };
   },
@@ -120,7 +121,8 @@ export default {
   },
   mounted() {
     const lang = this.$lang();
-    this.lang = lang.mods.developer;
+    this.library = lang.mods.library;
+    this.langDev = lang.mods.developer;
   },
   methods: {
     createPlaylist: function () {

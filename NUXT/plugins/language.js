@@ -83,29 +83,54 @@ function module(subPack, listPacks) {
 
   //---   Return Language Pack   ---//
   const selectedLanguage = localStorage.getItem("language") || "en";
-  const languagePack = packs[selectedLanguage];
+  let languagePack = mergeMissingKeysFlat(packs.en, packs[selectedLanguage]);
 
   //---   Send Full Language Pack   ---//
   if (!subPack) return languagePack;
   //---   Allow Subpack Fallback   ---//
-  let builtSubPack = new Object();
-  for (const i in packs.en[subPack]) {
-    const englishEntry = packs.en[subPack][i];
-    const entry = languagePack[subPack][i];
-
-    if (!entry) {
-      builtSubPack[i] = englishEntry;
-    } else {
-      builtSubPack[i] = entry;
-    }
-
-
-  }
+  // let builtSubPack = new Object();
+  // for (const i in packs.en[subPack]) {
+  //   const englishEntry = packs.en[subPack][i];
+  //   const entry = languagePack[subPack][i];
+  //
+  //   if (!entry) {
+  //     builtSubPack[i] = englishEntry;
+  //   } else {
+  //     builtSubPack[i] = entry;
+  //   }
+  //
+  //
+  // }
   //---   Return Built Subpack   ---//
-  console.log("RETURNING:",builtSubPack)
-  return builtSubPack;
+  languagePack = languagePack[subPack];
+  console.log("RETURNING:",languagePack)
+  return languagePack;
 }
+function mergeMissingKeysFlat(source, target) {
+  const stack = [{ src: source, tgt: target }];
 
+  while (stack.length) {
+    const {src, tgt} = stack.pop();
+    for (const key in src) {
+      if (!(key in tgt)) {
+        tgt[key] =
+          typeof src[key] === 'object' && src[key] !== null
+            ? {}
+            : `${src[key]} `; // need to be translated
+      }
+
+      if (
+        typeof src[key] === 'object' &&
+        src[key] !== null &&
+        typeof tgt[key] === 'object' &&
+        tgt[key] !== null
+      ) {
+        stack.push({src: src[key], tgt: tgt[key]});
+      }
+    }
+  }
+  return target;
+}
 
 export default ({ app }, inject) => {
   inject("lang", module);

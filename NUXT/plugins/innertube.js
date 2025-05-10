@@ -431,6 +431,12 @@ class Innertube {
     // baseJsUrl =
     //   "https://m.youtube.com/s/player/22f02d3d/player_ias.vflset/uk_UA/base.js";
     // Get base.js content
+    const regex = /\/player\/([a-f0-9]{8})\/player/;
+    const match = baseJsUrl.match(regex);
+    if (match) {
+      localStorage.setItem("baseJsVersion", match[1]);
+    }
+
     const baseJs = await Http.get({
       url: baseJsUrl,
     }).catch((error) => error);

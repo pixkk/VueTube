@@ -59,6 +59,10 @@
         {{ deviceInfo.manufacturer || "Unknown" }}<br />
         <h3>{{ lang.emulator }}</h3>
         {{ deviceInfo.isVirtual ? "yes" : "no" }}
+        <h3>{{ lang.basejs }}</h3>
+        {{ getBaseJsVersion() || "-" }}
+        <h3>{{ lang.userAgent }}</h3>
+        {{ ua.userAgent }}
       </v-card-text>
     </v-card>
     <!--   End Device Information   -->
@@ -95,6 +99,7 @@
 
 <script>
 import { Device } from "@capacitor/device";
+import { UserAgent } from '@adeprez/capacitor-user-agent';
 
 export default {
   data() {
@@ -103,6 +108,7 @@ export default {
       release: process.env.channel,
       deviceInfo: "",
       lang: {},
+      ua: "",
     };
   },
   computed: {
@@ -113,11 +119,19 @@ export default {
 
   async mounted() {
     const info = await Device.getInfo();
+    const ua = await UserAgent.get();
     this.deviceInfo = info;
+    this.ua = ua;
 
     this.lang = this.$lang().mods.about;
   },
   methods: {
+    getBaseJsVersion() {
+      return localStorage.getItem("baseJsVersion");
+    },
+    async getUserAgent() {
+      return this.ua
+    },
     openExternal(url) {
       this.$vuetube.openExternal(url);
     },
