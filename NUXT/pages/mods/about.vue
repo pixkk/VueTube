@@ -98,8 +98,8 @@
 </template>
 
 <script>
-import { Device } from "@capacitor/device";
-import { UserAgent } from '@adeprez/capacitor-user-agent';
+import {Device} from "@capacitor/device";
+import {UserAgent} from '@adeprez/capacitor-user-agent';
 
 export default {
   data() {
@@ -118,12 +118,14 @@ export default {
   },
 
   async mounted() {
-    const info = await Device.getInfo();
-    const ua = await UserAgent.get();
-    this.deviceInfo = info;
-    this.ua = ua;
-
     this.lang = this.$lang().mods.about;
+    this.deviceInfo = await Device.getInfo();
+    try {
+      this.ua = await UserAgent.get();
+    }catch (e) {
+      this.ua = "-"
+    }
+
   },
   methods: {
     getBaseJsVersion() {
