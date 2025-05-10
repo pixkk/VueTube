@@ -4,7 +4,7 @@ export const state = () => ({
   speedAutosave: null,
   preload: null,
   preloadUpTo: 100,
-  preferedCodec: "avc and av01",
+  removeVP9Codec: false,
   // quality: null,
   // qualityAutoSwitch: null,
   // shortFullscreen: null,
@@ -30,9 +30,12 @@ export const mutations = {
       state.preload = JSON.parse(localStorage.getItem("preload")) === true; // defaults to false
       state.preloadUpTo =
         JSON.parse(localStorage.getItem("preloadUpTo")) || 100; // defaults to 100(percent)
-      state.preferedCodec = localStorage.getItem("preferedCodec")
-        ? localStorage.getItem("preferedCodec")
-        : "avc and av01"; // defaults to null
+      if (localStorage.getItem("removeVP9Codec") !== ("true" || "false")) {
+        localStorage.setItem("removeVP9Codec", "false");
+      }
+      console.log("state:")
+      console.log(localStorage.getItem("removeVP9Codec"))
+      state.removeVP9Codec = Boolean(localStorage.getItem("removeVP9Codec"))
     }
   },
   setLoop(state, payload) {
@@ -55,11 +58,11 @@ export const mutations = {
     state.preloadUpTo = payload;
     localStorage.setItem("preloadUpTo", payload);
   },
-  setPreferedCodec(state, payload) {
-    state.preferedCodec = payload;
-    localStorage.setItem("preferedCodec", payload);
+  setAvailiablityOfVP9Codec(state, payload) {
+    state.removeVP9Codec = payload;
+    localStorage.setItem("removeVP9Codec", payload);
   },
   getPreferedCodec() {
-    localStorage.getItem("preferedCodec");
+    localStorage.getItem("removeVP9Codec");
   },
 };

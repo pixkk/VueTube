@@ -569,11 +569,11 @@ export default {
       // console.log(this.sources[i].mimeType.toLowerCase());
       // console.log('video/webm; codecs="vp9"'.indexOf("vp9"));
       if (
-        this.sources[i].mimeType.toLowerCase().indexOf(
-          this.$store.state.player.preferedCodec.toLowerCase()
-        ) >= 0
+        this.sources[i].mimeType.toLowerCase().indexOf("vp9") >= 0
       ) {
-        this.sources.splice(i, 1);
+        if (localStorage.getItem("removeVP9Codec") === "true") {
+          this.sources.splice(i, 1);
+        }
       }
     }
     this.sources.splice(0, 1);
