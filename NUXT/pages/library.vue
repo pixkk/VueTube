@@ -5,7 +5,7 @@
         class="background--text w-50"
         :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
-        Local Playlists
+        {{ library.localplaylists }}
       </h4>
       <v-btn text tile elevation="0" class="w-5-0" @click="dialog = true">
         <v-icon>mdi-plus</v-icon>
@@ -79,9 +79,9 @@
           $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
-        <v-card-title class="text-h5">Create Playlist</v-card-title>
+        <v-card-title class="text-h5"> {{library.createplaylist}}</v-card-title>
         <v-card-text>
-          <v-text-field v-model="playlistName" label="Playlist Name" solo />
+          <v-text-field v-model="playlistName" :label="library.playlistname" solo />
         </v-card-text>
         <v-divider />
         <v-card-actions>

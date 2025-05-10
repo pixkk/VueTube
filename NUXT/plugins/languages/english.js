@@ -2,14 +2,14 @@ module.exports = {
   name: "English",
 
   global: {
-    home: "Home",
-    subscriptions: "Subscriptions",
-    library: "Library",
     restart: "Restart",
     later: "Later",
     settingRestart:
       "Modifying this setting requires the app to restart for the changes to be applied.",
     okay: "Okay",
+    quality: "Quality",
+    yes: "Yes",
+    no: "No"
   },
 
   pages: {
@@ -58,6 +58,7 @@ module.exports = {
       restore: "Restore",
       personalizedrecommendations: "Personalized recommendations",
       personalizedrecommendationsinfo: "Receive personalized recommendations in exchange for sending watch time telemetry.",
+      applanguage: "App language"
     },
     theme: {
       normal: "Normal",
@@ -121,6 +122,8 @@ module.exports = {
       os: "Operating System",
       model: "Model",
       manufacturer: "Manufacturer",
+      basejs: "API version",
+      userAgent: "User Agent",
       emulator: "Emulator",
       github: "GitHub",
       discord: "Discord",
@@ -139,6 +142,15 @@ module.exports = {
       delete: "Delete",
       change: "Change",
     },
+    library: {
+      fullhistory: "Full history",
+      localplaylists: "Local playlists",
+      createplaylist: "Create Playlist",
+      playlistname: "Playlist Name"
+    },
+    player: {
+      removevp9: "Remove VP9 video codec"
+    }
   },
 
   events: {

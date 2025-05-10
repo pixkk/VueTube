@@ -94,6 +94,7 @@ export default {
       { name: "Channels", to: "/channel/channels" },
       { name: "About", to: "/channel/about" },
     ],
+    lang: {}
   }),
 
   computed: {
@@ -109,8 +110,26 @@ export default {
         case this.$route.path.includes("mods/sponsorblock"):
           pageName = "SponsorBlock";
           break;
+        case this.$route.path.includes("mods/theme"):
+          pageName = this.lang.theme;
+          break;
+        case this.$route.path.includes("mods/player"):
+          pageName = this.lang.player;
+          break;
+        case this.$route.path.includes("home"):
+          pageName = this.lang.home;
+          break;
+        case this.$route.path.includes("subscriptions"):
+          pageName = this.lang.subscriptions;
+          break;
+        case this.$route.path.includes("library"):
+          pageName = this.lang.library;
+          break;
+        case this.$route.path.includes("settings"):
+          pageName = this.lang.settings;
+          break;
       }
-      //     console.log(pageName);
+          console.log(pageName);
       return pageName || "Home";
     },
   },
@@ -129,6 +148,8 @@ export default {
   mounted() {
     if (!process.browser) this.$vuetube.resetBackActions();
 
+    const lang = this.$lang("pages");
+    this.lang = lang;
     // ---   External URL Handling   --- //
     CapacitorApp.addListener("appUrlOpen", (event) => {
       // We only push to the route if there is a url present

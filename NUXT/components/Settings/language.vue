@@ -12,7 +12,7 @@
         maxHeight: 228,
         transition: 'slide-y-transition',
       }"
-      label="App Language"
+      :label="lang.mods.general.applanguage"
       :items="langs"
       outlined
     />

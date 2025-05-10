@@ -155,7 +155,7 @@ export default {
   },
 
   mounted() {
-    const lang = this.$lang("global");
+    const lang = this.$lang("pages");
     this.tabs[0].name = lang.home;
     this.tabs[1].name = lang.subscriptions;
     this.tabs[2].name = lang.library;
