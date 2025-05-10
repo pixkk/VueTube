@@ -197,7 +197,7 @@ export default {
       //---   Get Latest Version   ---//
       this.status = "checking";
       let currentVersion = localStorage.getItem("lastRunVersion");
-      if (currentVersion === "canary" || currentVersion === "release") {
+      if (currentVersion === "canary" || currentVersion === "release" || /^\d+\.\d+\.\d+$/.test(currentVersion) ) {
         const releases = await this.$vuetube.checkForUpdates();
         this.latestVersion = releases[0];
 
