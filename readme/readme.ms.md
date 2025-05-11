@@ -93,7 +93,7 @@ Untuk memasang aplikasi VueTube, sila lihat di bawah untuk versi VueTube yang te
 
 <h3 align="left">
 <sub>
-<img  src="resources/readme_icon_android.png"
+<img  src="/resources/readme_icon_android.png"
       height="20"
       width="20">
 </sub>
@@ -106,7 +106,7 @@ Android
 
 <h3 align="left">
 <sub>
-<img  src="resources/readme_icon_ios.png"
+<img  src="/resources/readme_icon_ios.png"
       height="20"
       width="20">
 </sub>
@@ -369,5 +369,5 @@ Repositori VueTube yang lain
 <hr>
 
 <p align="center">
-<img src="resources/bottom_banner_readme.png" width="800">
+<img src="/resources/bottom_banner_readme.png" width="800">
 </p>
