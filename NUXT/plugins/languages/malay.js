@@ -2,14 +2,14 @@ module.exports = {
   name: "Bahasa Melayu",
 
   global: {
-    home: "Laman Utama",
-    subscriptions: "Langganan",
-    library: "Pustaka",
     restart: "Mulakan semula",
     later: "Kemudian",
     settingRestart:
       "Mengubah tetapan ini memerlukan apl dimulakan semula untuk menerapkan tetapan.",
     okay: "OK",
+    quality: "Kualiti",
+    yes: "Ya",
+    no: "Tidak"
   },
 
   pages: {
@@ -33,8 +33,8 @@ module.exports = {
 
   index: {
     connecting: "Menyambung",
-    plugins: "Memuatkan Plugin",
-    launching: "Melancarkan",
+    plugins: "Memuatkan plugin",
+    launching: "Memulakan",
   },
 
   settings: {
@@ -57,7 +57,8 @@ module.exports = {
       backupinfo: "Sandarkan atau pulihkan semula tetapan aplikasi anda",
       restore: "Pulihkan semula",
       personalizedrecommendations: "Cadangan diperibadikan",
-      personalizedrecommendationsinfo: "Terima cadangan diperibadikan sebagai pertukaran untuk menghantar telemetri waktu tonton.",
+      personalizedrecommendationsinfo: "Terima cadangan diperibadikan sebagai pertukaran hantaran telemetri waktu tonton.",
+      applanguage: "Bahasa aplikasi"
     },
     theme: {
       normal: "Normal",
@@ -75,7 +76,7 @@ module.exports = {
       roundthumbnails: "Lakaran Kecil Bulat",
       roundwatchpagecomponents: "Komponen Halaman Tonton Bulat",
       radius: "Radius",
-      launchscreen: "Skrin Lancar",
+      launchscreen: "Skrin Permulaan",
       centeredlayout: "Susun Atur Berpusat",
       fullscreenlayout: "Susun Atur Skrin Penuh",
       themedicon: "Ikon Bertema",
@@ -83,7 +84,7 @@ module.exports = {
       shift: "Shift",
       showlabels: "Tunjuk label",
       mdi: "MDI",
-      materialsymbols: "Simbol Material",
+      materialsymbols: "Material Symbol",
       fluentuiicons: "Ikon FluentUI",
       ibmcarbonicons: "Ikon IBM Carbon",
     },
@@ -121,24 +122,35 @@ module.exports = {
       os: "Sistem Operasi",
       model: "Model",
       manufacturer: "Pengilang",
+      basejs: "Versi API",
+      userAgent: "User Agent",
       emulator: "Emulator",
       github: "GitHub",
       discord: "Discord",
     },
     developer: {
-      registryeditor: "Editor Daftaran",
+      registryeditor: "Editor daftaran",
       registrywarning: "MENGUBAH SEBARANG ENTRI MUNGKIN MENYEBABKAN APL ANDA ROSAK!",
       createentry: "Cipta entri",
       createentryfull: "Cipta entri daftaran",
       cancel: "Batal",
       create: "Cipta",
-      key: "Kunci",
+      key: "Kekunci",
       value: "Nilai",
       confirmdelete: "Sahkan pemadaman",
       areyousure: "Adakah anda pasti untuk memadamkannya?",
       delete: "Padam",
       change: "Ubah",
     },
+    library: {
+      fullhistory: "Sejarah penuh",
+      localplaylists: "Senarai main tempatan",
+      createplaylist: "Cipta Senarai Main",
+      playlistname: "Nama Senarai Main"
+    },
+    player: {
+      removevp9: "Buang VP9 video codec"
+    }
   },
 
   events: {
