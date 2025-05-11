@@ -41,7 +41,7 @@ Disebut View Tube (<code>/ˈvjuːˌtjuːb/</code>)
 
 <h2 align="left">
 <sub>
-<img  src="resources/readme_icon_community.png"
+<img  src="/resources/readme_icon_community.png"
       height="30"
       width="30">
 </sub>
