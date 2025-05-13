@@ -52,15 +52,15 @@ export default {
     this.pages = [
       {
         value: "home",
-        text: lang.global.home,
+        text: lang.pages.home,
       },
       {
         value: "subscriptions",
-        text: lang.global.subscriptions,
+        text: lang.pages.subscriptions,
       },
       {
         value: "library",
-        text: lang.global.library,
+        text: lang.pages.library,
       },
     ];
   },
