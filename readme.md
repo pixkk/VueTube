@@ -118,7 +118,7 @@ To install the app, please check below all versions available:
 Android
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.6.0><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                                  | Less bugs than unstable while having more features than stable.                                                              | Not available yet.                                                                              |
 
@@ -131,7 +131,7 @@ Android
 iOS
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.6.0><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Pretty unstable, but you get early access to new features.                                                                              | Less bugs than unstable while having more features than stable.                                                                                                                | Not available yet.                                                                              |
 
@@ -174,9 +174,9 @@ Screenshots
   <summary> 🖱️ Click to display screenshots </summary>
 <br />
 
-<img src="https://pixkk.com/wtch.png" width="400">
-<img src="https://pixkk.com/stng.png" width="400">
-<img src="https://pixkk.com/srch.png" width="400">
+<img src="https://vuetube.pixkk.com/wtch.png" width="400">
+<img src="https://vuetube.pixkk.com/stng.png" width="400">
+<img src="https://vuetube.pixkk.com/srch.png" width="400">
 
 </details>
 
