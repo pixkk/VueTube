@@ -1030,6 +1030,9 @@ class Innertube {
     let resolutions = responseInfo.streamingData;
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
+
+    // let hls = responseInfo.streamingData?.hlsManifestUrl && responseInfo.videoDetails.isLiveContent ? responseInfo.streamingData?.hlsManifestUrl : null;
+    // let dash = responseInfo.streamingData?.dashManifestUrl && responseInfo.videoDetails.isLiveContent ? responseInfo.streamingData?.dashManifestUrl : null;
     if (details.isPostLiveDvr) {
       // hls = null;
       // dash = null;
@@ -1181,9 +1184,7 @@ class Innertube {
       engagementPanels: responseNext.engagementPanels,
       commentData: columnUI.contents
         .find((content) => content.itemSectionRenderer?.contents)
-        ?.itemSectionRenderer.contents.find(
-          (content) => content.commentsEntryPointHeaderRenderer
-        )?.commentsEntryPointHeaderRenderer,
+        ?.itemSectionRenderer.contents[0].videoMetadataCarouselViewModel,
       playbackTracking: responseInfo.playbackTracking,
       commentContinuation: responseNext.engagementPanels
         .find(

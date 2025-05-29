@@ -34,11 +34,12 @@
           v-on="on"
         >
           <v-card-text class="comment-count keep-spaces px-0">
-            <template v-for="text in comments?.headerText?.runs">
-              <template v-if="text.bold">
-                <strong :key="text.text">{{ text.text + "(" + comments?.commentCount?.runs[0]?.text + ")" }}</strong>
-              </template>
-              <template v-else>{{ text.text }} {{ "(" + comments?.commentCount?.runs[0]?.text + ")" }}</template>
+            <template v-for="text in comments.carouselTitles">
+<!--              <template v-if="text.bold">-->
+<!--                <strong :key="text.text">{{ text.text + "(" + comments?.commentCount?.runs[0]?.text + ")" }}</strong>-->
+<!--              </template>-->
+<!--              <template v-else>{{ text.text }} {{ "(" + comments?.commentCount?.runs[0]?.text + ")" }}</template>-->
+              <template>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel.subtitle + ")" }}</template>
             </template>
           </v-card-text>
 <!--          <v-icon v-if="showComments" dense>mdi-unfold-less-horizontal</v-icon>-->
@@ -57,11 +58,8 @@
 // <!--            down: () => (sheet = false),-->
           }"
         >
-          <template v-for="text in comments?.headerText?.runs">
-            <template v-if="text.bold">
-              <strong :key="text.text">{{ text.text + "(" + comments?.commentCount?.runs[0]?.text + ")" }}</strong>
-            </template>
-            <template v-else>{{ text.text }} {{ "(" + comments?.commentCount?.runs[0]?.text + ")" }}</template>
+          <template v-for="text in comments.carouselTitles">
+            <template><h3>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel.subtitle + ")" }}</h3></template>
           </template>
           <v-spacer />
           <v-btn fab text small @click="sheet = false">

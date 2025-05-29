@@ -5,7 +5,7 @@
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
       <v-toolbar-title>
-        <strong>Replies</strong>
+        <h5 style="margin-bottom: 0!important; font-weight: normal;">Replies</h5>
       </v-toolbar-title>
       <v-spacer></v-spacer>
 <!--      <v-btn icon @click="$emit('closeComments')">-->

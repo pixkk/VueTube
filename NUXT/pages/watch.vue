@@ -202,7 +202,7 @@
       <!-- Comments -->
 
       <comments
-        v-if="$refs.player && loaded && video?.commentData?.commentCount?.runs && parseFloat(video.commentData?.commentCount?.runs[0]?.text.replace(',', '.')) >= 1"
+        v-if="$refs.player && loaded && video?.commentData?.carouselTitles[0]?.carouselTitleViewModel.title && parseFloat(video.commentData?.carouselTitles[0]?.carouselTitleViewModel.subtitle.replace(',', '.')) >= 1"
         :commentsContinuations="video.commentContinuation"
         :comments="video?.commentData"
       />
