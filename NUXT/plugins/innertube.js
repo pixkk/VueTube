@@ -338,7 +338,7 @@ class Innertube {
       //.get("n"))&&(b=fG[0](b),a.set("n",b),fG.length||kq(""))}}
       // fG;
       challenge_name = new RegExp(
-        `var ${challenge_name.replace("$", "\\$")}\\s*=\\s*\\[(.+?)\\]\\s*[,;]`
+        `var ${challenge_name.replaceAll("$", "\\$")}\\s*=\\s*\\[(.+?)\\]\\s*[,;]`
       ).exec(baseJs.data)[1];
 
       if (challenge_name) {
@@ -364,7 +364,7 @@ class Innertube {
 
       challenge_name = /^.*?=\s*\[(.*)\];/gm.exec(challenge_name[0])[1];
 
-      challenge_name = challenge_name.replace("$", "\\$");
+      challenge_name = challenge_name.replaceAll("$", "\\$");
 
       // console.warn(challenge_name);
       let res = null;
