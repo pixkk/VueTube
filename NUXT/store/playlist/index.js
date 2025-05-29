@@ -20,7 +20,7 @@ export const mutations = {
     }
   },
   createPlaylist(state, name) {
-    state.playlists.push({ name, videos: [] });
+    state.playlists.push({ name, videos: [], time: new Date(Date.now()), });
     localStorage.setItem("playlists", JSON.stringify(state.playlists));
   },
   removePlaylist(state, index) {
@@ -29,6 +29,7 @@ export const mutations = {
   },
   addToPlaylist(state, { index, video }) {
     state.playlists[index].videos.unshift(video);
+    state.playlists[index].time = Date.now();
     localStorage.setItem("playlists", JSON.stringify(state.playlists));
   },
   removeFromPlaylist(state, { playlistIndex, video }) {
@@ -37,6 +38,7 @@ export const mutations = {
     );
     if (videoIndex === -1) throw new Error("Unable To Find Video");
     state.playlists[playlistIndex].videos.splice(videoIndex, 1);
+    state.playlists[playlistIndex].time = Date.now();
     localStorage.setItem("playlists", JSON.stringify(state.playlists));
   },
   changeToPlaylist(state, videoIndex) {

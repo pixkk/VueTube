@@ -72,6 +72,7 @@ export default {
     this.$store.commit("tweaks/initTweaks");
     this.$store.commit("player/initPlayer");
     this.$store.commit("history/initHistory");
+    this.$store.commit("playlist/initPlaylists");
     await this.$vuetube.launchBackHandling();
 
     //---   Load Theming   ---//

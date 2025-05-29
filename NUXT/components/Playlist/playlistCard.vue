@@ -17,7 +17,7 @@
         ? `${$store.state.tweaks.roundTweak / 3}rem`
         : '0',
     }"
-    @click.native="clickHandler"
+    @click="clickHandler"
   >
     <v-img
       contain
@@ -46,7 +46,7 @@
         class="background--text caption mt-2"
         :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
-        Bottom Text <br />
+        Updated: {{ getTimeOfPlaylist(playlist?.time) }} <br />
         {{ playlist.videos.length }} videos
       </div>
     </div>
@@ -95,6 +95,18 @@ export default {
     clickHandler() {
       this.$emit("click");
     },
+    getTimeOfPlaylist(timestamp) {
+      if (timestamp == null) return "-";
+      let date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
   },
 };
 </script>

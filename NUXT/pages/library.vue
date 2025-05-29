@@ -1,28 +1,5 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between mb-2 mx-4">
-      <h4
-        class="background--text w-50"
-        :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
-      >
-        {{ library.localplaylists }}
-      </h4>
-      <v-btn text tile elevation="0" class="w-5-0" @click="dialog = true">
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
-    </div>
-
-    <div class="d-flex justify-space-between mb-1 mx-4 ">
-      <v-divider v-if="!$store.state.tweaks.roundTweak" />
-    </div>
-    <div class="d-flex flex-column-reverse">
-      <playlist-card
-        v-for="(playlist, index) in playlists"
-        :key="index"
-        :playlist="playlist"
-        @click="changeToPlaylist(index)"
-      />
-    </div>
     <div class="d-flex justify-space-between mb-1 mx-4 ">
       <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
     </div>
@@ -71,6 +48,35 @@
         @deleted="deleteHistoryVideo(index)"
       />
     </div>
+<!--    DISABLED PLAYLISTs -->
+    <div style="display: none;">
+      <div class="d-flex justify-space-between mb-1 mx-4 ">
+        <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
+      </div>
+      <div class="d-flex justify-space-between mb-2 mx-4">
+        <h4
+          class="background--text w-50"
+          :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
+        >
+          {{ library.localplaylists }}
+        </h4>
+        <v-btn text tile elevation="0" class="w-5-0" @click="dialog = true">
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </div>
+      <div class="d-flex flex-column-reverse">
+        <playlist-card
+          v-for="(playlist, index) in playlists"
+          :key="index"
+          :playlist="playlist"
+          @click="changeToPlaylist(index)"
+        />
+      </div>
+      <div class="d-flex justify-space-between mb-1 mx-4 ">
+        <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
+      </div>
+    </div>
+
     <!-- Create Playlist Dialog -->
     <v-dialog v-model="dialog" width="500">
       <v-card
@@ -123,6 +129,7 @@ export default {
     const lang = this.$lang();
     this.library = lang.mods.library;
     this.langDev = lang.mods.developer;
+    this.playlists = this.$store.state.playlist;
   },
   methods: {
     createPlaylist: function () {
@@ -130,6 +137,8 @@ export default {
       this.dialog = false;
     },
     changeToPlaylist: function (videoIndex) {
+    // TODO: changeToPlaylist can't be clicked twice
+      // console.log(videoIndex);
       this.$store.commit("playlist/changeToPlaylist", videoIndex);
     },
     deleteHistoryVideo(target) {
