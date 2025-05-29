@@ -17,7 +17,7 @@
     }"
   >
       <video
-        preload="metadata"
+        :autoplay="true"
         ref="player"
         v-touch="{
         up: () => {
@@ -58,7 +58,6 @@
         :poster="poster"
         id="playerVideo"
         @loadedmetadata="checkDimensions()"
-        :autoplay="true"
         @click="controlsHandler()"
       >
         <track default kind="captions" id="captions" src=""/>
@@ -1241,7 +1240,7 @@ export default {
 
 .chrome {
   video::cue {
-    //font-size: 13.4px;
+    /* font-size: 13.4px; */
     opacity: 1;
     background-color: black;
     -webkit-transform: translateY(10%) !important;
@@ -1258,7 +1257,7 @@ export default {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  //display: block;
+  /* display: block; */
   z-index: 9999;
 }
 </style>
