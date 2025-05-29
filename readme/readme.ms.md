@@ -41,11 +41,11 @@ Disebut View Tube (<code>/ˈvjuːˌtjuːb/</code>)
 
 <h2 align="left">
 <sub>
-<img  src="resources/readme_icon_community.png"
+<img  src="/resources/readme_icon_community.png"
       height="30"
       width="30">
 </sub>
-    Star History Chart
+    Carta Sejarah Bintang
 </h2>
 <div align="center">
 
@@ -93,27 +93,27 @@ Untuk memasang aplikasi VueTube, sila lihat di bawah untuk versi VueTube yang te
 
 <h3 align="left">
 <sub>
-<img  src="resources/readme_icon_android.png"
+<img  src="/resources/readme_icon_android.png"
       height="20"
       width="20">
 </sub>
 Android
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/app-release.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.6.0><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=/resources/getstable.png></a> |
 | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
 <h3 align="left">
 <sub>
-<img  src="resources/readme_icon_ios.png"
+<img  src="/resources/readme_icon_ios.png"
       height="20"
       width="20">
 </sub>
 iOS
 </h3>
 
-| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=./resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.5.10><img id="im" width="200" src=./resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=./resources/getstable.png></a> |
+| <a href=https://nightly.link/pixkk/VueTube/workflows/ci/main/VueTube.zip><img id="im" width="200" src=/resources/getunstable.png></a> | <a href=https://github.com/pixkk/VueTube/releases/tag/0.6.0><img id="im" width="200" src=/resources/getcanary.png></a> | <a href=https://pixkk.com/install><img id="im" width="200" src=/resources/getstable.png></a> |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
 | Agak tidak stabil, tetapi anda mendapat akses awal kepada ciri-ciri baru.                                                                                  | Kurang pepijat berbanding versi _unstable_ sementara mempunyai lebih banyak ciri berbanding versi stabil.                                                              | Belum tersedia.                                                                              |
 
@@ -154,9 +154,9 @@ Tangkapan skrin
   <summary> 🖱️Klik di sini untuk menunjukkan tangkapan skrin </summary>
 <br />
   
-<img src="https://pixkk.com/wtch.png" width="400">
-<img src="https://pixkk.com/stng.png" width="400">
-<img src="https://pixkk.com/srch.png" width="400">
+<img src="https://vuetube.pixkk.com/wtch.png" width="400">
+<img src="https://vuetube.pixkk.com/stng.png" width="400">
+<img src="https://vuetube.pixkk.com/srch.png" width="400">
      
 </details>
 
@@ -369,5 +369,5 @@ Repositori VueTube yang lain
 <hr>
 
 <p align="center">
-<img src="resources/bottom_banner_readme.png" width="800">
+<img src="/resources/bottom_banner_readme.png" width="800">
 </p>
