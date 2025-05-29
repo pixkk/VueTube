@@ -38,13 +38,13 @@
         >
           <v-list-item-group
             v-for="src in captions"
-            :key="src.name.runs[0].text"
+            :key="src.name?.runs ? src.name?.runs[0]?.text : src.name.simpleText"
             >
             <v-list-item
               @click="(sheet = false), $emit('captionsHandler', src)">
               <v-list-item-content>
                 <v-list-item-title >
-                  {{src.name.runs[0].text}}
+                  {{src.name?.runs ? src.name?.runs[0]?.text : src.name.simpleText}}
                 </v-list-item-title>
               </v-list-item-content>
             </v-list-item>
