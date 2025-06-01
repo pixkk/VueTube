@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="d-flex justify-space-between mb-1 mx-4 ">
-      <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
+      <v-divider v-if="!$store.state.tweaks.roundTweak && playlists?.length > 0" />
     </div>
     <div class="d-flex justify-space-between mb-1 mx-4 ">
       <v-btn
@@ -49,7 +49,7 @@
       />
     </div>
 <!--    DISABLED PLAYLISTs -->
-    <div style="display: none;">
+    <div style="display: none;" v-if="playlists !== null">
       <div class="d-flex justify-space-between mb-1 mx-4 ">
         <v-divider v-if="!$store.state.tweaks.roundTweak && playlists.length > 0" />
       </div>
