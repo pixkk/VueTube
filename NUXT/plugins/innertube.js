@@ -406,7 +406,7 @@ class Innertube {
 
     fullCode = this.processFunctionWithKnownSecretArray(fullCode, baseJs.data);
     // console.warn(fullCode);
-    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
+    fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9_$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
     // console.warn(fullCode);
     let modify = /([A-z0-9$])\[\"([A-z0-9$]+)\"\]/g.exec(fullCode);
     if (modify) {
