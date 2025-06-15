@@ -73,7 +73,7 @@
               : 'darken-1'
             : ''
         "
-        style="position: relative"
+        style="position: relative; width: 100%"
         :style="{
           boxShadow:
             $store.state.tweaks.roundTweak > 0
@@ -176,6 +176,89 @@
       />
     </v-card>
 
+    <!-- Recommendations fix -->
+    <v-divider v-if="!$store.state.tweaks.roundTweak" />
+    <v-card
+      flat
+      class="d-flex flex-row mx-4 mb-4 pr-4 background"
+      style="overflow: hidden; position: relative"
+      :class="
+        $store.state.tweaks.roundTweak > 0
+          ? $vuetify.theme.dark
+            ? 'lighten-1'
+            : 'darken-1'
+          : ''
+      "
+      :style="{
+        borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
+        padding: !$store.state.tweaks.roundTweak ? '1rem !important' : '',
+        margin: !$store.state.tweaks.roundTweak ? '0 !important' : '',
+      }"
+      @click="
+        (recommendationsFix = !recommendationsFix),
+          $vuetube.haptics.hapticsImpactLight(1)
+      "
+    >
+      <div
+        v-if="roundTweak > 0"
+        class="circle"
+        :class="recommendationsFix ? '' : 'moved'"
+        style="width: 11rem; height: 11rem"
+      ></div>
+      <div
+        v-if="roundTweak > 0"
+        class="circle"
+        :class="recommendationsFix ? '' : 'moved'"
+        style="width: 7rem; height: 7rem"
+      ></div>
+      <v-icon
+        class="pr-8 pl-4 py-12"
+        style="border-radius: 0rem !important; transition: all 0.2s ease"
+        :style="{
+          scale: recommendationsFix ? '1.1' : '1',
+          color: recommendationsFix ? 'var(--v-primary-base)' : '',
+        }"
+      >
+        {{
+          recommendationsFix
+            ? "mdi-auto-fix"
+            : "mdi-auto-fix"
+        }}
+      </v-icon>
+      <div
+        class="my-auto pa-4 ml-n4 background"
+        :class="
+          $store.state.tweaks.roundTweak > 0
+            ? $vuetify.theme.dark
+              ? 'lighten-1'
+              : 'darken-1'
+            : ''
+        "
+        style="position: relative; width: 100%"
+        :style="{
+          boxShadow:
+            $store.state.tweaks.roundTweak > 0
+              ? 'inset 1rem 0 1rem -1rem var(--v-background-base)'
+              : '',
+          borderRadius: `${$store.state.tweaks.roundTweak / 4}rem`,
+        }"
+      >
+        <div class="mb-4">{{ "Recommendations fix" }}</div>
+        <div
+          class="background--text"
+          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          style="font-size: 0.75rem; margin-top: -0.25rem !important"
+        >
+          {{ "Enable only if you have problems with recommendations loading." }}
+        </div>
+      </div>
+      <v-switch
+        v-model="recommendationsFix"
+        class="mt-4"
+        style="pointer-events: none"
+        inset
+      />
+    </v-card>
 
     <!-- Clear Watch History -->
     <!-- <v-dialog v-model="dialog" class="ma-0">
@@ -278,6 +361,14 @@ export default {
     };
   },
   computed: {
+    recommendationsFix: {
+      get() {
+        return this.$store.state.recommendationsFix;
+      },
+      set(value) {
+        this.$store.commit("setRecommendationsFixPreference", value);
+      },
+    },
     watchTelemetry: {
       get() {
         return this.$store.state.watchTelemetry;

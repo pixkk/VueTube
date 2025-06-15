@@ -109,6 +109,16 @@ export default {
         this.$store.commit("setSponsorBlockIntegration", value);
       },
     },
+
+    recommendationsFix: {
+      get() {
+        return this.$store.state.recommendationsFix;
+      },
+      set(value) {
+        this.$store.commit("setRecommendationsFixPreference", value);
+      },
+    },
+
   },
   mounted() {
     this.lang = this.$lang("events");
@@ -121,6 +131,7 @@ export default {
       if (!this.$refs["stage" + this.stage]) {
         localStorage.setItem("lastRunVersion", process.env.version);
         localStorage.setItem("firstTimeSetupComplete", true);
+        this.recommendationsFix = false;
         this.$router.replace("/");
       }
 

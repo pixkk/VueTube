@@ -5,6 +5,7 @@ export const state = () => ({
   watchTelemetry: null,
   sponsorBlockIntegration: true,
   sponsorBlockSegmentsSettingsValue: "",
+  recommendationsFix: false,
   channelData: {},
   channel: {},
 });
@@ -24,6 +25,12 @@ function updateObject(testObject, value) {
 
 
 export const mutations = {
+  initRecommendationsFixPreference(state) {
+    if (localStorage.getItem("recommendationsFix") == null || localStorage.getItem("recommendationsFix") === undefined ) {
+      localStorage.setItem("recommendationsFix", "false");
+    }
+    state.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false)
+  },
   initTelemetryPreference(state) {
     if (process.client) {
       state.watchTelemetry = !(
@@ -35,6 +42,10 @@ export const mutations = {
       );
       // JSON.parse(localStorage.getItem("watchTelemetry")) === true; // defaults to false
     }
+  },
+  setRecommendationsFixPreference(state, payload) {
+    state.recommendationsFix = payload;
+    localStorage.setItem("recommendationsFix", payload);
   },
   setTelemetryPreference(state, payload) {
     state.watchTelemetry = payload;

@@ -23,6 +23,7 @@ class Innertube {
     this.getPot = "";
     this.pot = "";
     this.secretArrayName = "";
+    this.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false)
   }
 
   checkErrorCallback() {
@@ -463,6 +464,11 @@ class Innertube {
           this.context = data.INNERTUBE_CONTEXT;
           this.logged_in = data.LOGGED_IN;
 
+          if (this.recommendationsFix) {
+            console.log("Applying patch for Emulators (recommendation page fix)");
+            this.context.client.userAgent =  constants.YT_API_VALUES.USER_AGENT;
+          }
+
           this.context.client = constants.INNERTUBE_CLIENT(this.context.client);
           this.header = constants.INNERTUBE_HEADER(this.context.client);
         }
@@ -708,6 +714,10 @@ class Innertube {
 
     const clientConfigs  = constants.clientConfigs;
     for (const config of clientConfigs) {
+      if (this.recommendationsFix) {
+        console.log("Applying patch for Emulators (recommendation page fix)");
+        data.context.client.userAgent = config.CLIENTNAME;
+      }
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       data.context.client.clientScreen = config.clientScreen;

@@ -69,6 +69,7 @@ export default {
     //---   Init Stuff   ---//
     this.progressMsg = this.$lang("index").connecting;
     this.$store.commit("initTelemetryPreference");
+    this.$store.commit("initRecommendationsFixPreference");
     this.$store.commit("tweaks/initTweaks");
     this.$store.commit("player/initPlayer");
     this.$store.commit("history/initHistory");
