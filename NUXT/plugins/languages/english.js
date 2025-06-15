@@ -58,7 +58,9 @@ module.exports = {
       restore: "Restore",
       personalizedrecommendations: "Personalized recommendations",
       personalizedrecommendationsinfo: "Receive personalized recommendations in exchange for sending watch time telemetry.",
-      applanguage: "App language"
+      applanguage: "App language",
+      recommendationsFixTitle: "Recommendations fix",
+      recommendationsFixDescription: "Enable only if you have problems with recommendations loading.",
     },
     theme: {
       normal: "Normal",
