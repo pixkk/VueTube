@@ -406,7 +406,7 @@ export default {
           channel: this.video.channelName,
         });
 
-        this.playlistsCheckbox = this.playlists.map(
+        this.playlistsCheckbox = this.playlists?.map(
           (playlist) =>
             playlist.videos.findIndex(
               (playlistVideo) => playlistVideo.id === this.video.id
