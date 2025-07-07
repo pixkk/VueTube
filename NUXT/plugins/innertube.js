@@ -259,7 +259,8 @@ class Innertube {
     let secondFunctionName = "";
 
     let thirdFunction = /function\([^)]*\)\{[A-Za-z0-9]+===void 0\&\&\([A-z0-9$]+\=0\)\;.*?join\(""\)\};/m.exec(baseJs.data);
-    let fourthFunction = /[A-z0-9$]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
+    // let fourthFunction = /[A-z0-9$]+=function\(\)\{if[^₴]*\"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\"\.split\(""\),[^₴]*\)\}\}\}\}\;/.exec(baseJs.data)[0].match(/^.*?}};/);
+    let fourthFunction = /[A-z0-9$]+=function\(\)\{if\(![A-z0-9$]+\)\{.*\}\}\;/.exec(baseJs.data);
 
     let resultF = "";
     if (firstFunction) {
@@ -267,6 +268,7 @@ class Innertube {
 
       if (secondFunction) {
         let optimizedSecondFunc = secondFunction[0].substring(1, secondFunction[0].length - 4);
+        optimizedSecondFunc = optimizedSecondFunc.replaceAll("this.clientState", "2");
         console.warn(optimizedSecondFunc);
 
 
@@ -431,6 +433,8 @@ class Innertube {
     //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
     // baseJsUrl =
     //   "https://m.youtube.com/s/player/22f02d3d/player_ias.vflset/uk_UA/base.js";
+    // baseJsUrl =
+    //   "https://m.youtube.com/s/player/20830619/player_ias.vflset/uk_UA/base.js";
     // Get base.js content
     const regex = /\/player\/([a-f0-9]{8})\/player/;
     const match = baseJsUrl.match(regex);
@@ -721,12 +725,19 @@ class Innertube {
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       data.context.client.clientScreen = config.clientScreen;
+      config.deviceMake ? data.context.client.deviceMake = config.deviceMake : ""
+      config.deviceModel ? data.context.client.deviceModel = config.deviceModel : ""
+      config.browserName ? data.context.client.browserName = config.browserName : ""
+      config.browserVersion ? data.context.client.browserVersion = config.browserVersion : ""
+      config.platform ? data.context.client.platform = config.platform : ""
+      config.USER_AGENT ? data.context.client.userAgent = config.USER_AGENT : ""
       console.warn("Trying with client config - ", data.context.client);
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
           "embedUrl": "https://www.youtube.com/embed/" + id,
         }
       }
+      this.context.client = data.context.client;
       response = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
         data: {
@@ -756,7 +767,7 @@ class Innertube {
             },
           },
         },
-        headers: constants.INNERTUBE_NEW_HEADER(this.context.client),
+        headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
       }).catch((error) => error);
 
       if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&

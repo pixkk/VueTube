@@ -45,16 +45,22 @@ const webEmbeddedApiVal = {
 const tvApiVal = {
   CLIENTNAME: "TVHTML5",
   clientScreen: "WATCH",
-  VERSION_WEB: "7.20250212.16.00",
-  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+  VERSION_WEB: "7.20250622.15.00",
+  deviceModel: "BRAVIA 8K UR2",
+  deviceMake: "Sony",
+  USER_AGENT: "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
+  browserName: "Opera",
+  browserVersion: "46.0.2207.0",
+  platform: "TV",
+  VERSION: "7.20250622.15.00",
 };
 
 const clientConfigs = [
+  tvApiVal,
   webEmbeddedApiVal,
   androidVrApiVal,
-  tvApiVal,
 ];
 const filesystem = {
   plugins: "plugins/",
@@ -80,6 +86,7 @@ module.exports = {
   },
 
   INNERTUBE_NEW_HEADER: (info) => {
+    console.warn(info)
     return {
       accept: "*/*",
       "user-agent": info.userAgent,
@@ -87,8 +94,8 @@ module.exports = {
       "content-type": "application/json",
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": androidApiVal.CLIENT_WEB_M,
-      "x-youtube-client-version": androidApiVal.VERSION,
+      "x-youtube-client-name": info.CLIENT_WEB_M || info.clientVersion || 7,
+      "x-youtube-client-version": info.VERSION || info.clientVersion || androidApiVal.VERSION,
     };
   },
   INNERTUBE_CLIENT: (info) => {
