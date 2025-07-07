@@ -41,7 +41,7 @@
         <b
           class="text-left"
           style="
-             {
+
               height: 1.5rem;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -50,7 +50,7 @@
               -webkit-box-orient: vertical;
               word-wrap: break-word;
               white-space: normal;
-            }
+
           "
           >{{ video.title }}
         </b>
@@ -58,9 +58,9 @@
           class="background--text caption mt-2 text-left d-inline-block text-truncate"
           :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="
-             {
+
               height: 0.75rem;
-            }
+
           "
         >
           {{ video.channel }}

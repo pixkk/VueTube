@@ -1,3 +1,4 @@
+<!--TODO: PLEASE, OPIMIZE ME. DON'T USE PAGE SPECIFICATION. RELY ON LAYOUT-->
 <template>
   <div style="height: 100%;">
     <div style="position: fixed; top: calc(4rem + env(safe-area-inset-top)); left: 0; right: 0; z-index: 999; background: white;">
@@ -41,12 +42,19 @@
               <videos v-if="arrayWithTabs?.videos && index === tabsIndexes.videoTab"
                       :videos="getVideosOfChannel()"
               />
+
+              <videos v-if="index !== tabsIndexes.videoTab && useVideoTabsLayout"
+                      :videos="currentLayout"
+              />
               <community v-if="arrayWithTabs?.communityTab && index === tabsIndexes.communityTab"
                          :community="arrayWithTabs?.communityTab"
                 />
               <shorts v-if="arrayWithTabs?.shortsVideosTab && index === tabsIndexes.shortsVideosTab"
                          :shorts="arrayWithTabs?.shortsVideosTab"
                 />
+              <div v-if="arrayWithTabs?.playlistsTab && index === tabsIndexes.playlistsTab">
+                  Playlists will be here...
+              </div>
 <!--              {{tabsIndexes?.communityTab}}-->
 <!--              {{arrayWithTabs}}-->
 <!--              <videos v-if="arrayWithTabs?.shortsVideosTab && index === tabsIndexes.shortsVideosTab"-->
@@ -92,14 +100,18 @@ export default {
       channelData: this.$store.state.channel.channelData,
       videoData: this.$store.state.channel.videoList,
       shortsVideoData: this.$store.state.channel.shortsVideoData,
+      useVideoTabsLayout: false,
+      currentLayout: {},
       arrayWithTabs: {
         communityTab: {},
+        playlistsTab: {},
         aboutChannelTab: {},
         shortsVideosTab: {}
       },
       tabsIndexes: {
         channel: 0,
         communityTab: -1,
+        playlistsTab: -1,
         aboutChannelTab: -1,
         shortsVideosTab: -1
       }
@@ -169,15 +181,34 @@ getTabIndexes() {
           this.arrayWithTabs.shortsVideosTab = res?.continuationContents?.richGridContinuation;
           return;
         }
+        case "RICH_GRID_STYLE_SLIM": {
+          this.useVideoTabsLayout = true;
+          this.currentLayout = res?.continuationContents?.richGridContinuation;
+          return;
+        }
       }
-      // console.error(res.continuationContents?.sectionListContinuation?.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || res.continuationContents?.sectionListContinuation.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section");
-      if (res?.continuationContents?.sectionListContinuation?.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || res.continuationContents?.sectionListContinuation.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section") {
-        this.tabsIndexes.communityTab = index;
-        this.arrayWithTabs.communityTab = res.continuationContents?.sectionListContinuation;
+      let sectionListContents = res?.continuationContents?.sectionListContinuation;
+      console.error(sectionListContents)
+      console.error(sectionListContents)
+      console.error(sectionListContents)
+      if (sectionListContents) {
+        // console.error(sectionListContents?.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || sectionListContents.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section");
+        if (sectionListContents.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || sectionListContents.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section") {
+          this.tabsIndexes.communityTab = index;
+          this.arrayWithTabs.communityTab = sectionListContents;
+        }
+        if (sectionListContents.contents[0]?.itemSectionRenderer?.contents[0]?.compactPlaylistRenderer) {
+          this.tabsIndexes.playlistsTab = index;
+          this.arrayWithTabs.playlistsTab = sectionListContents.contents[0]?.itemSectionRenderer?.contents;
+        }
       }
-      if (res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel) {
-        this.tabsIndexes.aboutChannelTab = index;
-        this.arrayWithTabs.aboutChannelTab = res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel;
+
+      if (res?.onResponseReceivedEndpoints) {
+        if (res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction
+          ?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel) {
+          this.tabsIndexes.aboutChannelTab = index;
+          this.arrayWithTabs.aboutChannelTab = res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel;
+        }
       }
 
       // community = await this.$youtube.getChannel(channelRequest, "community");
