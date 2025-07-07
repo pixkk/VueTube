@@ -58,9 +58,9 @@ const tvApiVal = {
 };
 
 const clientConfigs = [
-  tvApiVal,
   webEmbeddedApiVal,
   androidVrApiVal,
+  tvApiVal,
 ];
 const filesystem = {
   plugins: "plugins/",
