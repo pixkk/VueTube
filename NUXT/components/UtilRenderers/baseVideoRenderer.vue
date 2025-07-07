@@ -9,7 +9,8 @@
     }"
     flat
   >
-    <div style="position: relative" class="thumbnail-container overflow-hidden">
+    <div style="position: relative"
+         :class="thumbnailAutoWidth ? 'thumbnail-container-auto-width overflow-hidden' : 'thumbnail-container overflow-hidden'">
       <v-img
         :aspect-ratio="16 / 9"
         :src="thumbnailUrl"
@@ -27,7 +28,7 @@
     </div>
     <div
       id="details"
-      class="background mt-1"
+      class="background mt-1 d-flex flex-row"
       :class="
         roundThumb && roundTweak > 0
           ? $vuetify.theme.dark
@@ -54,7 +55,8 @@
           style="margin-top: 0.5em"
           class="font-weight-medium vid-title"
         >
-          {{ titles[0] ? titles[0].text : titles }}
+<!--          {{titles}}-->
+          {{ titles[0]?.text ? titles[0].text : titles }}
         </span>
 
         <div
@@ -100,6 +102,10 @@ export default {
     thumbnailOverlayStyle: {
       type: String,
     },
+    thumbnailAutoWidth: {
+      type: Boolean,
+      required: false,
+    },
   },
   data() {
     return {
@@ -135,6 +141,9 @@ export default {
 }
 
 .videoRuntimeFloat.style-DEFAULT {
+  background: rgba(0, 0, 0, 0.5);
+}
+.videoRuntimeFloat.style-SHORTS {
   background: rgba(0, 0, 0, 0.5);
 }
 
@@ -175,6 +184,9 @@ export default {
   .thumbnail-container {
     width: 50vh;
     float: left;
+  }
+  .thumbnail-container-auto-width {
+    width: auto;
   }
   #details {
     flex-direction: column-reverse;

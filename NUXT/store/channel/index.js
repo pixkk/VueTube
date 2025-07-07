@@ -17,6 +17,7 @@ export const state = () => {
     videoExample: null,
     channel: null,
     videoList: null,
+    shortsVideoData: null,
     channelData: null,
   };
 };

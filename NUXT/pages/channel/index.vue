@@ -44,6 +44,9 @@
               <community v-if="arrayWithTabs?.communityTab && index === tabsIndexes.communityTab"
                          :community="arrayWithTabs?.communityTab"
                 />
+              <shorts v-if="arrayWithTabs?.shortsVideosTab && index === tabsIndexes.shortsVideosTab"
+                         :shorts="arrayWithTabs?.shortsVideosTab"
+                />
 <!--              {{tabsIndexes?.communityTab}}-->
 <!--              {{arrayWithTabs}}-->
 <!--              <videos v-if="arrayWithTabs?.shortsVideosTab && index === tabsIndexes.shortsVideosTab"-->
@@ -73,9 +76,10 @@ import GeneralPage from "./GeneralPage.vue";
 import Videos from "./videos.vue";
 import Community from "./community.vue";
 import About from "./about.vue";
+import Shorts from "~/pages/channel/shorts.vue";
 
 export default {
-  components: {About, Community, Videos, GeneralPage},
+  components: {Shorts, About, Community, Videos, GeneralPage},
   mounted() {
     this.isLoading = true;
   },
@@ -90,12 +94,14 @@ export default {
       shortsVideoData: this.$store.state.channel.shortsVideoData,
       arrayWithTabs: {
         communityTab: {},
-        aboutChannelTab: {}
+        aboutChannelTab: {},
+        shortsVideosTab: {}
       },
       tabsIndexes: {
         channel: 0,
         communityTab: -1,
         aboutChannelTab: -1,
+        shortsVideosTab: -1
       }
     };
   },
@@ -159,9 +165,9 @@ getTabIndexes() {
       console.warn(res);
       switch (res?.continuationContents?.richGridContinuation?.style) {
         case "RICH_GRID_STYLE_SHORTS_GRID": {
-
           this.tabsIndexes.shortsVideosTab = index;
           this.arrayWithTabs.shortsVideosTab = res?.continuationContents?.richGridContinuation;
+          return;
         }
       }
       // console.error(res.continuationContents?.sectionListContinuation?.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || res.continuationContents?.sectionListContinuation.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section");

@@ -15,6 +15,8 @@ class rendererUtils {
       return base.canonicalBaseUrl;
     } else if (base.watchEndpoint) {
       return `/watch?v=${base.watchEndpoint.videoId}`;
+    } else if (base.reelWatchEndpoint) {
+      return `/watch?v=${base.reelWatchEndpoint.videoId}`;
     } else if (base.navigationEndpoint) {
       if (base.navigationEndpoint.browseEndpoint) {
         return base.navigationEndpoint.browseEndpoint.browseId; //for now
