@@ -31,30 +31,23 @@ class Innertube {
   }
   getSecretArray(secretArrayName, rootPageBody) {
     let array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\),\\n`, 'gm').exec(rootPageBody);
-    // console.warn(`var ${secretArrayName.replace("$", "\\$")}=("|\').*("|\').split\\(".*"\\),\\n`);
     if (array == null) {
-      // console.warn(0)
       array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`, 'g').exec(rootPageBody);
-      // console.warn(`var ${secretArrayName.replace("$", "\\$")}='(.*)'.split\\("(.*)"\\)`);
     }
     if (array == null) {
-      // console.warn(1)
       array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\\n.*)\\n.*\\]`, 'g').exec(rootPageBody);
-      // console.warn(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\\n.*)\\n.*\\]`);
     }
     if (array == null) {
-      // console.warn(2)
       array = new RegExp(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`, 'g').exec(rootPageBody);
-      // console.warn(`var ${secretArrayName.replace("$", "\\$")}=\\[(.*.*\n.*)\\]`);
     }
     if (array) {
       array[0] = array[0] + "; return " + secretArrayName + ";"
       array[0] = array[0].replace("),\n; return ", ") \n; return ");
-      // console.log(array[0])
       let returnSecretArray = new Function(array[0]);
       return returnSecretArray();
     }
   }
+
   decodeFunctionWithSecretArray(functionBody, secretArray, secretArrayName) {
     let regex = new RegExp(`(${secretArrayName.replace("$", "\\$")})\\[([0-9]+)\\]`, 'gm');
     functionBody = functionBody.replace(regex, (match, varName, index) => {
@@ -63,135 +56,79 @@ class Innertube {
     return functionBody;
   }
   processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
-    let res;
-    // console.warn(helpDecipher)
     let secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]+\]/.exec(helpDecipher[0]);
-    // console.warn(secretArray)
     let splitDataFromSecretArray;
     if (secretArray) {
-      // try {
-        splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
-      // }
-      // catch (e) {
-        // secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]+\]/.exec(helpDecipher[0]);
-        // splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
-      // }
+      splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
       this.secretArrayName = secretArray[1];
-      res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
-      return res;
+      return this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, secretArray[1]);
     }
   }
-  processFunctionWithKnownSecretArray(functionBody, rootDocumentBody) {
-    let splitDataFromSecretArray;
-    splitDataFromSecretArray = this.getSecretArray(this.secretArrayName, rootDocumentBody);
 
-      let res = this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, this.secretArrayName);
-      return res;
+  processFunctionWithKnownSecretArray(functionBody, rootDocumentBody) {
+    let splitDataFromSecretArray = this.getSecretArray(this.secretArrayName, rootDocumentBody);
+    return this.decodeFunctionWithSecretArray(functionBody, splitDataFromSecretArray, this.secretArrayName);
   }
+
   async makeDecipherFunction(baseJs) {
     // Example:
     //;var IF={k4:function(a,b){var c=a[0];a[0]=a[b%a.length];a[b%a.length]=c},
     // VN:function(a){a.reverse()},
     // DW:function(a,b){a.splice(0,b)}};
     let isMatch;
-    if (
-      /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\(a\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/.exec(
-        baseJs.data
-      )
-    ) {
-      isMatch =
-        /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\(a\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/.exec(
-          baseJs.data
-        );
-    } else if (
-      /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/.exec(
-        baseJs.data
-      )
-    ) {
-      isMatch =
-        /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/.exec(
-          baseJs.data
-        );
+    let firstPart0 = /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\(a\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/;
+    let firstPart1 = /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/;
+    if (firstPart0.exec(baseJs.data)) {
+      isMatch = firstPart0.exec(baseJs.data);
+    } else if (firstPart1.exec(baseJs.data)) {
+      isMatch = firstPart1.exec(baseJs.data);
     }
+
     if (isMatch) {
       let firstPart = isMatch[0];
-      // console.warn(firstPart);
       let helpDecipher;
-      if (
-        /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
-          baseJs.data
-        )
-      ) {
-        isMatch =
-          /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/.exec(
-            baseJs.data
-          );
-      } else if (
-        /{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-          baseJs.data
-        )
-      ) {
-        isMatch =
-          /{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-            baseJs.data
-          );
-      } else if (
-        /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-          baseJs.data
-        )
-      ) {
-        isMatch =
-          /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-            baseJs.data
-          );
-      } else if (/\{[A-Za-z]=[A-Za-z]\.split\(""[^"]*""\)\};/i.exec(baseJs.data)) {
+      let secondPart0 = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return [A-z0-9$]\.join\(""\)\};/;
+      let secondPart1 = /{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/;
+      let secondPart2 = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/;
+      let secondPart3 = /\{[A-Za-z]=[A-Za-z]\.split\(""[^"]*""\)\};/i;
+      let secondPart4 = /\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/;
+      let secondPart5 = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/;
+      let secondPart6 = /{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/;
+      let secondPart7 = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/;
+      let secondPart8 = /{[A-Za-z]=[A-Za-z]\[[A-Za-z$]+\[[0-9]+\]\]\([A-Za-z$]+\[[0-9]+\]\).*/;
+      if (secondPart0.exec(baseJs.data)) {
+        isMatch = secondPart0.exec(baseJs.data);
+      } else if (secondPart1.exec(baseJs.data)) {
+        isMatch = secondPart1.exec(baseJs.data);
+      } else if (secondPart2.exec(baseJs.data)) {
+        isMatch = secondPart2.exec(baseJs.data);
+      } else if (secondPart3.exec(baseJs.data)) {
         // 10.07.2023
-        isMatch = /\{[A-Za-z]=[A-Za-z]\.split\(""[^"]*""\)\};/i.exec(baseJs.data);
-      } else if (/\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
-        baseJs.data
-      )){
-        isMatch =
-          /\{a=a\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return a\.join\(""\)\};/.exec(
-            baseJs.data
-          );
+        isMatch = secondPart3.exec(baseJs.data);
+      } else if (secondPart4.exec(baseJs.data)){
+        isMatch = secondPart4.exec(baseJs.data);
       }
-      else if(/\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-        baseJs.data
-      )) {
+      else if(secondPart5.exec(baseJs.data)) {
       // 12.01.2025
-        isMatch = /\{[A-Za-z$]=[A-z0-9$]\.split\(""\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);[A-z0-9$]+\.[A-Za-z0-9]+\([^)]*\);return +[A-z0-9$]\.join\(""\)};/.exec(
-          baseJs.data
-        );
+        isMatch = secondPart5.exec(baseJs.data);
       }
-      else if (/{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
-        baseJs.data
-      )){
+      else if (secondPart6.exec(baseJs.data)){
         // 16.01.2025
-        isMatch = /{[A-Za-z]=[A-Za-z]\.split\(""\);.*return [A-Za-z]\.join\(""\)};/.exec(
-          baseJs.data
-        );
+        isMatch = secondPart6.exec(baseJs.data);
       }
-      else if (/{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
-        baseJs.data
-      )) {
-        helpDecipher = /{[A-Za-z]=[A-Za-z]\.split\(.*\);return [A-Za-z]\.join\(.*\)};/.exec(
-          baseJs.data
-        );
+      else if (secondPart7.exec(baseJs.data)) {
+        helpDecipher = secondPart7.exec(baseJs.data);
           // 25.03.2025 - new update: additional array with some values.
          //var ****="',(\";\u00ae{reverse{*****{;[)/({...".split("{")
           if (helpDecipher) {
             isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
           }
-        // console.log(isMatch);
       }
       else {
-        helpDecipher = /{[A-Za-z]=[A-Za-z]\[[A-Za-z$]+\[[0-9]+\]\]\([A-Za-z$]+\[[0-9]+\]\).*/.exec(
-          baseJs.data
-        );
+        helpDecipher = secondPart8.exec(baseJs.data);
         if (helpDecipher) {
           isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
         }
-        // console.log(isMatch);
       }
 
       if (!isMatch) {
@@ -203,12 +140,8 @@ class Innertube {
       // Example:
       // {a=a.split("");IF.k4(a,4);IF.VN(a,68);IF.DW(a,2);IF.VN(a,66);IF.k4(a,19);IF.DW(a,2);IF.VN(a,36);IF.DW(a,2);IF.k4(a,41);return a.join("")};
 
-      // Get second part of decipher function
-      // console.warn(firstPart);
-      // console.warn(isMatch[0]);
-
+      // Get third part of decipher function
       let functionArg = "";
-      // console.warn(isMatch)
       if (helpDecipher) {
         isMatch[0] = isMatch[0].replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
         firstPart = this.processFunctionWithKnownSecretArray(firstPart, baseJs.data);
@@ -216,19 +149,16 @@ class Innertube {
         firstPart = firstPart.replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
       }
       const match = isMatch[0].match(/(\w+)\.join\(\s*""\s*\)/);
-
-      // console.warn(match)
       if (match) {
         functionArg = match[1];
       }
 
-
-      const secondPart =
+      const thirdPart =
         "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
-      let decodeFunction = firstPart + secondPart;
-      // console.warn(decodeFunction)
+      let decodeFunction = firstPart + thirdPart;
       let decodeUrlFunction = new Function(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
+
       let signatureIntValue = /.sts="[0-9]+";/.exec(baseJs.data);
       // Get signature timestamp
       this.signatureTimestamp = parseInt(
