@@ -180,9 +180,6 @@ const innertubeModule = {
     const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
     return response.data;
   },
-  async getChannelHtml(channel_url) {
-    return await InnertubeAPI.getChannelHtml(channel_url);
-  },
   // It just works™
   // Front page recommendation
   async recommend() {

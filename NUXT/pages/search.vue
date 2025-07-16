@@ -1,7 +1,7 @@
 <template>
   <div class="background">
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="renderer.length <= 0" />
+    <vid-load-renderer v-if="renderer && renderer.length <= 0" />
     <sectionListRenderer :render="renderer" />
   </div>
 </template>

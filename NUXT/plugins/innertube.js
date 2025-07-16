@@ -306,7 +306,7 @@ class Innertube {
       res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\[[0-9]+\\]\\)};`, 'g').exec(baseJs.data);
       if (res == null) {
         res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)};`, 'g').exec(baseJs.data);
-        console.log(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`);
+        // console.log(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`);
       }
       // console.warn(res[0]);
       let helpDecipher = /return [A-Za-z]\.join\(.*\)}/.exec(
@@ -325,10 +325,9 @@ class Innertube {
         functionArg = match[1].trim();
       }
 
-      var startIndex = challenge_name.indexOf('{');
-
-        let trimmedCode = challenge_name.slice(startIndex).substring(1);
-        var endIndex = trimmedCode.lastIndexOf('}');
+      let startIndex = challenge_name.indexOf('{');
+      let trimmedCode = challenge_name.slice(startIndex).substring(1);
+      let endIndex = trimmedCode.lastIndexOf('}');
           trimmedCode = trimmedCode.slice(0, endIndex);
           challenge_name = trimmedCode;
     }
@@ -524,45 +523,6 @@ class Innertube {
     };
   }
 
-  async getChannelHtml(channel_url){
-
-    let data = {
-      context: {
-        client: constants.INNERTUBE_CLIENT(this.context.client),
-      },
-    };
-    data = {
-      context: {
-        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-      },
-    };
-    data.context.client = {
-      ...data.context.client,
-      clientFormFactor: "LARGE_FORM_FACTOR",
-    };
-    data.context = {
-      ...data.context,
-      request: constants.INNERTUBE_REQUEST(),
-    };
-
-    const response = await Http.get({
-      url: `${channel_url}`,
-    }).catch((error) => error);
-    console.log(response);
-
-    if (response instanceof Error)
-      return {
-        success: false,
-        status_code: response.status,
-        message: response.message,
-      };
-
-    return {
-      success: true,
-      status_code: response.status,
-      data: response.data,
-    };
-  }
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
     let data = {
       context: { ...contextAdditional },
@@ -667,7 +627,7 @@ class Innertube {
           "embedUrl": "https://www.youtube.com/embed/" + id,
         }
       }
-      this.context.client = data.context.client;
+      // this.context.client = data.context.client;
       response = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
         data: {
@@ -761,7 +721,7 @@ class Innertube {
         // url: `${url}/navigation/resolve_url?key=${this.key}`,
         url: `${url}`,
         headers: { "Content-Type": "text/html; charset=utf-8" },
-      }).catch((error) => {
+      }).catch(() => {
 
         // console.warn(browseId);
       });
@@ -779,10 +739,7 @@ class Innertube {
       else {
         let match;
         let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
-        // console.warn(html);
-        // console.warn(regex.exec(html));
         while ((match = regex.exec(html)) !== null) {
-          // console.warn(match);
           browseId = match[1];
         }
 
@@ -849,8 +806,6 @@ class Innertube {
         };
     }
 
-
-
     return {
       success: true,
       status_code: response.status,
@@ -875,7 +830,6 @@ class Innertube {
 
     await Http.get({
       url: urlWithParams,
-
       headers: this.header,
     });
   }
@@ -911,11 +865,6 @@ class Innertube {
     const rec = await this.browseAsync(recommendationsType);
     return rec;
   }
-  async getChannelVideosAsync(recommendationsType = "recommendations") {
-    const rec = await this.browseAsync(recommendationsType);
-    return rec;
-  }
-
   async getChannelAsync(url, tab="main") {
     const channelEndpoint = await this.getEndPoint(url, true);
     if (
@@ -975,9 +924,6 @@ class Innertube {
 
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
-    // const columnUI =
-    //   responseInfo[3].response?.contents.singleColumnWatchNextResults?.results
-    //     ?.results;
     let resolutions = responseInfo.streamingData;
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
@@ -1038,7 +984,6 @@ class Innertube {
     } catch (e) {}
     // Deciphering urls
     resolutions = resolutions?.formats ? resolutions?.formats.concat(resolutions.adaptiveFormats) : resolutions?.adaptiveFormats;
-    // console.warn(resolutions);
     resolutions?.forEach((source) => {
       if (source.isLive) {
         isLive = true;
