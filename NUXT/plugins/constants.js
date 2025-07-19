@@ -184,4 +184,10 @@ module.exports = {
       },
     };
   },
+  INNERTUBE_TECHNICAL: (info) => {
+    return {
+      clientName: webEmbeddedApiVal.CLIENTNAME,
+      clientVersion: webEmbeddedApiVal.VERSION_WEB,
+    };
+  },
 };

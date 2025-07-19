@@ -574,6 +574,44 @@ class Innertube {
     };
   }
 
+  async getCaptions(id) {
+    let data = {
+      context: {
+        client: constants.INNERTUBE_TECHNICAL(this.context.client),
+      },
+      videoId: id,
+    };
+    let response = "";
+
+    const clientConfigs  = constants.clientConfigs;
+    for (const config of clientConfigs) {
+      data.context.client.clientName = config.CLIENTNAME;
+      data.context.client.clientVersion = config.VERSION_WEB;
+      console.warn("Trying with client config - ", data.context.client);
+      // this.context.client = data.context.client;
+      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
+        data.context.thirdParty = {
+          "embedUrl": "https://www.youtube.com/embed/" + id,
+        }
+      }
+      response = await Http.post({
+        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
+        data: {
+          ...data,
+        },
+        headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
+      }).catch((error) => error);
+
+      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
+        response?.data?.playabilityStatus !== "LOGIN_REQUIRED" && response?.data?.playabilityStatus?.status !== "ERROR") {
+        break;
+      }
+
+    }
+    return response.data;
+  }
+
+
   async getVidAsync(id) {
     let data = {
       context: {

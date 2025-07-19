@@ -1098,11 +1098,31 @@ export default {
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {
-        const html = await Http.get({
+        let html = await Http.get({
           url: (constants.URLS.YT_MOBILE + q.baseUrl).replace("https://www.youtube.com", ""),
           params: {},
         }).catch((error) => error);
-        let captions = convertTranscriptToVTT(html.data);
+
+        let captions;
+        if (html.data !== "") {
+          captions = convertTranscriptToVTT(html.data);
+        }
+        else {
+          let r = await this.$youtube.getCaptions(this.video.id);
+          this.video.captions = r.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+          console.warn(r)
+          for (let i =0; i< this.video.captions.length; i++) {
+            if (this.video.captions[i].languageCode === q.languageCode) {
+              html = await Http.get({
+                url: (constants.URLS.YT_MOBILE + this.video.captions[i].baseUrl).replace("https://www.youtube.com", ""),
+                params: {},
+              }).catch((error) => error);
+
+              captions = convertTranscriptToVTT(html.data);
+            }
+          }
+        }
+
         function textToDataURL(text) {
           const blob = new Blob([text], { type: 'text/plain' });
           const reader = new FileReader();

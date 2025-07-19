@@ -385,6 +385,9 @@ const innertubeModule = {
     }
   },
 
+  async getCaptions(id) {
+    return (await this.getAPI()).getCaptions(id);
+  },
   async recommendContinuation(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint);
     const contents =
