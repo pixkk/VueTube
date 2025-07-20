@@ -14,7 +14,7 @@
         :channel-thumbnail="`https:`+section.backstagePostThreadRenderer.post.backstagePostRenderer.authorThumbnail.thumbnails[section.backstagePostThreadRenderer.post.backstagePostRenderer.authorThumbnail.thumbnails.length - 1].url"
         :published-time="section.backstagePostThreadRenderer.post.backstagePostRenderer.publishedTimeText.runs[0].text"
         :text="section.backstagePostThreadRenderer.post.backstagePostRenderer.contentText"
-        :votes-count="section.backstagePostThreadRenderer.post.backstagePostRenderer.voteCount.runs[0].text"
+        :votes-count="section.backstagePostThreadRenderer.post.backstagePostRenderer.voteCount?.runs[0]?.text || ''"
         :backstage-attachment="section.backstagePostThreadRenderer.post.backstagePostRenderer"
       />
       <div
@@ -77,8 +77,9 @@ export default {
             this.community.contents[0].itemSectionRenderer.contents = this.community.contents[0]?.itemSectionRenderer?.contents.concat(
               result.contents
             );
-            this.community.contents[0].itemSectionRenderer.continuations =
-              this.community.contents[0]?.itemSectionRenderer?.continuations.concat(result.continuations);
+
+            // this.community.contents[0].itemSectionRenderer.contents =
+            //   this.community.contents[0]?.itemSectionRenderer?.continuations.concat(result.continuations);
             this.$store.state.channel.community = this.community;
           });
       } else {
