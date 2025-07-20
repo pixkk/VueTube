@@ -12,7 +12,6 @@
           v-for="(tab, index) in tabs"
           :key="tab[0]"
           exact
-          @click="loadTabContent(index)"
         >
           {{ tab[0] }}
         </v-tab>
@@ -123,6 +122,10 @@ export default {
     },
   },
   watch: {
+    activeTab(newIndex) {
+      console.log('Active tab changed to:', newIndex);
+      this.loadTabContent(newIndex);
+    },
     tabs(newTabs) {
       if (newTabs.length && !this.executedTabs.has(newTabs[0][1])) {
         this.loadTabContent(0);
@@ -150,6 +153,7 @@ getTabIndexes() {
       return this.$store.state.channel.community;
     },
     loadTabContent(index) {
+      console.log(index)
       const token = this.tabs[index][1];
       // if (this.executedTabs.has(token)) return;
       if (this.executedTabs.has(token)) {
