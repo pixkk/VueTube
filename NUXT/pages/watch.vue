@@ -11,14 +11,7 @@
 <!--        :recommends="recommends"-->
 <!--        :disabled="saveDialog"-->
 <!--      />-->
-      <player
-        v-if="false"
-        ref="player"
-        :video="video"
-        :sources="sources"
-        :recommends="recommends"
-        :disabled="saveDialog"
-      />
+<!---->
     </div>
 
     <div
@@ -299,14 +292,14 @@
       >
         <v-card-title class="text-h5">Save To Playlist</v-card-title>
         <v-spacer></v-spacer>
-        <v-checkbox
-          v-for="(playlist, index) in playlists"
-          :key="index"
-          v-model="playlistsCheckbox[index]"
-          class="mx-5"
-          :label="playlist.name"
-          @change="updatePlaylist($event, index)"
-        />
+<!--        <v-checkbox-->
+<!--          v-for="(playlist, index) in playlists"-->
+<!--          :key="index"-->
+<!--          v-model="playlistsCheckbox[index]"-->
+<!--          class="mx-5"-->
+<!--          :label="playlist.name"-->
+<!--          @change="updatePlaylist($event, index)"-->
+<!--        />-->
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -373,8 +366,8 @@ export default {
   },
 
   mounted() {
-    this.mountedInit();
-    this.$vuetube.resetBackActions();
+    // this.mountedInit();
+    // this.$vuetube.resetBackActions();
   },
 
   beforeDestroy() {
