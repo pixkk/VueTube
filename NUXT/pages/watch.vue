@@ -3,8 +3,16 @@
     <div id="player-container" ref="playerContainer">
       <!-- // TODO: move component to default.vue -->
       <!-- // TODO: pass sources through vuex instead of props -->
+<!--      <player-->
+<!--        v-if="sources.length > 0 && video.title && video.channelName"-->
+<!--        ref="player"-->
+<!--        :video="video"-->
+<!--        :sources="sources"-->
+<!--        :recommends="recommends"-->
+<!--        :disabled="saveDialog"-->
+<!--      />-->
       <player
-        v-if="sources.length > 0 && video.title && video.channelName"
+        v-if="false"
         ref="player"
         :video="video"
         :sources="sources"
