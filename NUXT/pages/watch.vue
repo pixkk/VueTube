@@ -3,15 +3,15 @@
     <div id="player-container" ref="playerContainer">
       <!-- // TODO: move component to default.vue -->
       <!-- // TODO: pass sources through vuex instead of props -->
-<!--      <player-->
-<!--        v-if="sources.length > 0 && video.title && video.channelName"-->
-<!--        ref="player"-->
-<!--        :video="video"-->
-<!--        :sources="sources"-->
-<!--        :recommends="recommends"-->
-<!--        :disabled="saveDialog"-->
-<!--      />-->
-<!---->
+      <player
+        v-if="sources.length > 0 && video.title && video.channelName"
+        ref="player"
+        :video="video"
+        :sources="sources"
+        :recommends="recommends"
+        :disabled="saveDialog"
+      />
+
     </div>
 
     <div
@@ -366,7 +366,7 @@ export default {
   },
 
   mounted() {
-    // this.mountedInit();
+    this.mountedInit();
     // this.$vuetube.resetBackActions();
   },
 
@@ -376,55 +376,55 @@ export default {
 
   methods: {
     getVideo() {
-      this.loaded = false;
+      this.loaded = true;
 
-      this.$youtube.getVid(this.$route.query.v).then((result) => {
-        // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
-        this.sources = result.availableResolutionsAdaptive;
-        this.captions = result.captions;
-        console.log("Video info data", result);
-        this.video = result;
-        // this.video.endscreen = result.endscreen ? result.endscreen : null;
-        this.video.title = this.video.title ? this.video.title : "null";
-        this.video.channelName = this.video.channelName ? this.video.channelName : "null";
-
-        //---   Content Stuff   ---//
-        // this.interactions[0].value = result.metadata.likes.toLocaleString();
-        this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
-          this.likes = result.metadata.likes || data.likes.toLocaleString();
-          this.dislikes = data.dislikes.toLocaleString();
-          this.interactions[0].value = data.likes.toLocaleString();
-          this.interactions[1].value = data.dislikes.toLocaleString();
-        });
-        this.loaded = true;
-        this.recommends = result.renderedData.recommendations;
-        console.log("recommendations:", this.recommends);
-
-        // Store To History
-        this.$store.commit("history/addHistory", {
-          id: this.video.id,
-          title: this.video.title,
-          channel: this.video.channelName,
-        });
-
-        this.playlistsCheckbox = this.playlists?.map(
-          (playlist) =>
-            playlist.videos.findIndex(
-              (playlistVideo) => playlistVideo.id === this.video.id
-            ) !== -1
-        );
-
-        //---   API WatchTime call   ---//
-        if (this.$store.state.watchTelemetry) {
-          this.playbackTracking = result.playbackTracking;
-          this.st = 0;
-          this.cpn = getCpn();
-          this.initWatchTime().then(() => {
-            this.sendWatchTime();
-            this.interval = setInterval(this.sendWatchTime, 60000);
-          });
-        }
-      });
+      // this.$youtube.getVid(this.$route.query.v).then((result) => {
+      //   // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
+      //   this.sources = result.availableResolutionsAdaptive;
+      //   this.captions = result.captions;
+      //   console.log("Video info data", result);
+      //   this.video = result;
+      //   // this.video.endscreen = result.endscreen ? result.endscreen : null;
+      //   this.video.title = this.video.title ? this.video.title : "null";
+      //   this.video.channelName = this.video.channelName ? this.video.channelName : "null";
+      //
+      //   //---   Content Stuff   ---//
+      //   // this.interactions[0].value = result.metadata.likes.toLocaleString();
+      //   this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
+      //     this.likes = result.metadata.likes || data.likes.toLocaleString();
+      //     this.dislikes = data.dislikes.toLocaleString();
+      //     this.interactions[0].value = data.likes.toLocaleString();
+      //     this.interactions[1].value = data.dislikes.toLocaleString();
+      //   });
+      //   this.loaded = true;
+      //   this.recommends = result.renderedData.recommendations;
+      //   console.log("recommendations:", this.recommends);
+      //
+      //   // Store To History
+      //   this.$store.commit("history/addHistory", {
+      //     id: this.video.id,
+      //     title: this.video.title,
+      //     channel: this.video.channelName,
+      //   });
+      //
+      //   this.playlistsCheckbox = this.playlists?.map(
+      //     (playlist) =>
+      //       playlist.videos.findIndex(
+      //         (playlistVideo) => playlistVideo.id === this.video.id
+      //       ) !== -1
+      //   );
+      //
+      //   //---   API WatchTime call   ---//
+      //   if (this.$store.state.watchTelemetry) {
+      //     this.playbackTracking = result.playbackTracking;
+      //     this.st = 0;
+      //     this.cpn = getCpn();
+      //     this.initWatchTime().then(() => {
+      //       this.sendWatchTime();
+      //       this.interval = setInterval(this.sendWatchTime, 60000);
+      //     });
+      //   }
+      // });
 
 
       if (!document.pictureInPictureEnabled) {
