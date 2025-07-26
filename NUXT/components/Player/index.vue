@@ -646,7 +646,7 @@ export default {
             this.audioSources.push(this.sources[i]);
           }
           if (this.sources[i].audioTrack?.audioIsDefault === Boolean("true")) {
-            if (localStorage.getItem("audioTrackId") === undefined && localStorage.getItem("audioTrackId") === null) {
+            if (localStorage.getItem("audioTrackId") === undefined || localStorage.getItem("audioTrackId") === null) {
               localStorage.setItem("audioTrackId", this.sources[i].audioTrack.id);
             }
           }
@@ -696,26 +696,47 @@ export default {
 
     this.audioSources.sort((a, b) => a?.audioTrack?.displayName?.localeCompare(b?.audioTrack?.displayName));
 
+    let dubIsFound = false;
     this.audioSources.forEach((source) => {
+      if (dubIsFound) {
+        return;
+      }
         // this.audSrc = source.url;
       // console.log(source.audioTrack?.audioIsDefault);
       if (source?.audioTrack !== undefined) {
         if (localStorage.getItem("audioTrackId") !== undefined) {
           if (source.audioTrack?.id === localStorage.getItem("audioTrackId")) {
             this.audSrc = source.url;
+            dubIsFound = true;
           }
         }
-        else {
-          if (source.audioTrack.audioIsDefault === Boolean("true")) {
-            this.audSrc = source.url;
-          }
-        }
+
       }
       else {
       //   Nothing.
       }
 
     });
+    if (!dubIsFound) {
+      this.audioSources.forEach((source) => {
+        if (dubIsFound) {
+          return;
+        }
+        if (source?.audioTrack !== undefined) {
+          if (localStorage.getItem("audioTrackId") !== undefined) {
+            if (source.audioTrack?.id.split(".")[0] === localStorage.getItem("audioTrackId").split(".")[0]) {
+              this.audSrc = source.url;
+              dubIsFound = true;
+            }
+            else {
+              if (source.audioTrack.audioIsDefault === Boolean("true")) {
+                this.audSrc = source.url;
+              }
+            }
+          }
+        }
+      });
+    }
 
     this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
