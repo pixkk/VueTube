@@ -983,10 +983,19 @@ class Innertube {
       (content) => content.slimVideoMetadataSectionRenderer
     ).slimVideoMetadataSectionRenderer;
 
-    const recommendations = columnUI?.contents.find(
-      (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
-    )?.itemSectionRenderer;
+    // const recommendations = columnUI?.contents.find(
+    //   (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
+    // )?.itemSectionRenderer;
+    const recommendations = {contents: columnUI?.contents
+      ?.filter(c => c.itemSectionRenderer?.contents)
+      ?.flatMap(c =>
+        c.itemSectionRenderer.contents.filter(
+          item => !item.videoMetadataCarouselViewModel &&
+            !item.compactRadioRenderer
+        )
+      )}
 
+    console.warn(recommendations)
     if (details.title == null) {
       vidMetadata?.contents.forEach((content) => {
           let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
