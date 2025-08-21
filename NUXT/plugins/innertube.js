@@ -78,10 +78,14 @@ class Innertube {
     let isMatch;
     let firstPart0 = /;var [A-Za-z$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\(a\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\};/;
     let firstPart1 = /var [A-z0-9$]+=\{[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\},\n[A-Za-z0-9]+:function\([^)]*\)\{[^}]*\}\}\;/;
+    let firstPart2 = /var [A-z0-9$"]+=\{(?:[A-z0-9"]+:function\([^)]*\)\{[^}]*\},\n)+.*\}\};/;
     if (firstPart0.exec(baseJs.data)) {
       isMatch = firstPart0.exec(baseJs.data);
     } else if (firstPart1.exec(baseJs.data)) {
       isMatch = firstPart1.exec(baseJs.data);
+    } else if (firstPart2.exec(baseJs.data)) {
+      // FirstPart2 - more optimized version of firstpart1
+      isMatch = firstPart2.exec(baseJs.data);
     }
 
     if (isMatch) {
