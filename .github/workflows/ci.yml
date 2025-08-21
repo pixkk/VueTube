@@ -73,7 +73,7 @@ jobs:
           path: android/app/build/outputs/apk/release/app-release.apk
   ios:
     name: Build iOS platform
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: [build]
     steps:
       - name: Checkout
@@ -106,6 +106,7 @@ jobs:
           -scheme App
           -archivePath App/build/App.xarchive
           clean build archive
+          -destination 'generic/platform=iOS'
           CODE_SIGN_IDENTITY=""
           CODE_SIGNING_REQUIRED=NO
           CODE_SIGNING_ALLOWED="NO"
