@@ -49,7 +49,7 @@ class Innertube {
   }
 
   decodeFunctionWithSecretArray(functionBody, secretArray, secretArrayName) {
-    let regex = new RegExp(`(${secretArrayName.replace("$", "\\$")})\\[([0-9]+)\\]`, 'gm');
+    let regex = new RegExp(`\\b(${secretArrayName.replace("$", "\\$")})\\[([0-9]+)\\]`, 'gm');
     functionBody = functionBody.replace(regex, (match, varName, index) => {
       return  '"' + secretArray[`${parseInt(index)}`].replace(/(["'\\])/g, '\\$1') +  '"';
     });
@@ -103,7 +103,7 @@ class Innertube {
       // secondPart8 - Oldest method
       let secondPart8 = /{[A-Za-z]=[A-Za-z]\[[A-Za-z$]+\[[0-9]+\]\]\([A-Za-z$]+\[[0-9]+\]\).*/;
       // 24.09.2025 - preparing for the second part #9
-      let secondPart9 = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9]+)\(.*decodeURIComponent\([A-z0-9]+\)\),/gm;
+      let secondPart9 = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
 
       if (secondPart0.exec(baseJs.data)) {
         isMatch = secondPart0.exec(baseJs.data);
@@ -135,7 +135,7 @@ class Innertube {
       }
       else if (secondPart8.exec(baseJs.data) && false){
         helpDecipher = secondPart8.exec(baseJs.data);
-        console.warn(helpDecipher)
+        // console.warn(helpDecipher)
         if (helpDecipher) {
           isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
         }
@@ -146,17 +146,32 @@ class Innertube {
         // Searching needed functin by alr yes parameter.
         let resultPreSecond = secondPart9.exec(baseJs.data);
         resultPreSecond = secondPart9.exec(baseJs.data);
+        // console.warn(resultPreSecond[2])
+
+        this.decodeUrlFirstArg = resultPreSecond[2];
         // TODO: Optimize it
         let secondPart8Name = resultPreSecond[1];
         secondPart8 = new RegExp(
           `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(baseJs.data);
+        // console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
         functionArg = new RegExp(
           `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
         helpDecipher = new RegExp(
           `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(secondPart8[0]);
+
+        // console.warn(helpDecipher)
+        // console.warn(/[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0]))
+        if (/[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0])) {
+          let name = /[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0])[1];
+          // console.warn(name);
+          // console.warn(`\\s${name}=function\\(.*?\\){[\\s\\S]*?};`);
+          let funcBody = new RegExp(`\\s${name}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
+          // console.warn(funcBody);
+          helpDecipher[0] += "\n" + funcBody;
+        }
         if (helpDecipher) {
           isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
         }
@@ -185,6 +200,7 @@ class Innertube {
       const thirdPart =
         "var decodeUrl=function("+functionArg+")" + isMatch[0] + "return decodeUrl;";
       let decodeFunction = firstPart + thirdPart;
+      // console.warn(decodeFunction)
       let decodeUrlFunction = new Function(decodeFunction);
       this.decodeUrl = decodeUrlFunction();
 
@@ -336,10 +352,11 @@ class Innertube {
 
       // console.warn(res);
       res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\[[0-9]+\\]\\)};`, 'g').exec(baseJs.data);
-      //console.error(res);
+      // console.error(res);
       if (res == null) {
         res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\(.*\\)};`, 'g').exec(baseJs.data);
-        //console.error(res);
+        // console.error(res);
+        this.nfunctionFirstArg = /\(this,([0-9]+),.*\)/gm.exec(res[0])[1];
         // 24.09.2025
         newMethod = true;
       }
@@ -363,17 +380,19 @@ class Innertube {
           res[0] = this.processFunctionWithSecretArray(helpDecipher, res[0], baseJs.data);
         // res[0] = this.processFunctionWithKnownSecretArray(res[0], baseJs.data);
       }
+      // console.warn(helpDecipher);
 
       if (newMethod) {
         let funcName = /return ([A-z0-9$]+)\[[A-z0-9$]+\[[0-9]+\]\]/.exec(helpDecipher[0])[1];
-        //console.warn(funcName);
-        let funcBody = new RegExp(`${funcName}=function\\(.*\\){.*\\s.*\\s.*\\s.*`, 'gm').exec(baseJs.data)[0];
-       // console.warn(funcBody);
+        // console.warn(funcName);
+        let funcBody = new RegExp(`${funcName}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
        // console.warn(`${funcName}=function\\(.*\\){.*\\s.*\\s.*\\s.*`);
+       // console.warn(`${funcName}=function\\(.*\\){.*\\s.*\\s.*\\s.*`);
+       // console.warn(funcBody);
         let funcBodyProcessed = this.processFunctionWithKnownSecretArray(funcBody, baseJs.data);
-        //console.warn(funcBodyProcessed);
+        // console.warn(funcBodyProcessed);
 
-        const threeSymbolsFunctionsNameForProcessing = new RegExp('\\b(?!var|try\\b)(?=[A-Za-z0-9]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9]{3}\\b,', 'gm');
+        const threeSymbolsFunctionsNameForProcessing = new RegExp('(?:\\b(?!var|try|for|let|1[e,E][0-9]+\\b)(?=[A-Za-z0-9$]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9$]{3}\\b,)|\\$[A-z0-9]+,|[A-z0-9]+\\$,', 'gm');
 
        // console.warn(threeSymbolsFunctionsNameForProcessing);
         let m;
@@ -400,17 +419,19 @@ class Innertube {
           // The result can be accessed through the `m`-variable.
           m.forEach((match, groupIndex) => {
             // console.log(`Found match, group ${groupIndex}: ${match}`);
-            let updMatch = match.replace(",", "");
+            let updMatch = match.replaceAll(",", "");
          //   console.log(`Found match: ${updMatch}`);
-            let findSourceOfMatch = new RegExp(`var ${updMatch}=function\\(.*\\){return .*};`).exec(baseJs.data)
+            let findSourceOfMatch = new RegExp(`var ${updMatch.replace("$", "\\$")}=function\\(.*\\){return .*};`).exec(baseJs.data)
             whatToReplace.push(updMatch);
-         //   console.log(`Found findSourceOfMatch: ${findSourceOfMatch}`);
+           // console.log(`var ${updMatch}=function\\(.*\\){return .*};`);
+           // console.log(`Found findSourceOfMatch: ${findSourceOfMatch}`);
             findSourceOfMatch = this.processFunctionWithKnownSecretArray(findSourceOfMatch[0], baseJs.data)
             let args = parseArgsOfFunc(findSourceOfMatch);
             let subfunc = parseSubFunc(findSourceOfMatch);
             // console.log(`Found findSourceOfMatch: ${findSourceOfMatch}, args: ${args}, subfunc: ${JSON.stringify(subfunc)}`);
-            let subFuncBodyRegex = new RegExp(`\\s${subfunc[0]}=function\\(.*\\){.*\\s.*return [A-z0-9]+};`).exec(baseJs.data);
-
+            let subFuncBodyRegex = new RegExp(`\\s${subfunc[0]}=function\\(.*\\){[\\s\\S]*?return [A-z0-9]+};`).exec(baseJs.data);
+// console.warn(`\\s${subfunc[0]}=function\\(.*\\){.*\\s.*return [A-z0-9]+};`)
+// console.warn(subFuncBodyRegex)
             if (subFuncBodyRegex == null && subfunc[0]===funcName) {
               subFuncBody.push([subfunc[0], subfunc[1], this.processFunctionWithKnownSecretArray(funcBody, baseJs.data), args])
             }
@@ -426,7 +447,7 @@ class Innertube {
               subFuncBody.push([subfunc[0], subfunc[1], processed, args])
             }
           });
-          console.warn(subFuncBody);
+          // console.warn(subFuncBody);
         }
         for (let i = 0; i < whatToReplace.length; i++) {
           // funcBody += "\n";
@@ -452,16 +473,31 @@ class Innertube {
 
 
         }
-       // console.warn(funcBodyProcessed)
-        let andOneFunct = /try{var [A-z0-9]+=([A-z0-9]+)\([0-9]+,[A-z0-9]+\);/gm.exec(funcBodyProcessed);
+        const regex = /[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\)(?:,|;|[,;][A-z0-9]+=)/gm;
+        let m1;
 
-       // console.warn(andOneFunct)
-        let thFName = andOneFunct[1];
-        let bodyOfAndOneFunct = new RegExp(`${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`).exec(baseJs.data)
-        console.warn(bodyOfAndOneFunct)
-        bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
-      //  console.warn(bodyOfAndOneFunct)
-        funcBodyProcessed += "\n" + bodyOfAndOneFunct;
+        let tempFuncBodyProcessed = funcBodyProcessed;
+        while ((m1 = regex.exec(tempFuncBodyProcessed)) !== null) {
+          // This is necessary to avoid infinite loops with zero-width matches
+          if (m1.index === regex.lastIndex) {
+            regex.lastIndex++;
+          }
+
+          // The result can be accessed through the `m1`-variable.
+          m1.forEach((match, groupIndex) => {
+            // console.log(`Found match, group ${groupIndex}: ${match}`);
+            // console.warn(andOneFunct)
+            if (groupIndex === 1) {
+
+              let thFName = match.replace("$", "\\$");
+              let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
+              // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
+              bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
+              //  console.warn(bodyOfAndOneFunct)
+              funcBodyProcessed += "\n" + bodyOfAndOneFunct;
+            }
+          });
+        }
 
       //   ======================
         challenge_name = funcBodyProcessed;
@@ -480,6 +516,7 @@ class Innertube {
         fullCode =
           // "var "+ funcName +"=function("+functionArg+"){" + challenge_name + "}; return "+ funcName + ";";
           "var "+ funcName +"=function("+functionArg+"){" + challenge_name + "};"
+        // console.warn(fullCode)
         this.nfunction = funcName;
       }
       else {
@@ -519,13 +556,15 @@ class Innertube {
 
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9_$]+==="undefined"\)return [A-Za-z0-9]+;/g, "");
     fullCode = fullCode.replace(/if\(typeof [A-Za-z0-9_$]+==="undefined"\)var [A-Za-z0-9]+=[A-Za-z0-9]+;/g, "if (false) var sgsgnsbdbnn = 1;");
+    fullCode = fullCode.replace(/typeof [A-z0-9$]+==="undefined"/g, "false");
     // console.warn(fullCode);
     let modify = /([A-z0-9$])\[\"([A-z0-9$]+)\"\]/g.exec(fullCode);
     if (modify) {
+      // console.warn(modify);
       fullCode = fullCode.replace(/([A-z0-9$])\["([A-z0-9$]+)"\]/g, '$1.$2');
       fullCode = fullCode.replace(/\[\"([A-z0-9$]+)\"\]/g, '.$1');
     }
-    //console.warn(fullCode);
+    // console.warn(fullCode);
     const script = document.createElement('script');
     script.textContent = fullCode;
     document.body.appendChild(script);
@@ -548,8 +587,12 @@ class Innertube {
     //   "https://m.youtube.com/s/player/22f02d3d/player_ias.vflset/uk_UA/base.js";
     // baseJsUrl =
     //   "https://m.youtube.com/s/player/20830619/player_ias.vflset/uk_UA/base.js";
-    baseJsUrl =
-      "https://m.youtube.com/s/player/377ca75b/player_ias.vflset/uk_UA/base.js";
+    // baseJsUrl =
+    //   "https://m.youtube.com/s/player/377ca75b/player_ias.vflset/uk_UA/base.js";
+    // if (baseJsUrl.indexOf("player-plasma") > 0) {
+      // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
+    // }
+
     // Get base.js content
     // 377ca75b
     const baseJs = await Http.get({
@@ -1233,7 +1276,7 @@ class Innertube {
             try {
               decipheredValue = this.decodeUrl(cipher);
             }catch (e) {
-               decipheredValue = this.decodeUrl(1, cipher);
+               decipheredValue = this.decodeUrl(this.decodeUrlFirstArg, cipher);
             }
             // console.log("decipheredValue", decipheredValue);
             source["url"] = (params.url + "&sig=" + decipheredValue).replace(
@@ -1257,7 +1300,7 @@ class Innertube {
           }
            catch (e) {
              // nValue = "&n=" + this.nfunction(1, n)
-             nValue = "&n=" + window[this.nfunction](1, n)
+             nValue = "&n=" + window[this.nfunction](this.nfunctionFirstArg, n)
            }
         }
         searchParams.delete("n");
