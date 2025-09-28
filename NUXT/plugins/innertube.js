@@ -1275,6 +1275,10 @@ class Innertube {
             let decipheredValue;
             try {
               decipheredValue = this.decodeUrl(cipher);
+
+              if (decipheredValue === undefined ) {
+                decipheredValue = this.decodeUrl(this.decodeUrlFirstArg, cipher);
+              }
             }catch (e) {
                decipheredValue = this.decodeUrl(this.decodeUrlFirstArg, cipher);
             }
@@ -1297,6 +1301,9 @@ class Innertube {
         if (n !== null) {
           try {
             nValue = "&n=" + this.nfunction(n)
+            if (nValue === undefined) {
+              nValue = "&n=" + window[this.nfunction](this.nfunctionFirstArg, n)
+            }
           }
            catch (e) {
              // nValue = "&n=" + this.nfunction(1, n)
