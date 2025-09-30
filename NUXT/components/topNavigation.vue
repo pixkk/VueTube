@@ -43,7 +43,6 @@
 
     <v-btn
       v-if="!search && $route.path.includes('/home')"
-      v-show="page == 'Home'"
       icon
       tile
       class="ml-3 mr-1 my-auto fill-height"
