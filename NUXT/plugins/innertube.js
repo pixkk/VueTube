@@ -152,9 +152,15 @@ class Innertube {
         // TODO: Optimize it
         let secondPart8Name = resultPreSecond[1];
         secondPart8 = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(baseJs.data);
-        // console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
+        if (!secondPart8[0]) {
+          secondPart8 = new RegExp(
+            `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          ).exec(baseJs.data);
+
+        }
+        console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
         functionArg = new RegExp(
           `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
@@ -576,7 +582,7 @@ class Innertube {
   async initAsync() {
     const html = await Http.get({
       url: constants.URLS.YT_MOBILE,
-      params: { hl: "en" },
+      params: { hl: localStorage.getItem("language") || "en", },
     }).catch((error) => error);
     // Get url of base.js file
     let baseJsUrl =
