@@ -474,9 +474,11 @@ export default {
         fmt: 396,
       };
       this.st = player.currentTime;
+      let watchStatsUrl = this.playbackTracking.videostatsWatchtimeUrl.baseUrl;
+      watchStatsUrl = watchStatsUrl.replace("embedded", "detailpage")
       this.$youtube.saveApiStats(
         params,
-        this.playbackTracking.videostatsWatchtimeUrl.baseUrl
+        watchStatsUrl,
       );
     },
 
