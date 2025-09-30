@@ -154,7 +154,8 @@ class Innertube {
         secondPart8 = new RegExp(
           `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(baseJs.data);
-        if (!secondPart8[0]) {
+        console.warn(secondPart8)
+        if (!secondPart8) {
           secondPart8 = new RegExp(
             `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
           ).exec(baseJs.data);
