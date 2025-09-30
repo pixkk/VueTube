@@ -152,14 +152,14 @@ class Innertube {
         // TODO: Optimize it
         let secondPart8Name = resultPreSecond[1];
         secondPart8 = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(baseJs.data);
-        // console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
+        // console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
         functionArg = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
+          `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
         helpDecipher = new RegExp(
-          `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(secondPart8[0]);
 
         // console.warn(helpDecipher)
@@ -515,6 +515,7 @@ class Innertube {
         challenge_name = trimmedCode;
         fullCode =
           // "var "+ funcName +"=function("+functionArg+"){" + challenge_name + "}; return "+ funcName + ";";
+          // "var "+ funcName +"=function("+functionArg+"){console.error(" + functionArg + "); debugger;" + challenge_name + "};"
           "var "+ funcName +"=function("+functionArg+"){" + challenge_name + "};"
         // console.warn(fullCode)
         this.nfunction = funcName;
@@ -567,7 +568,7 @@ class Innertube {
     // console.warn(fullCode);
     const script = document.createElement('script');
     script.textContent = fullCode;
-    document.body.appendChild(script);
+    document.head.appendChild(script);
     // let getN = new Function(fullCode);
     // this.nfunction = getN();
   }
@@ -1302,12 +1303,12 @@ class Innertube {
           try {
             nValue = "&n=" + this.nfunction(n)
             if (nValue === undefined) {
-              nValue = "&n=" + window[this.nfunction](this.nfunctionFirstArg, n)
+              nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
             }
           }
            catch (e) {
              // nValue = "&n=" + this.nfunction(1, n)
-             nValue = "&n=" + window[this.nfunction](this.nfunctionFirstArg, n)
+             nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
            }
         }
         searchParams.delete("n");
