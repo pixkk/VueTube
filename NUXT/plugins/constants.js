@@ -13,11 +13,11 @@ const url = {
 };
 
 const androidApiVal = {
-  // VERSION: "16.25",
-  VERSION: "19.09",
+  // VERSION: "19.09",
+  VERSION: "20.38",
   CLIENTNAME: "ANDROID",
   // VERSION_WEB: "2.20240628.01.00",
-  VERSION_WEB: "2.20250222.10.01",
+  VERSION_WEB: "2.20250930.01.00",
   USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
@@ -37,7 +37,7 @@ const webEmbeddedApiVal = {
   CLIENTNAME: "WEB_EMBEDDED_PLAYER",
   clientScreen: "EMBED",
   // VERSION_WEB: "2.20240628.01.00",
-  VERSION_WEB: "2.20250528.01.00",
+  VERSION_WEB: "2.20250930.01.00",
   USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
