@@ -55,7 +55,7 @@ export default {
     },
     canonicalBaseUrl() {
       // console.log(this.video?.longBylineText?.runs[0]?.navigationEndpoint.browseEndpoint.canonicalBaseUrl);
-      return this.video?.videoData ? this.video.videoData.avatar.endpoint.innertubeCommand : this.video?.longBylineText?.runs[0]?.navigationEndpoint.browseEndpoint.browseId;
+      return this.video?.videoData ? this.video.videoData.avatar.endpoint.innertubeCommand : this.video?.longBylineText?.runs[0]?.navigationEndpoint?.browseEndpoint?.browseId;
     },
     vidIdValue() {
       return this.video?.videoData ? this.video.videoData.dragAndDropUrl.split("?v=")[1] : this.video?.videoId;

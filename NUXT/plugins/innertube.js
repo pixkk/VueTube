@@ -399,7 +399,7 @@ class Innertube {
         let funcBodyProcessed = this.processFunctionWithKnownSecretArray(funcBody, baseJs.data);
         // console.warn(funcBodyProcessed);
 
-        const threeSymbolsFunctionsNameForProcessing = new RegExp('(?:\\b(?!var|try|for|let|1[e,E][0-9]+\\b)(?=[A-Za-z0-9$]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9$]{3}\\b,)|\\$[A-z0-9]+,|[A-z0-9]+\\$,', 'gm');
+        const threeSymbolsFunctionsNameForProcessing = new RegExp('(?:\\b(?!var|try|for|url|let|[0-9]+|1[e,E][0-9]+\\b)(?=[A-Za-z0-9$]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9$]{3}\\b(?:,|\\]| \\[))|\\$[A-z0-9]+,|[A-z0-9]+\\$,', 'gm');
 
        // console.warn(threeSymbolsFunctionsNameForProcessing);
         let m;
@@ -426,7 +426,7 @@ class Innertube {
           // The result can be accessed through the `m`-variable.
           m.forEach((match, groupIndex) => {
             // console.log(`Found match, group ${groupIndex}: ${match}`);
-            let updMatch = match.replaceAll(",", "");
+            let updMatch = match.replaceAll(",", "").replaceAll("]", "").replaceAll("[", "");
          //   console.log(`Found match: ${updMatch}`);
             let findSourceOfMatch = new RegExp(`var ${updMatch.replace("$", "\\$")}=function\\(.*\\){return .*};`).exec(baseJs.data)
             whatToReplace.push(updMatch);
