@@ -1280,15 +1280,16 @@ class Innertube {
           );
           if (params.s) {
             let cipher = decodeURIComponent(params.s);
+            console.warn(cipher)
             let decipheredValue;
             try {
               decipheredValue = this.decodeUrl(cipher);
 
-              if (decipheredValue === undefined ) {
-                decipheredValue = this.decodeUrl(this.decodeUrlFirstArg, cipher);
+              if (decipheredValue === undefined || decipheredValue === true || decipheredValue === false) {
+                decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
               }
             }catch (e) {
-               decipheredValue = this.decodeUrl(this.decodeUrlFirstArg, cipher);
+               decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
             }
             // console.log("decipheredValue", decipheredValue);
             source["url"] = (params.url + "&sig=" + decipheredValue).replace(
