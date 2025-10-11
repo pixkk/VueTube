@@ -152,16 +152,17 @@ class Innertube {
         // TODO: Optimize it
         let secondPart8Name = resultPreSecond[1];
         secondPart8 = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          `${secondPart8Name.replaceAll("$", "\\$")}=function\\([^)]*\\)\\{[\\s\\S]*?return[\\s\\S]*?\\}\\s*;`
         ).exec(baseJs.data);
-        console.warn(secondPart8)
+ //       console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\([^)]*\\)\\{[\\s\\S]*?return[\\s\\S]*?\\}\\s*;`)
+ //       console.warn(secondPart8)
         if (!secondPart8) {
           secondPart8 = new RegExp(
             `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
           ).exec(baseJs.data);
 
         }
-        console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
+ //       console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
         functionArg = new RegExp(
           `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
