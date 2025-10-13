@@ -142,6 +142,7 @@ module.exports = {
     return {
       useSsl: true,
       internalExperimentFlags: [],
+      consistencyTokenJars: [],
     };
   },
   // https://github.com/zerodytrash/YouTube-Internal-Clients
