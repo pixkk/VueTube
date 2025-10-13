@@ -1,8 +1,10 @@
 <template>
   <div class="background">
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="renderer && renderer.length <= 0" />
+    <vid-load-renderer v-if="!renderer || !renderer.contents" />
     <sectionListRenderer :render="renderer" />
+    <vid-load-renderer v-if="loading" :count="1" />
+    <observer v-if="!loading && renderer && renderer.contents" @intersect="paginate" />
   </div>
 </template>
 
@@ -18,6 +20,7 @@ export default {
   data() {
     return {
       renderer: [],
+      loading: false,
     };
   },
   watch: {
@@ -36,12 +39,41 @@ export default {
   },
   methods: {
     getSearch() {
-      this.$store.commit("search/setLoading", true); // in case navigated to the page not from top bar
+      this.$store.commit("search/setLoading", true);
       const searchQuestion = this.$route.query.q;
       this.$youtube.search(searchQuestion).then((response) => {
         this.$store.commit("search/setLoading", false);
         this.renderer = response;
       });
+    },
+    paginate() {
+      this.loading = true;
+      const continuationCode = this.renderer.continuations?.find(
+        (element) => element.nextContinuationData
+      )?.nextContinuationData.continuation;
+
+      if (continuationCode) {
+        this.$youtube
+          .getContinuation(
+            continuationCode,
+            "search"
+          )
+          .then((result) => {
+            this.loading = false;
+            // console.warn(this.renderer.contents)
+            // console.warn(this.renderer.continuations)
+            // console.warn(result.data)
+            if (result.data.continuationContents) {
+              this.renderer.contents.push(...result.data.continuationContents.sectionListContinuation.contents);
+              this.renderer.continuations = result.data.continuationContents.sectionListContinuation.continuations;
+
+              // console.warn(this.renderer.contents)
+              // console.warn(this.renderer.continuations)
+            }
+          });
+      } else {
+        this.loading = false;
+      }
     },
   },
 };
