@@ -393,7 +393,7 @@ class Innertube {
       if (newMethod) {
         let funcName = /return ([A-z0-9$]+)\[[A-z0-9$]+\[[0-9]+\]\]/.exec(helpDecipher[0])[1];
         // console.warn(funcName);
-        let funcBody = new RegExp(`${funcName}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
+        let funcBody = new RegExp(`\\s${funcName}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
        // console.warn(`${funcName}=function\\(.*\\){.*\\s.*\\s.*\\s.*`);
        // console.warn(`${funcName}=function\\(.*\\){.*\\s.*\\s.*\\s.*`);
        // console.warn(funcBody);
@@ -1281,7 +1281,7 @@ class Innertube {
           );
           if (params.s) {
             let cipher = decodeURIComponent(params.s);
-            console.warn(cipher)
+            // console.warn(cipher)
             let decipheredValue;
             try {
               decipheredValue = this.decodeUrl(cipher);
