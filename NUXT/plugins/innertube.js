@@ -105,6 +105,7 @@ class Innertube {
       // 24.09.2025 - preparing for the second part #9
       let secondPart9 = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
 
+      let skip = false;
       if (secondPart0.exec(baseJs.data)) {
         isMatch = secondPart0.exec(baseJs.data);
       } else if (secondPart1.exec(baseJs.data)) {
@@ -164,24 +165,35 @@ class Innertube {
         }
  //       console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
         functionArg = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
+          `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
         helpDecipher = new RegExp(
           `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
         ).exec(secondPart8[0]);
 
-        // console.warn(helpDecipher)
+    //    console.error(`${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`)
+    //    console.error(secondPart8[0])
+    //    console.warn(helpDecipher)
         // console.warn(/[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0]))
         if (/[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0])) {
+          helpDecipher[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
+         // console.warn(helpDecipher[0]);
           let name = /[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\),/g.exec(helpDecipher[0])[1];
           // console.warn(name);
           // console.warn(`\\s${name}=function\\(.*?\\){[\\s\\S]*?};`);
-          let funcBody = new RegExp(`\\s${name}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
+         // console.warn(`\\s${name}=function\\(.*?\\){[\\s\\S]*?return .*};`);
+          if (name !== secondPart8Name) {
+
+            let funcBody = new RegExp(`\\s${name}=function\\(.*?\\){[\\s\\S]*?return .*};`, 'gm').exec(baseJs.data)[0];
           // console.warn(funcBody);
-          helpDecipher[0] += "\n" + funcBody;
+            helpDecipher[0] += "\n" + funcBody;
+          }
+          else {
+            skip = true;
+          }
         }
         if (helpDecipher) {
-          isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
+          isMatch[0] = this.processFunctionWithKnownSecretArray(helpDecipher[0], baseJs.data);
         }
       }
 
@@ -437,9 +449,7 @@ class Innertube {
             let args = parseArgsOfFunc(findSourceOfMatch);
             let subfunc = parseSubFunc(findSourceOfMatch);
             // console.log(`Found findSourceOfMatch: ${findSourceOfMatch}, args: ${args}, subfunc: ${JSON.stringify(subfunc)}`);
-            let subFuncBodyRegex = new RegExp(`\\s${subfunc[0]}=function\\(.*\\){[\\s\\S]*?return [A-z0-9]+};`).exec(baseJs.data);
-// console.warn(`\\s${subfunc[0]}=function\\(.*\\){.*\\s.*return [A-z0-9]+};`)
-// console.warn(subFuncBodyRegex)
+            let subFuncBodyRegex = new RegExp(`\\s${subfunc[0].replace("$", "\\$")}=function\\(.*\\){[\\s\\S]*?return [A-z0-9]+};`).exec(baseJs.data);
             if (subFuncBodyRegex == null && subfunc[0]===funcName) {
               subFuncBody.push([subfunc[0], subfunc[1], this.processFunctionWithKnownSecretArray(funcBody, baseJs.data), args])
             }
@@ -459,7 +469,6 @@ class Innertube {
         }
         for (let i = 0; i < whatToReplace.length; i++) {
           // funcBody += "\n";
-          // console.warn(whatToReplace[i])
           // console.warn(whatToReplace[i])
           // funcBodyProcessed = funcBodyProcessed.replace(whatToReplace[i], subFuncBody[i][0] + "("+ subFuncBody[i][1] + ")")
        //   console.log(`var ${whatToReplace[i]} = function(${subFuncBody[i][3]}){return ${subFuncBody[i][0]}(${subFuncBody[i][1]})}`)
@@ -491,18 +500,23 @@ class Innertube {
             regex.lastIndex++;
           }
 
+          let arrayWithProcessedFunctions = [];
           // The result can be accessed through the `m1`-variable.
           m1.forEach((match, groupIndex) => {
             // console.log(`Found match, group ${groupIndex}: ${match}`);
             // console.warn(andOneFunct)
             if (groupIndex === 1) {
-
               let thFName = match.replace("$", "\\$");
-              let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
-              // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
-              bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
-              //  console.warn(bodyOfAndOneFunct)
-              funcBodyProcessed += "\n" + bodyOfAndOneFunct;
+              if (!arrayWithProcessedFunctions.indexOf(thFName)) {
+                if (thFName !== funcName) {
+                  let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
+                  // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
+                  bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
+                  //  console.warn(bodyOfAndOneFunct)
+                  funcBodyProcessed += "\n" + bodyOfAndOneFunct;
+                  arrayWithProcessedFunctions.push(thFName);
+                }
+              }
             }
           });
         }
@@ -1349,6 +1363,7 @@ class Innertube {
       channelImg: ownerData?.thumbnail?.thumbnails[0].url,
       captions: captions,
       endscreen: responseInfo.endscreen,
+      storyboards: responseInfo.storyboards.playerStoryboardSpecRenderer.spec,
       availableResolutions: resolutions.formats ? resolutions.formats : resolutions,
       availableResolutionsAdaptive: resolutions?.adaptiveFormats ? resolutions.adaptiveFormats : resolutions,
       hls: hls,
