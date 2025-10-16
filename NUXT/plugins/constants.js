@@ -86,7 +86,6 @@ module.exports = {
   },
 
   INNERTUBE_NEW_HEADER: (info) => {
-    console.warn(info)
     return {
       accept: "*/*",
       "user-agent": info.userAgent,
@@ -187,6 +186,8 @@ module.exports = {
   },
   INNERTUBE_TECHNICAL: (info) => {
     return {
+      gl: info.gl,
+      hl: localStorage.getItem("language") || "en",
       clientName: webEmbeddedApiVal.CLIENTNAME,
       clientVersion: webEmbeddedApiVal.VERSION_WEB,
     };
