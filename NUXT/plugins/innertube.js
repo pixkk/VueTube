@@ -104,8 +104,6 @@ class Innertube {
       let secondPart8 = /{[A-Za-z]=[A-Za-z]\[[A-Za-z$]+\[[0-9]+\]\]\([A-Za-z$]+\[[0-9]+\]\).*/;
       // 24.09.2025 - preparing for the second part #9
       let secondPart9 = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
-
-      let skip = false;
       if (secondPart0.exec(baseJs.data)) {
         isMatch = secondPart0.exec(baseJs.data);
       } else if (secondPart1.exec(baseJs.data)) {
@@ -189,11 +187,15 @@ class Innertube {
             helpDecipher[0] += "\n" + funcBody;
           }
           else {
-            skip = true;
           }
         }
         if (helpDecipher) {
-          isMatch[0] = this.processFunctionWithKnownSecretArray(helpDecipher[0], baseJs.data);
+          try {
+            isMatch[0] = this.processFunctionWithKnownSecretArray(helpDecipher[0], baseJs.data);
+          }
+          catch (e) {
+            isMatch[0] = this.processFunctionWithSecretArray(helpDecipher, helpDecipher[0], baseJs.data);
+          }
         }
       }
 
@@ -412,7 +414,7 @@ class Innertube {
         let funcBodyProcessed = this.processFunctionWithKnownSecretArray(funcBody, baseJs.data);
         // console.warn(funcBodyProcessed);
 
-        const threeSymbolsFunctionsNameForProcessing = new RegExp('(?:\\b(?!var|try|for|url|let|[0-9]+|1[e,E][0-9]+\\b)(?=[A-Za-z0-9$]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9$]{3}\\b(?:,|\\]| \\[))|\\$[A-z0-9]+,|[A-z0-9]+\\$,', 'gm');
+        const threeSymbolsFunctionsNameForProcessing = new RegExp('(?:\\b(?!var|try|for|url|let|[0-9]+|1[e,E][0-9]+\\b)(?=[A-Za-z0-9$]{3}\\b)(?=.*[A-Za-z])[A-Za-z0-9$]{3}\\b(?:,|\\]| \\[))|\\$[A-z0-9]+,|,[A-z0-9$]{3},|[A-z0-9]+\\$,', 'gm');
 
        // console.warn(threeSymbolsFunctionsNameForProcessing);
         let m;
