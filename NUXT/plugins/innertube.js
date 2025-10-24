@@ -151,19 +151,20 @@ class Innertube {
         // TODO: Optimize it
         let secondPart8Name = resultPreSecond[1];
         secondPart8 = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\([^)]*\\)\\{[\\s\\S]*?return[\\s\\S]*?\\}\\s*;`
+          `\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\([^)]*\\)\\{[\\s\\S]*?return[\\s\\S]*?\\}\\s*;`
         ).exec(baseJs.data);
  //       console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\([^)]*\\)\\{[\\s\\S]*?return[\\s\\S]*?\\}\\s*;`)
  //       console.warn(secondPart8)
         if (!secondPart8) {
           secondPart8 = new RegExp(
-            `${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+            `\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
           ).exec(baseJs.data);
 
         }
- //       console.warn(`${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
+  //     console.warn(`\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
+  //     console.warn(`\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`);
         functionArg = new RegExp(
-          `${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
+          `\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
         ).exec(secondPart8[0])[1];
         helpDecipher = new RegExp(
           `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
@@ -373,17 +374,17 @@ class Innertube {
       let newMethod = false;
 
       // console.warn(res);
-      res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\[[0-9]+\\]\\)};`, 'g').exec(baseJs.data);
+      res = new RegExp(`\\s${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\[[0-9]+\\]\\)};`, 'g').exec(baseJs.data);
       // console.error(res);
       if (res == null) {
-        res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\(.*\\)};`, 'g').exec(baseJs.data);
+        res = new RegExp(`\\s${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return [A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\(.*\\)};`, 'g').exec(baseJs.data);
         // console.error(res);
         this.nfunctionFirstArg = /\(this,([0-9]+),.*\)/gm.exec(res[0])[1];
         // 24.09.2025
         newMethod = true;
       }
       if (res == null) {
-        res = new RegExp(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)};`, 'g').exec(baseJs.data);
+        res = new RegExp(`\\s${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)};`, 'g').exec(baseJs.data);
         // console.log(`${challenge_name}=function\\([A-z0-9$]\\){[\\s\\S]*?return.*?\\.join\\(.*\\)}`);
       }
       // console.warn(res[0]);
@@ -492,38 +493,9 @@ class Innertube {
 
 
         }
-        const regex = /[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\)(?:,|;|[,;][A-z0-9]+=)/gm;
-        let m1;
+        funcBodyProcessed = this.addMissingFunctions(funcBodyProcessed, funcName, baseJs);
 
-        let tempFuncBodyProcessed = funcBodyProcessed;
-        while ((m1 = regex.exec(tempFuncBodyProcessed)) !== null) {
-          // This is necessary to avoid infinite loops with zero-width matches
-          if (m1.index === regex.lastIndex) {
-            regex.lastIndex++;
-          }
-
-          let arrayWithProcessedFunctions = [];
-          // The result can be accessed through the `m1`-variable.
-          m1.forEach((match, groupIndex) => {
-            // console.log(`Found match, group ${groupIndex}: ${match}`);
-            // console.warn(andOneFunct)
-            if (groupIndex === 1) {
-              let thFName = match.replace("$", "\\$");
-              if (!arrayWithProcessedFunctions.indexOf(thFName)) {
-                if (thFName !== funcName) {
-                  let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
-                  // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
-                  bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
-                  //  console.warn(bodyOfAndOneFunct)
-                  funcBodyProcessed += "\n" + bodyOfAndOneFunct;
-                  arrayWithProcessedFunctions.push(thFName);
-                }
-              }
-            }
-          });
-        }
-
-      //   ======================
+        //   ======================
         challenge_name = funcBodyProcessed;
       //  console.warn(challenge_name);
         const match = challenge_name.match(/function\s*\(([^)]+)\)/);
@@ -595,6 +567,40 @@ class Innertube {
     document.head.appendChild(script);
     // let getN = new Function(fullCode);
     // this.nfunction = getN();
+  }
+
+  addMissingFunctions(funcBodyProcessed, funcName, baseJs) {
+    const regex = /[A-z0-9$]+=([A-z0-9$]+)\([0-9]+,.*\)(?:,|;|[,;][A-z0-9]+=)/gm;
+    let m1;
+
+    let tempFuncBodyProcessed = funcBodyProcessed;
+    while ((m1 = regex.exec(tempFuncBodyProcessed)) !== null) {
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m1.index === regex.lastIndex) {
+        regex.lastIndex++;
+      }
+
+      let arrayWithProcessedFunctions = [];
+      // The result can be accessed through the `m1`-variable.
+      m1.forEach((match, groupIndex) => {
+        // console.log(`Found match, group ${groupIndex}: ${match}`);
+        // console.warn(andOneFunct)
+        if (groupIndex === 1) {
+          let thFName = match.replace("$", "\\$");
+          if (arrayWithProcessedFunctions.indexOf(thFName) === -1) {
+            if (thFName !== funcName) {
+              let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
+              // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
+              bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
+              //  console.warn(bodyOfAndOneFunct)
+              funcBodyProcessed += "\n" + bodyOfAndOneFunct;
+              arrayWithProcessedFunctions.push(thFName);
+            }
+          }
+        }
+      });
+    }
+    return funcBodyProcessed;
   }
 
   async initAsync() {
