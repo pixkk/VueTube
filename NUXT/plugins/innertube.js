@@ -56,7 +56,7 @@ class Innertube {
     return functionBody;
   }
   processFunctionWithSecretArray(helpDecipher, functionBody, rootDocumentBody) {
-    let secretArray = /\[([A-z0-9$]+)\[[A-z0-9$]+\]/.exec(helpDecipher[0]);
+    let secretArray = /\[([A-Za-z0-9$]+)\[[A-Za-z0-9$]+\]/.exec(helpDecipher[0]);
     let splitDataFromSecretArray;
     if (secretArray) {
       splitDataFromSecretArray = this.getSecretArray(secretArray[1], rootDocumentBody);
