@@ -162,12 +162,12 @@ class Innertube {
 
         }
   //     console.warn(`\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\(.*\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`);
-  //     console.warn(`\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`);
+  //    console.warn(`\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){.*}`);
         functionArg = new RegExp(
-          `\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`
+          `\\s${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*,[A-z0-9]+)\\){.*}`
         ).exec(secondPart8[0])[1];
         helpDecipher = new RegExp(
-          `{if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)};`
+          `{.*};`
         ).exec(secondPart8[0]);
 
     //    console.error(`${secondPart8Name.replaceAll("$", "\\$")}=function\\((.*)\\){if\\(.*\\([A-Za-z$]+\\[[0-9]+\\]\\).*[\\s\\S]*?return (?:[A-z0-9$]+\\[[A-z0-9$]+\\[[0-9]+\\]\\]\\([A-z0-9$]+\\)|[A-z0-9$]+)}`)
@@ -452,7 +452,10 @@ class Innertube {
             let args = parseArgsOfFunc(findSourceOfMatch);
             let subfunc = parseSubFunc(findSourceOfMatch);
             // console.log(`Found findSourceOfMatch: ${findSourceOfMatch}, args: ${args}, subfunc: ${JSON.stringify(subfunc)}`);
-            let subFuncBodyRegex = new RegExp(`\\s${subfunc[0].replace("$", "\\$")}=function\\(.*\\){[\\s\\S]*?return [A-z0-9]+};`).exec(baseJs.data);
+            let subFuncBodyRegex = new RegExp(`(?:\\s|,)${subfunc[0].replace("$", "\\$")}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data);
+            if (subFuncBodyRegex[0].charAt(0) === ",") {
+              subFuncBodyRegex[0] = subFuncBodyRegex[0].replace(",", "");
+            }
             if (subFuncBodyRegex == null && subfunc[0]===funcName) {
               subFuncBody.push([subfunc[0], subfunc[1], this.processFunctionWithKnownSecretArray(funcBody, baseJs.data), args])
             }
@@ -463,6 +466,7 @@ class Innertube {
                   this.processFunctionWithKnownSecretArray(subFuncBodyRegex[0], baseJs.data);
               }
               catch (e) {
+            //    console.error(`(?:\\s|,)${subfunc[0].replace("$", "\\$")}=function\\(.*\\){[\\s\\S]*?};\\s`);
                 processed = "error";
               }
               subFuncBody.push([subfunc[0], subfunc[1], processed, args])
@@ -589,8 +593,11 @@ class Innertube {
           let thFName = match.replace("$", "\\$");
           if (arrayWithProcessedFunctions.indexOf(thFName) === -1) {
             if (thFName !== funcName) {
-              let bodyOfAndOneFunct = new RegExp(`\\s${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
-              // console.warn(`\\s${thFName}=function\\(.*\\){.*\\s.*\\s.*\\s.*\\s.*};`)
+              let bodyOfAndOneFunct = new RegExp(`(?:\\s|,)${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`).exec(baseJs.data)
+              //console.warn(`(?:\\s|,)${thFName}=function\\(.*\\){[\\s\\S]*?};\\s`)
+              if (bodyOfAndOneFunct[0].charAt(0) === ",") {
+                bodyOfAndOneFunct[0] = bodyOfAndOneFunct[0].replace(",", "");
+              }
               bodyOfAndOneFunct = this.processFunctionWithKnownSecretArray(bodyOfAndOneFunct[0], baseJs.data);
               //  console.warn(bodyOfAndOneFunct)
               funcBodyProcessed += "\n" + bodyOfAndOneFunct;
