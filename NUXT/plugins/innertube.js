@@ -11,13 +11,7 @@ import rendererUtils from "./renderers";
 import constants from "./constants";
 import * as acorn from "acorn";
 import {generate} from "astring";
-import {
-  findDecipherFunction,
-  findGlobalArray,
-  findMethodByName,
-  getUndeclaredMethods,
-  processJs
-} from "@/plugins/ast/ast";
+import {findDecipherFunction, findGlobalArray, findMethodByName, getUndeclaredMethods} from "@/plugins/ast/ast";
 
 class Innertube {
   //--- Initiation ---//
@@ -895,20 +889,16 @@ class Innertube {
 
     let globalArray = findGlobalArray(parsedBaseJs);
 
-    let funcNode = findDecipherFunction(parsedBaseJs, decipherFunctionName);
-
-    let funcCode = processJs(funcNode, globalArray);
+    let funcCode = findDecipherFunction(parsedBaseJs, decipherFunctionName)
     let unDeclared = getUndeclaredMethods(funcCode, decipherFunctionName);
     let additionalCode = "\n";
     unDeclared.forEach(name => {
-      let processed = processJs(findMethodByName(parsedBaseJs, name), globalArray);
-      if (processed?.init?.body?.body[0]?.type === "ReturnStatement") {
-        processed.init.body.body[0].argument = processJs(processed.init.body.body[0].argument, globalArray);
-      }
-      additionalCode += generate(processJs(findMethodByName(parsedBaseJs, name), globalArray)) + "\n";
+      let method = findMethodByName(parsedBaseJs, name);
+      if (method === null) return
+      additionalCode += generate(method) + "\n";
     })
     const finalPart =
-      "var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + ", nValue); };" + generate(funcCode) + additionalCode + "\nreturn decodeUrl;";
+      "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + ", nValue); };" + generate(funcCode) + additionalCode + "\nreturn decodeUrl;";
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
   }
@@ -920,7 +910,7 @@ class Innertube {
     let preChallengeMethod = findMethodByName(parsedBaseJs, preChallengeName);
     let globalArray = findGlobalArray(parsedBaseJs);
 
-    let preChallengeMethodCode = processJs(preChallengeMethod, globalArray);
+    let preChallengeMethodCode = preChallengeMethod
     let challengeName = preChallengeMethodCode.expression.right.body.body[0].argument.callee.object.name;
 
     let firstArg = "";
@@ -931,23 +921,19 @@ class Innertube {
       }
     }
 
-    let nFunctionFind = findMethodByName(parsedBaseJs, preChallengeMethodCode.expression.right.body.body[0].argument.callee.object.name);
-    let nFunctionCode = processJs(nFunctionFind, globalArray);
+    let nFunctionCode = findMethodByName(parsedBaseJs, preChallengeMethodCode.expression.right.body.body[0].argument.callee.object.name)
     let unDeclared = getUndeclaredMethods(nFunctionCode, challengeName);
     let additionalCode = "\n";
     unDeclared.forEach(name => {
-      let processed = processJs(findMethodByName(parsedBaseJs, name), globalArray);
+      let processed = findMethodByName(parsedBaseJs, name)
       if (name === preChallengeName || name === challengeName || processed === null) return;
-      if (processed?.init?.body?.body[0]?.type === "ReturnStatement") {
-        processed.init.body.body[0].argument = processJs(processed.init.body.body[0].argument, globalArray);
-      }
       additionalCode += generate(processed) + ";\n";
       additionalCode = additionalCode.replace("};;", "};").replace("};\n;", "};\n")
     })
-    let unDeclared2 = getUndeclaredMethods(acorn.parse(generate(nFunctionCode) + additionalCode, {ecmaVersion: 2020}), challengeName, globalArray.globalArrayData);
+    let unDeclared2 = getUndeclaredMethods(acorn.parse(generate(nFunctionCode) + additionalCode, {ecmaVersion: 2020}), challengeName);
     let additionalCode2 = "\n";
     unDeclared2.difference(unDeclared).forEach(name => {
-      let processed = processJs(findMethodByName(parsedBaseJs, name), globalArray);
+      let processed = findMethodByName(parsedBaseJs, name)
       if (name === preChallengeName || name === challengeName || processed === null) return;
       additionalCode2 += generate(processed) + "\n";
     })
