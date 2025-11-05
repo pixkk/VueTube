@@ -72,43 +72,43 @@ export default {
       devClicks: 0,
       devmode: false,
 
-      devmodebuttonname: "Developer Mode",
+      devmodebuttonname: this.$lang("settings").devmode,
 
       settingsItems: [
         {
-          name: "General",
+          name: this.$lang("settings").general,
           icon: "mdi-cog",
           to: "/mods/general",
         },
         {
-          name: "Theme",
+          name: this.$lang("settings").theme,
           icon: "mdi-brush-variant",
           to: "/mods/theme",
         },
         {
-          name: "Player",
+          name: this.$lang("settings").player,
           icon: "mdi-motion-play-outline",
           to: "/mods/player",
           disabled: false,
         },
         {
-          name: "UI Tweaker",
+          name: this.$lang("settings").uitweaker,
           icon: "mdi-television-guide",
           to: "/mods/tweaks",
         },
         {
-          name: "Startup Options",
+          name: this.$lang("settings").startupoptions,
           icon: "mdi-restart",
           to: "/mods/startup",
         },
         {
-          name: "Plugins",
+          name: this.$lang("settings").plugins,
           icon: "mdi-puzzle",
           to: "/mods/plugins",
           disabled: true,
         },
         {
-          name: "Updates",
+          name: this.$lang("settings").updates,
           icon: "mdi-cloud-download-outline",
           to: "/mods/updates",
         },
@@ -122,15 +122,6 @@ export default {
   },
 
   mounted() {
-    this.settingsItems[0].name = this.$lang("settings").general;
-    this.settingsItems[1].name = this.$lang("settings").theme;
-    this.settingsItems[2].name = this.$lang("settings").player;
-    this.settingsItems[3].name = this.$lang("settings").uitweaker;
-    this.settingsItems[4].name = this.$lang("settings").startupoptions;
-    this.settingsItems[5].name = this.$lang("settings").plugins;
-    this.settingsItems[6].name = this.$lang("settings").updates;
-    this.settingsItems[7].name = this.$lang("settings").about;
-    this.devmodebuttonname = this.$lang("settings").devmode;
 
     this.devmode = localStorage.getItem("devmode");
   },
