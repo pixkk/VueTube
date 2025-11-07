@@ -47,9 +47,6 @@
         </v-card>
       </template>
       <v-card class="background"
-              v-touch="{
-            down: () => (sheet = false),
-          }"
       :style="{
             minHeight: 60 + 'vh',}"
       >
@@ -58,8 +55,15 @@
 // <!--            down: () => (sheet = false),-->
           }"
         >
-          <template v-for="text in comments.carouselTitles">
-            <template><h3>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}</h3></template>
+          <template v-for="text in comments.carouselTitles" >
+            <v-col
+              :style="{
+                padding: 0 + '!important',
+              }"
+              v-touch="{
+            down: () => (sheet = false),
+          }"
+            ><h3>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}</h3></v-col>
           </template>
           <v-spacer />
           <v-btn fab text small @click="sheet = false">
