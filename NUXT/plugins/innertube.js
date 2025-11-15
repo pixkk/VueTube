@@ -879,7 +879,7 @@ class Innertube {
   }
 
   async makeDecipherFunctionWithAst(baseJs) {
-    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
+    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
     let decipherFunction = decipherFunctionRegex.exec(baseJs.data);
 
     let decipherFunctionFirstArg = decipherFunction[2];
