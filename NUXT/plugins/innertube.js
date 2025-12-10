@@ -375,6 +375,10 @@ class Innertube {
             playerParams: this.playerParams,
             contentCheckOk: false,
             racyCheckOk: false,
+            // TODO: fix embedded config
+            // serializedThirdPartyEmbedConfig: {
+            //   enc: "value_for_embedded_video",
+            // },
             // serviceIntegrityDimensions: {
             //   poToken: this.pot
             // },

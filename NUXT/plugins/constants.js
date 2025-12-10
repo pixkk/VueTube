@@ -57,10 +57,12 @@ const tvApiVal = {
   VERSION: "7.20250622.15.00",
 };
 
+// TODO: fix embedded config
+//  body data - \"serializedThirdPartyEmbedConfig\":\"{\\\"enc\\\":\\\"AXH1ezm6q________________Ag\\\"}\"
 const clientConfigs = [
+  tvApiVal,
   webEmbeddedApiVal,
   androidVrApiVal,
-  tvApiVal,
 ];
 const filesystem = {
   plugins: "plugins/",
