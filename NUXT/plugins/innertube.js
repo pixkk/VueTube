@@ -57,11 +57,12 @@ class Innertube {
     // baseJsUrl =
     //   "https://m.youtube.com/s/player/20830619/player_ias.vflset/uk_UA/base.js";
     //  baseJsUrl =
-       // "https://m.youtube.com/s/player/377ca75b/player_ias.vflset/uk_UA/base.js";
+    //    "https://m.youtube.com/s/player/3062cec8/player_ias.vflset/uk_UA/base.js";
        // "https://m.youtube.com/s/player/6e4dbefe/player_ias.vflset/uk_UA/base.js";
     // if (baseJsUrl.indexOf("player-plasma") > 0) {
       // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
     // }
+    baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
 
     // Get base.js content
     // 377ca75b
@@ -289,6 +290,7 @@ class Innertube {
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       console.warn("Trying with client config - ", data.context.client);
+      if (data.context.client.clientName === "TVHTML5") continue;
       // this.context.client = data.context.client;
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
@@ -909,8 +911,15 @@ class Innertube {
 
   async getNFunctionAst(baseJs) {
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
-    let preChallengeName = /\nvar [A-z0-9$]+=\[([A-z0-9$]+)\];/i.exec(baseJs.data)[1];
-
+    let preChallengeName = /(?:\nvar [A-z0-9$]+=\[([A-z0-9$]+)\];|};([A-z0-9]+)=\[([A-z0-9]+)\];)/i.exec(baseJs.data);
+    let additionalVarName = "";
+    if (!preChallengeName[1]) {
+      preChallengeName = preChallengeName[3]
+      additionalVarName = preChallengeName[2]
+    }
+    else {
+      preChallengeName = preChallengeName[1];
+    }
     let preChallengeMethod = findMethodByName(parsedBaseJs, preChallengeName);
     let globalArray = findGlobalArray(parsedBaseJs);
 
@@ -925,7 +934,7 @@ class Innertube {
       }
     }
 
-    let nFunctionCode = findMethodByName(parsedBaseJs, preChallengeMethodCode.expression.right.body.body[0].argument.callee.object.name)
+    let nFunctionCode = findMethodByName(parsedBaseJs, challengeName)
     let unDeclared = getUndeclaredMethods(nFunctionCode, challengeName);
     let additionalCode = "\n";
     unDeclared.forEach(name => {
@@ -940,7 +949,11 @@ class Innertube {
       let processed = findMethodByName(parsedBaseJs, name)
       if (name === preChallengeName || name === challengeName || processed === null) return;
       additionalCode2 += generate(processed) + "\n";
+      // TODO:
+      //  h = m0() - m0 is not defined - ab89db3f
+      // console.error(getUndeclaredMethods(processed));
     })
+    additionalCode2 = additionalCode2.replaceAll(preChallengeName, "nFunction")
 
     const finalPart =
       "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ ";\n var nFunction=function(nValue) { return " + challengeName + "(" + firstArg + ", nValue); };" + generate(nFunctionCode) + additionalCode2 + "\n" + additionalCode + "\nreturn nFunction;";
@@ -948,5 +961,14 @@ class Innertube {
     this.nfunction = nFunction();
   }
 }
-
+// function getUndeclaredMethodsJS(parsedBaseJs, undeclares, challengeName, preChallengeName) {
+//   let additionalCode = "\n";
+//   undeclares.forEach(name => {
+//     let processed = findMethodByName(parsedBaseJs, name)
+//     if (name === preChallengeName || name === challengeName || processed === null) return;
+//     additionalCode += generate(processed) + ";\n";
+//     additionalCode = additionalCode.replace("};;", "};").replace("};\n;", "};\n")
+//   })
+//   return additionalCode
+// }
 export default Innertube;
