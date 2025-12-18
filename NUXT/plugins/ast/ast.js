@@ -22,6 +22,7 @@ export function findGlobalArray(parsedBaseJs) {
           globalArrayName = v.id.name;
           globalArrayData = JSON.parse(generate(v.init));
           globalArrayFound = true;
+          break;
         }
       }
     }
