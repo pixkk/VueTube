@@ -1,4 +1,5 @@
 import * as walk from "acorn-walk";
+import {generate} from "astring";
 
 export function findGlobalArray(parsedBaseJs) {
   let globalArrayName = "";
@@ -16,6 +17,11 @@ export function findGlobalArray(parsedBaseJs) {
           globalArrayData = v.init?.callee?.object.value.split(splitArg.toString());
           globalArrayFound = true;
           break;
+        }
+        if (v?.init?.elements) {
+          globalArrayName = v.id.name;
+          globalArrayData = JSON.parse(generate(v.init));
+          globalArrayFound = true;
         }
       }
     }
