@@ -87,12 +87,14 @@ export default {
       return this.$router.replace("/activities/update");
 
     //---   Start Innertube Connection   ---//
-    // await this.$youtube.getAPI();
     try {
       // throw "e";
       await this.$youtube.getAPI();
     }
     catch (e) {
+      if (localStorage.getItem("lastRunVersion") === "dev-local") {
+        throw e;
+      }
       this.progressMsg = "Error: " + e + ". Checking for updates";
       setTimeout(() => {
         this.$router.replace("/mods/updates");

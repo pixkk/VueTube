@@ -59,9 +59,16 @@ const tvApiVal = {
 
 // TODO: fix embedded config
 //  body data - \"serializedThirdPartyEmbedConfig\":\"{\\\"enc\\\":\\\"AXH1ezm6q________________Ag\\\"}\"
+// /next - contents.twoColumnWatchNextResults.results.results.contents[0].videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons[1].buttonViewModel.trackingParams
+// for  https://www.youtube.com/youtubei/v1/share/get_share_panel?prettyPrint=false (serializedSharedEntity: "Cgt0ZU96VThrSWx0d6ABAQ%3D%3D" after context payload),
+// after that - in get_share_panel -
+// actions[0].openPopupAction.popup.unifiedSharePanelRenderer.contents[0].
+// thirdPartyNetworkSection.shareTargetContainer.thirdPartyShareTargetSectionRenderer.shareTargets[0].
+// shareTargetRenderer.serviceEndpoint.signalServiceEndpoint.actions[2].
+// openPopupAction.popup.sharingEmbedRenderer.encryptedEmbedConfig exists encryptedEmbedConfig. use it in "enc"
 const clientConfigs = [
-  tvApiVal,
   webEmbeddedApiVal,
+  tvApiVal,
   androidVrApiVal,
 ];
 const filesystem = {
