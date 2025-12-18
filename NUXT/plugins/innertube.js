@@ -848,9 +848,7 @@ class Innertube {
           )?.expandableVideoDescriptionBodyRenderer || null,
         recommendations: recommendations,
         recommendationsContinuation:
-          recommendations?.contents[recommendations.contents.length - 1]
-            .continuationItemRenderer?.continuationEndpoint.continuationCommand
-            .token,
+          recommendations?.contents[recommendations.contents.length - 1] ? recommendations?.contents[recommendations.contents.length - 1].continuationItemRenderer?.continuationEndpoint.continuationCommand.token : null,
       },
       engagementPanels: responseNext.engagementPanels,
       commentData: columnUI.contents
