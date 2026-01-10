@@ -53,11 +53,11 @@ class Innertube {
     // const baseJsUrl =
     //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
     // baseJsUrl =
-    //   "https://m.youtube.com/s/player/22f02d3d/player_ias.vflset/uk_UA/base.js";
+    //   "https://m.youtube.com/s/player/3062cec8/player_ias.vflset/uk_UA/base.js";
     // baseJsUrl =
     //   "https://m.youtube.com/s/player/20830619/player_ias.vflset/uk_UA/base.js";
     //  baseJsUrl =
-    //    "https://m.youtube.com/s/player/3062cec8/player_ias.vflset/uk_UA/base.js";
+       // "https://m.youtube.com/s/player/c80790c5/player_ias.vflset/uk_UA/base.js";
        // "https://m.youtube.com/s/player/6e4dbefe/player_ias.vflset/uk_UA/base.js";
     // if (baseJsUrl.indexOf("player-plasma") > 0) {
       // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
@@ -932,30 +932,49 @@ class Innertube {
         break;
       }
     }
+    let nFunctionCode = findMethodByName(parsedBaseJs, challengeName);
+    let baseCode = generate(nFunctionCode);
+    function collectDependencies(entryCode, challengeName) {
+      let collectedCode = "";
+      const processed = new Set();
+      const queue = new Set(
+        getUndeclaredMethods(acorn.parse(entryCode, { ecmaVersion: 2020 }), challengeName)
+      );
 
-    let nFunctionCode = findMethodByName(parsedBaseJs, challengeName)
-    let unDeclared = getUndeclaredMethods(nFunctionCode, challengeName);
-    let additionalCode = "\n";
-    unDeclared.forEach(name => {
-      let processed = findMethodByName(parsedBaseJs, name)
-      if (name === preChallengeName || name === challengeName || processed === null) return;
-      additionalCode += generate(processed) + ";\n";
-      additionalCode = additionalCode.replace("};;", "};").replace("};\n;", "};\n")
-    })
-    let unDeclared2 = getUndeclaredMethods(acorn.parse(generate(nFunctionCode) + additionalCode, {ecmaVersion: 2020}), challengeName);
-    let additionalCode2 = "\n";
-    unDeclared2.difference(unDeclared).forEach(name => {
-      let processed = findMethodByName(parsedBaseJs, name)
-      if (name === preChallengeName || name === challengeName || processed === null) return;
-      additionalCode2 += generate(processed) + "\n";
-      // TODO:
-      //  h = m0() - m0 is not defined - ab89db3f
-      // console.error(getUndeclaredMethods(processed));
-    })
-    additionalCode2 = additionalCode2.replaceAll(preChallengeName, "nFunction")
+      while (queue.size > 0) {
+        const [name] = queue;
+        queue.delete(name);
+
+        if (name === preChallengeName || name === challengeName) continue;
+        if (processed.has(name)) continue;
+
+        const node = findMethodByName(parsedBaseJs, name);
+        if (!node) continue;
+
+        const code = generate(node).replace("};;", "};").replace("};\n;", "};\n");
+        collectedCode += code + "\n";
+        processed.add(name);
+
+        const parsed = acorn.parse(entryCode + collectedCode, { ecmaVersion: 2020 });
+        const newUndeclared = getUndeclaredMethods(parsed, challengeName);
+
+        newUndeclared.forEach(n => {
+          if (!processed.has(n)) queue.add(n);
+        });
+      }
+      return collectedCode;
+    }
+
+    let additionalCode = collectDependencies(baseCode, challengeName)
+      .replaceAll(preChallengeName, "nFunction");
 
     const finalPart =
-      "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ ";\n var nFunction=function(nValue) { return " + challengeName + "(" + firstArg + ", nValue); };" + generate(nFunctionCode) + additionalCode2 + "\n" + additionalCode + "\nreturn nFunction;";
+      "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) +
+      ";\n var nFunction=function(nValue) { return " + challengeName + "(" + firstArg + ", nValue); };" +
+      baseCode +
+      additionalCode +
+      "\nreturn nFunction;";
+
     let nFunction = new Function(finalPart);
     this.nfunction = nFunction();
   }
