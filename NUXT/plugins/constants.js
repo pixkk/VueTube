@@ -12,12 +12,14 @@ const url = {
   VT_BETA_UPDATES: "https://api.github.com/repos/pixkk/VueTube/actions/runs"
 };
 
+const webVersion = "2.20260123.01.00";
+
 const androidApiVal = {
   // VERSION: "19.09",
   VERSION: "20.38",
   CLIENTNAME: "ANDROID",
   // VERSION_WEB: "2.20240628.01.00",
-  VERSION_WEB: "2.20250930.01.00",
+  VERSION_WEB: webVersion,
   USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
@@ -37,7 +39,15 @@ const webEmbeddedApiVal = {
   CLIENTNAME: "WEB_EMBEDDED_PLAYER",
   clientScreen: "EMBED",
   // VERSION_WEB: "2.20240628.01.00",
-  VERSION_WEB: "2.20250930.01.00",
+  VERSION_WEB: webVersion,
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
+  CLIENT_WEB_M: 2,
+  CLIENT_WEB_D: 1,
+};
+const MWEB = {
+  CLIENTNAME: "MWEB",
+  clientScreen: "WATCH",
+  VERSION_WEB: webVersion,
   USER_AGENT: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
@@ -70,6 +80,7 @@ const clientConfigs = [
   webEmbeddedApiVal,
   tvApiVal,
   androidVrApiVal,
+  MWEB
 ];
 const filesystem = {
   plugins: "plugins/",
