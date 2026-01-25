@@ -406,8 +406,8 @@ class Innertube {
       }).catch((error) => error);
 
       if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
-        response?.data?.playabilityStatus !== "LOGIN_REQUIRED" &&
-        response?.data?.playabilityStatus !== "ERROR") {
+        response?.data?.playabilityStatus?.status !== "LOGIN_REQUIRED" &&
+        response?.data?.playabilityStatus?.status !== "ERROR") {
         break;
       }
 
