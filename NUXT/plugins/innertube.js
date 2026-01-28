@@ -43,7 +43,7 @@ class Innertube {
 
   async initAsync() {
     const html = await Http.get({
-      url: constants.URLS.YT_MOBILE,
+      url: constants.URLS.YT_EMBED,
       params: { hl: localStorage.getItem("language") || "en", },
     }).catch((error) => error);
     // Get url of base.js file
@@ -278,15 +278,17 @@ class Innertube {
 
   async getCaptions(id) {
     let data = {
-      context: {
-        client: constants.INNERTUBE_TECHNICAL(this.context.client),
-      },
+      context: this.context,
+      // context: {
+      //   client: constants.INNERTUBE_TECHNICAL(this.context.client),
+      // },
       videoId: id,
     };
     let response = "";
 
     const clientConfigs  = constants.clientConfigs;
     for (const config of clientConfigs) {
+      if (config.CLIENTNAME !== "ANDROID_VR") continue
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       console.warn("Trying with client config - ", data.context.client);
@@ -294,7 +296,7 @@ class Innertube {
       // this.context.client = data.context.client;
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
-          "embedUrl": "https://www.youtube.com/embed/" + id,
+          "embedUrl": constants.URLS.YT_EMBED + id,
         }
       }
       response = await Http.post({
@@ -366,7 +368,7 @@ class Innertube {
       console.warn("Trying with client config - ", data.context.client);
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
-          "embedUrl": "https://www.youtube.com/embed/" + id,
+          "embedUrl": constants.URLS.YT_EMBED + id,
         }
       }
       // this.context.client = data.context.client;

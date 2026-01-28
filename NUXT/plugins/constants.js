@@ -3,6 +3,7 @@
 const url = {
   YT_URL: "https://www.youtube.com",
   YT_MOBILE: "https://m.youtube.com",
+  YT_EMBED: "https://www.youtube.com/embed/",
   YT_MUSIC_URL: "https://music.youtube.com",
   // YT_BASE_API: "https://www.youtube.com/youtubei/v1",
   YT_BASE_API: "https://m.youtube.com/youtubei/v1",
@@ -55,7 +56,7 @@ const MWEB = {
 const tvApiVal = {
   CLIENTNAME: "TVHTML5",
   clientScreen: "WATCH",
-  VERSION_WEB: "7.20250622.15.00",
+  VERSION_WEB: "7.20260125.19.00",
   deviceModel: "BRAVIA 8K UR2",
   deviceMake: "Sony",
   USER_AGENT: "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
@@ -64,7 +65,7 @@ const tvApiVal = {
   browserName: "Opera",
   browserVersion: "46.0.2207.0",
   platform: "TV",
-  VERSION: "7.20250622.15.00",
+  VERSION: "7.20260125.19.00",
 };
 
 // TODO: fix embedded config
