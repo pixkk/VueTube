@@ -20,7 +20,12 @@ export function findGlobalArray(parsedBaseJs) {
         }
         if (v?.init?.elements) {
           globalArrayName = v.id.name;
-          globalArrayData = JSON.parse(generate(v.init));
+          let globalArrayDataValue = generate(v.init);
+          try {
+            globalArrayData = JSON.parse(globalArrayDataValue);
+          }catch (e) {
+            globalArrayData = Function(`"use strict"; return ${globalArrayDataValue}`)();
+          }
           globalArrayFound = true;
           break;
         }
