@@ -96,7 +96,7 @@ function convertTranscriptToVTT(transcript) {
   let textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
 if (textElements == null) {
   isOkay = false;
-  textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)" wp="[\d.]+" ws="[\d.]+">([^<]+)<\/p>/g);
+  textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)" wp="[\d.]+" ws="[\d.]+">([\s\S]*?)<\/p>/g);
   if (textElements == null) {
     textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)">([^<]+)<\/p>/g);
   }
@@ -118,6 +118,9 @@ if (textElements == null) {
     let contentMatch = textElement.match(/>([^<]+)<\/text>/);
     if (contentMatch == null) {
       contentMatch = textElement.match(/>([^<]+)<\/p>/)
+    }
+    if (contentMatch == null) {
+      contentMatch = textElement.match(/<s[^>]*>([\s\S]*?)<\/s>/)
     }
 
     if (startMatch && durMatch && contentMatch) {
