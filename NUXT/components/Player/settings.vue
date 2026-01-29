@@ -16,7 +16,7 @@
           v-bind="attrs"
           v-on="on"
         >
-          <v-icon>mdi-cog</v-icon>
+          <v-icon>mdi-movie-open-settings-outline</v-icon>
         </v-btn>
       </template>
       <v-card class="background">
