@@ -1,5 +1,6 @@
 import * as walk from "acorn-walk";
 import {generate} from "astring";
+import {parse} from "acorn";
 
 export function findGlobalArray(parsedBaseJs) {
   let globalArrayName = "";
@@ -47,6 +48,38 @@ export function findDecipherFunction(parsed, functionName) {
   });
   return funcNode;
 }
+export function collectMethodsOrdered(code) {
+  const ast = parse(code, {
+    ecmaVersion: "latest",
+    sourceType: "module"
+  });
+
+  const methods = [];
+
+  walk.simple(ast, {
+    MethodDefinition(node) {
+      methods.push({
+        name: node.key.name,
+        pos: node.start,
+        node
+      });
+    },
+
+    Property(node) {
+      if (node.method) {
+        methods.push({
+          name: node.key.name,
+          pos: node.start,
+          node
+        });
+      }
+    }
+  });
+
+  methods.sort((a, b) => a.pos - b.pos);
+
+  return methods;
+}
 
 let excludeArrayMethodsName = [
   "await","break","case","catch","class","const","continue","debugger","default",
@@ -67,7 +100,29 @@ let excludeArrayMethodsName = [
   "Buffer","process","global","__dirname","__filename","module","exports","require"
 ]
 export function findMethodByName(parsed, funcNode) {
+  if (!funcNode) return null;
   let n = null;
+  const dotIndex = funcNode.indexOf(".");
+  if (dotIndex !== -1) {
+    const objName = funcNode.substring(0, dotIndex);
+    const propName = funcNode.substring(dotIndex + 1);
+    for (let node of parsed.body[1].expression.callee.body.body) {
+      if (node?.type === "ExpressionStatement") {
+        const expr = node.expression;
+        if (
+          expr?.type === "AssignmentExpression" &&
+          expr.left?.type === "MemberExpression" &&
+          !expr.left.computed &&
+          expr.left.object?.name === objName &&
+          expr.left.property?.name === propName &&
+          expr.right
+        ) {
+          return node;
+        }
+      }
+    }
+    return null;
+  }
   for (let node of parsed.body[1].expression.callee.body.body) {
     if (node?.type === "VariableDeclaration") {
       for (let v of node.declarations) {
@@ -76,7 +131,13 @@ export function findMethodByName(parsed, funcNode) {
             for (let i = 0; i < v.init?.elements?.length; i++) {
               v.init = findMethodByName(parsed, v.init.elements[i].name);
             }
-            return v;
+            return {
+              type: "VariableDeclaration",
+              kind: node.kind,
+              declarations: [v],
+              start: node.start,
+              end: node.end,
+            };
           }
         }
       }
@@ -97,6 +158,76 @@ export function findMethodByName(parsed, funcNode) {
   return n;
 }
 
+/**
+ * Collects all prototype method assignment nodes for a given constructor.
+ *
+ * Handles two patterns:
+ *   1. Encoded:  ctor[*[**]][*[**]] = function(...)  where *[**] === 'prototype'
+ *   2. Literal:  ctor.prototype.methodName = function(...)
+ *
+ * @param {object} parsed       - acorn-parsed AST of the full script
+ * @param {string} constructorName - e.g. "g.**" or "**"
+ * @param {Array}  globalArrayData - decoded * array (may be null for literal-only search)
+ * @param {string} globalArrayName - name of the * array variable in the source
+ * @returns {Array<object>}  array of ExpressionStatement AST nodes
+ */
+export function collectPrototypeMethods(parsed, constructorName, globalArrayData, globalArrayName) {
+  const results = [];
+  const body = parsed.body[1].expression.callee.body.body;
+
+  // Normalise constructorName for comparison: generate() output of the left-most object
+  // e.g. "g.**" or "**"
+  const ctorNorm = constructorName.trim();
+
+  for (const node of body) {
+    if (node.type !== "ExpressionStatement") continue;
+    const expr = node.expression;
+    if (expr?.type !== "AssignmentExpression") continue;
+    const left = expr.left;
+    if (left.type !== "MemberExpression") continue;
+
+    const obj = left.object;
+    if (obj.type !== "MemberExpression") continue;
+
+    // --- Pattern 1: encoded  ctor[*[*]][*[*]] ---
+    if (
+      left.computed &&
+      obj.computed &&
+      globalArrayData &&
+      globalArrayName
+    ) {
+      const protoExpr = obj.property;
+      if (
+        protoExpr?.type === "MemberExpression" &&
+        protoExpr.object?.name === globalArrayName &&
+        protoExpr.property?.type === "Literal"
+      ) {
+        const protoIdx = protoExpr.property.value;
+        if (globalArrayData[protoIdx] === "prototype") {
+          const ctorGenerated = generate(obj.object).trim();
+          if (ctorGenerated === ctorNorm) {
+            results.push(node);
+            continue;
+          }
+        }
+      }
+    }
+
+    // --- Pattern 2: literal  ctor.prototype.method ---
+    if (
+      !obj.computed &&
+      (obj.property?.name === "prototype" || obj.property?.value === "prototype")
+    ) {
+      const ctorGenerated = generate(obj.object).trim();
+      if (ctorGenerated === ctorNorm) {
+        results.push(node);
+      }
+    }
+  }
+
+  return results;
+}
+
 export function getUndeclaredMethods(funcCode, nFunctionName) {
   let declared = new Set();
   let unDeclared = new Set();
@@ -115,44 +246,43 @@ export function getUndeclaredMethods(funcCode, nFunctionName) {
       declared.add(node.id.name);
       addDeclaredFromParams(node.params);
     },
-    FunctionExpression(node, ancestors) {
+    FunctionExpression(node) {
       addDeclaredFromParams(node.params);
     },
-    ArrayExpression(node) {
-      for (let i = 0; i < node.elements.length; i++) {
-        if (node.elements[i].type === "MemberExpression") {
-          // node.elements[i] = processJs(node.elements[i], globalArray);
-        }
-        if (node.elements[i].type === "Identifier") {
-          unDeclared.add(node.elements[i].name);
+    ArrowFunctionExpression(node) {
+      addDeclaredFromParams(node.params);
+    },
+    AssignmentExpression(node) {
+      if (node.left?.type === "Identifier") {
+        declared.add(node.left.name);
+      }
+    },
+    MemberExpression(node, ancestors) {
+      if (!node.computed && node.object.type === "Identifier") {
+        const fullName = node.object.name + "." + node.property.name;
+        if (node.object.name !== nFunctionName) {
+          unDeclared.add(fullName);
         }
       }
     },
-    CallExpression(node) {
-      let name;
-      if (node.callee.type === "Identifier") {
-        name = node.callee.name;
-      } else if (node.callee.type === "MemberExpression") {
-        const obj = node.callee.object;
-        if (obj.type === "Identifier") name = obj.name;
-      }
-      if (name && !declared.has(name)) {
-        if (name !== nFunctionName) {
-          unDeclared.add(name);
-        }
+    Identifier(node, ancestors) {
+      if (!ancestors || ancestors.length === 0) return;
+      const parent = ancestors[ancestors.length - 1];
+      if (node.name === nFunctionName) return;
 
-      }
-    },
-    IfStatement(node, ancestors) {
-      for (let i = 0; i < node?.test?.expressions?.length; i++) {
-        let expr = node.test.expressions[i];
-        if (expr?.left?.argument?.name) {
-          unDeclared.add(expr.left.argument.name);
-        }
-      }
-      if (node?.test?.left?.argument?.name) {
-        unDeclared.add(node?.test?.left.argument.name);
-      }
+      // skip property keys (foo.BAR — BAR is not a reference)
+      if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
+      // skip declared names on the left side of variable declarator
+      if (parent.type === "VariableDeclarator" && parent.id === node) return;
+      // skip function/class declaration names
+      if ((parent.type === "FunctionDeclaration" || parent.type === "FunctionExpression") && parent.id === node) return;
+      // skip object property keys (shorthand is fine — value is the reference)
+      if (parent.type === "Property" && parent.key === node && !parent.computed && !parent.shorthand) return;
+      // skip label identifiers
+      if (parent.type === "LabeledStatement" && parent.label === node) return;
+      if (parent.type === "BreakStatement" || parent.type === "ContinueStatement") return;
+
+      unDeclared.add(node.name);
     },
   });
   unDeclared = new Set([...unDeclared].filter(name => !excludeArrayMethodsName.includes(name)));
