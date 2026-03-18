@@ -71,7 +71,48 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
+    if (localStorage.getItem("devmode") === "true") {
+      this.$store.commit("initTelemetryPreference");
+      this.$store.commit("initRecommendationsFixPreference");
+      this.$store.commit("tweaks/initTweaks");
+      this.$store.commit("player/initPlayer");
+      this.$store.commit("history/initHistory");
+      this.$store.commit("playlist/initPlaylists");
+      await this.$vuetube.launchBackHandling();
+
+      //---   Load Theming   ---//
+
+      setTimeout(() => {
+        this.$vuetify.theme.dark =
+          JSON.parse(localStorage.getItem("darkTheme")) === true;
+        if (localStorage.getItem("primaryDark") != null)
+          this.$vuetify.theme.themes.dark.primary =
+            localStorage.getItem("primaryDark");
+        if (localStorage.getItem("primaryLight") != null)
+          this.$vuetify.theme.themes.light.primary =
+            localStorage.getItem("primaryLight");
+        if (localStorage.getItem("backgroundDark") != null)
+          this.$vuetify.theme.themes.dark.background =
+            localStorage.getItem("backgroundDark");
+        if (localStorage.getItem("backgroundLight") != null)
+          this.$vuetify.theme.themes.light.background =
+            localStorage.getItem("backgroundLight");
+
+        this.$vuetube.navigationBar.setTheme(
+          this.$vuetify.theme.currentTheme.background,
+          !this.$vuetify.theme.dark
+        );
+        this.$vuetube.statusBar.setTheme(
+          this.$vuetify.theme.currentTheme.background,
+          this.$vuetify.theme.dark
+        );
+
+        // this.$vuetube.navigationBar.setTransparent();
+        // this.$vuetube.statusBar.setTransparent();
+      }, 0)
+      await this.$youtube.getAPI();
+    }
     if (!this.recommends.length) {
       this.$youtube
         .recommend()
@@ -80,8 +121,7 @@ export default {
             if (result.title) {
               this.title = result.title;
               this.subtitle = result.subtitle;
-            }
-            else {
+            } else {
               this.recommends = [result];
             }
 
