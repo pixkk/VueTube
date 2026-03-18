@@ -1,7 +1,60 @@
 import * as walk from "acorn-walk";
 import {generate} from "astring";
 import {parse} from "acorn";
+import * as acorn from "acorn";
+export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
+  const processed = new Set();
+  const codeMap = new Map();
+  const depsMap = new Map();
 
+  function collect(name) {
+    if (name === challengeName || processed.has(name)) return;
+    processed.add(name);
+
+    const node = findMethodByName(parsedBaseJs, name);
+    if (!node) return;
+
+    const rawCode = generate(node).replace("};;", "};").replace("};\n;", "};\n");
+    const code = ensureVarDeclaration(node, rawCode);
+    codeMap.set(name, code);
+
+    const parsed = acorn.parse(code, { ecmaVersion: 2020 });
+    const deps = getUndeclaredMethods(parsed, challengeName);
+    depsMap.set(name, deps);
+
+    for (const dep of deps) {
+      collect(dep);
+    }
+  }
+
+  const initialDeps = getUndeclaredMethods(
+    acorn.parse(entryCode, { ecmaVersion: 2020 }),
+    challengeName
+  );
+  for (const name of initialDeps) {
+    collect(name);
+  }
+
+  const sorted = [];
+  const visited = new Set();
+
+  function topoSort(name) {
+    if (visited.has(name)) return;
+    visited.add(name);
+    for (const dep of (depsMap.get(name) || [])) {
+      topoSort(dep);
+    }
+    if (codeMap.has(name)) {
+      sorted.push(name);
+    }
+  }
+
+  for (const name of codeMap.keys()) {
+    topoSort(name);
+  }
+
+  return sorted.map(name => codeMap.get(name)).join("\n");
+}
 export function findGlobalArray(parsedBaseJs) {
   let globalArrayName = "";
   let globalArrayData = null;
@@ -99,6 +152,16 @@ let excludeArrayMethodsName = [
 
   "Buffer","process","global","__dirname","__filename","module","exports","require"
 ]
+export function ensureVarDeclaration(node, code) {
+  if (
+    node.type === "ExpressionStatement" &&
+    node.expression?.type === "AssignmentExpression" &&
+    node.expression.left?.type === "Identifier"
+  ) {
+    return "var " + code;
+  }
+  return code;
+}
 export function findMethodByName(parsed, funcNode) {
   if (!funcNode) return null;
   let n = null;

@@ -11,7 +11,13 @@ import rendererUtils from "./renderers";
 import constants from "./constants";
 import * as acorn from "acorn";
 import {generate} from "astring";
-import {findDecipherFunction, findGlobalArray, findMethodByName, getUndeclaredMethods} from "@/plugins/ast/ast";
+import {
+  collectDependencies,
+  collectPrototypeMethods, ensureVarDeclaration, findDecipherFunction,
+  findGlobalArray,
+  findMethodByName,
+  getUndeclaredMethods
+} from "@/plugins/ast/ast";
 
 class Innertube {
   //--- Initiation ---//
@@ -50,36 +56,38 @@ class Innertube {
     let baseJsUrl =
       constants.URLS.YT_MOBILE +
       getBetweenStrings(html.data, '"jsUrl":"', '","');
-    // const baseJsUrl =
-    //   "https://m.youtube.com//s//player//******//player-plasma-****.vflset//base.js";
-    // baseJsUrl =
-    //   "https://m.youtube.com/s/player/3062cec8/player_ias.vflset/uk_UA/base.js";
-    // baseJsUrl =
-    //   "https://m.youtube.com/s/player/20830619/player_ias.vflset/uk_UA/base.js";
-    //  baseJsUrl =
-       // "https://m.youtube.com/s/player/c80790c5/player_ias.vflset/uk_UA/base.js";
-       // "https://m.youtube.com/s/player/6e4dbefe/player_ias.vflset/uk_UA/base.js";
-    // if (baseJsUrl.indexOf("player-plasma") > 0) {
-      // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
-    // }
-    baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
 
+    // if (baseJsUrl.indexOf("player-plasma") > 0) {
+    // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
+    // }
+    // https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js
+
+      baseJsUrl = baseJsUrl.replace(
+        /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+        'player-plasma-ias-phone-$1.vflset/base.js'
+      )
+      baseJsUrl = baseJsUrl.replace(
+        /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+        'player-plasma-ias-phone-$1.vflset/base.js'
+      )
+    // baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
+    // baseJsUrl = baseJsUrl.replace("player_embed_es6", "player_ias");
     // Get base.js content
     // 377ca75b
     const baseJs = await Http.get({
       url: baseJsUrl,
     }).catch((error) => error);
-    // await this.makeDecipherFunction(baseJs);
+
     await this.initTimeStamp(baseJs);
     await this.makeDecipherFunctionWithAst(baseJs);
 
     console.warn("one");
-    // await this.getNFunction(baseJs);
+
     await this.getNFunctionAst(baseJs);
     console.warn("two");
-    // await this.getPOTFunction(baseJs);
+
     console.warn("three");
-   const regex = /\/player\/([a-f0-9]{8})\/player/;
+    const regex = /\/player\/([a-f0-9]{8})\/player/;
     const match = baseJsUrl.match(regex);
     if (match) {
       localStorage.setItem("baseJsVersion", match[1]);
@@ -694,23 +702,23 @@ class Innertube {
     //   (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
     // )?.itemSectionRenderer;
     const recommendations = {contents: columnUI?.contents
-      ?.filter(c => c.itemSectionRenderer?.contents)
-      ?.flatMap(c =>
-        c.itemSectionRenderer.contents.filter(
-          item => !item.videoMetadataCarouselViewModel &&
-            !item.compactRadioRenderer
-        )
-      )}
+        ?.filter(c => c.itemSectionRenderer?.contents)
+        ?.flatMap(c =>
+          c.itemSectionRenderer.contents.filter(
+            item => !item.videoMetadataCarouselViewModel &&
+              !item.compactRadioRenderer
+          )
+        )}
 
     console.warn(recommendations)
     if (details.title == null) {
       vidMetadata?.contents.forEach((content) => {
-          let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
-          if (text !== undefined) {
-            details.title = text;
-            return;
-          }
-        });
+        let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
+        if (text !== undefined) {
+          details.title = text;
+          return;
+        }
+      });
     }
     let metadata = {};
     vidMetadata?.contents.forEach((content) => {
@@ -746,71 +754,71 @@ class Innertube {
       if (source.isLive) {
         isLive = true;
       }
-        if (source.signatureCipher) {
-          const params = new Proxy(
-            new URLSearchParams(source.signatureCipher),
-            {
-              get: (searchParams, prop) => searchParams.get(prop),
-            }
-          );
-          if (params.s) {
-            let cipher = decodeURIComponent(params.s);
-            // console.warn(cipher)
-            let decipheredValue;
-            try {
-              decipheredValue = this.decodeUrl(cipher);
-
-              // if (decipheredValue === undefined || decipheredValue === true || decipheredValue === false) {
-              //   decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
-              // }
-            }catch (e) {
-               // decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
-            }
-            // console.log("decipheredValue", decipheredValue);
-            source["url"] = (params.url + "&sig=" + decipheredValue).replace(
-              /&amp;/g,
-              "&"
-            );
+      if (source.signatureCipher) {
+        const params = new Proxy(
+          new URLSearchParams(source.signatureCipher),
+          {
+            get: (searchParams, prop) => searchParams.get(prop),
           }
-        }
-
-
-
-        var searchParams = new URLSearchParams(source.url);
-
-        //Iterate the search parameters.
-        let n = searchParams.get("n");
-        //let clen = searchParams.get("clen");
-        let nValue = "";
-        if (n !== null) {
+        );
+        if (params.s) {
+          let cipher = decodeURIComponent(params.s);
+          // console.warn(cipher)
+          let decipheredValue;
           try {
-            nValue = "&n=" + this.nfunction(n)
-            if (nValue === undefined) {
-              nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
-            }
-          }
-           catch (e) {
-             // nValue = "&n=" + this.nfunction(1, n)
-             nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
-           }
-        }
-        searchParams.delete("n");
+            decipheredValue = this.decodeUrl(cipher);
 
-        // For some reasons, searchParams.delete not removes &n in music videos
-        source["url"] = source["url"].replace(/&n=[^&]*/g, "");
-              source["url"] = source["url"] + nValue;
-        // source["url"] = source["url"] + "&alr=yes";
-        source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
-        // source["url"] = source["url"] + "&ump=1";
-        // source["url"] = source["url"] + "&srfvp=1";
-        source["url"] = source["url"] + "&cpn=" + getCpn();
-        // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
-        // source["url"] = source["url"] + "&range=0-" + source.contentLength;
-        if (searchParams.get("mime").indexOf("audio") < 0) {
-          // source["url"] = source["url"] + "&range=0-";
-          // source["url"] = source["url"] + "&alr=yes";
+            // if (decipheredValue === undefined || decipheredValue === true || decipheredValue === false) {
+            //   decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
+            // }
+          }catch (e) {
+            // decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
+          }
+          // console.log("decipheredValue", decipheredValue);
+          source["url"] = (params.url + "&sig=" + decipheredValue).replace(
+            /&amp;/g,
+            "&"
+          );
         }
-      });
+      }
+
+
+
+      var searchParams = new URLSearchParams(source.url);
+
+      //Iterate the search parameters.
+      let n = searchParams.get("n");
+      //let clen = searchParams.get("clen");
+      let nValue = "";
+      if (n !== null) {
+        try {
+            nValue = "&n=" + this.nfunction(n)
+          if (nValue === undefined) {
+            nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
+          }
+        }
+        catch (e) {
+          // nValue = "&n=" + this.nfunction(1, n)
+          nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
+        }
+      }
+      searchParams.delete("n");
+
+      // For some reasons, searchParams.delete not removes &n in music videos
+      source["url"] = source["url"].replace(/&n=[^&]*/g, "");
+      source["url"] = source["url"] + nValue;
+      // source["url"] = source["url"] + "&alr=yes";
+      source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
+      // source["url"] = source["url"] + "&ump=1";
+      // source["url"] = source["url"] + "&srfvp=1";
+      source["url"] = source["url"] + "&cpn=" + getCpn();
+      // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+      // source["url"] = source["url"] + "&range=0-" + source.contentLength;
+      if (searchParams.get("mime").indexOf("audio") < 0) {
+        // source["url"] = source["url"] + "&range=0-";
+        // source["url"] = source["url"] + "&alr=yes";
+      }
+    });
     const vidData = {
       id: details.videoId,
       title: details.title,
@@ -886,10 +894,13 @@ class Innertube {
     return search.data;
   }
 
+
   async makeDecipherFunctionWithAst(baseJs) {
-    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
+    // let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
+    let decipherFunctionRegex = /([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]\)\);return [A-z0-9$]+.timedOut\+/gm;
     let decipherFunction = decipherFunctionRegex.exec(baseJs.data);
 
+    let decipherFunctionSecondArg = decipherFunction[3];
     let decipherFunctionFirstArg = decipherFunction[2];
     let decipherFunctionName = decipherFunction[1];
 
@@ -898,98 +909,54 @@ class Innertube {
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let funcCode = findDecipherFunction(parsedBaseJs, decipherFunctionName)
-    let unDeclared = getUndeclaredMethods(funcCode, decipherFunctionName);
-    let additionalCode = "\n";
-    unDeclared.forEach(name => {
-      let method = findMethodByName(parsedBaseJs, name);
-      if (method === null) return
-      additionalCode += generate(method) + "\n";
-    })
+    let additionalCode = collectDependencies(generate(funcCode), decipherFunctionName, parsedBaseJs)
+
     const finalPart =
-      "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + ", nValue); };" + generate(funcCode) + additionalCode + "\nreturn decodeUrl;";
+      "var g = {};\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + ", nValue); };" + generate(funcCode) + "; \n" + additionalCode + "\nreturn decodeUrl;";
+    // console.warn(finalPart);
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
   }
 
+
   async getNFunctionAst(baseJs) {
-    let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
-    let preChallengeName = /(?:\nvar [A-z0-9$]+=\[([A-z0-9$]+)\];|};([A-z0-9]+)=\[([A-z0-9]+)\];)/i.exec(baseJs.data);
-    let additionalVarName = "";
-    if (!preChallengeName[1]) {
-      preChallengeName = preChallengeName[3]
-      additionalVarName = preChallengeName[2]
-    }
-    else {
-      preChallengeName = preChallengeName[1];
-    }
-    let preChallengeMethod = findMethodByName(parsedBaseJs, preChallengeName);
+    let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020});
+    let func = /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/.exec(baseJs.data);
+
+    let funcArgs = func[2] + "," + func[3];
+    let funcName = func[1];
+
     let globalArray = findGlobalArray(parsedBaseJs);
+    let startFunc = findMethodByName(parsedBaseJs, funcName);
+    let additionalCode = collectDependencies(generate(startFunc), funcName, parsedBaseJs)
 
-    let preChallengeMethodCode = preChallengeMethod
-    let challengeName = preChallengeMethodCode.expression.right.body.body[0].argument.callee.object.name;
+    let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + additionalCode + "\n";
+    let url = "https://youtube.com/watch?v=abcd123-";
 
-    let firstArg = "";
-    for (let i = 0; i < preChallengeMethodCode.expression.right.body.body[0].argument.arguments.length; i++) {
-      if (preChallengeMethodCode.expression.right.body.body[0].argument.arguments[i].type === "Literal") {
-        firstArg = preChallengeMethodCode.expression.right.body.body[0].argument.arguments[i].raw;
-        break;
-      }
-    }
-    let nFunctionCode = findMethodByName(parsedBaseJs, challengeName);
-    let baseCode = generate(nFunctionCode);
-    function collectDependencies(entryCode, challengeName) {
-      let collectedCode = "";
-      const processed = new Set();
-      const queue = new Set(
-        getUndeclaredMethods(acorn.parse(entryCode, { ecmaVersion: 2020 }), challengeName)
-      );
+    let firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
+    let gph = firstPoint[1];
+    // let gphFunc = findMethodByName(parsedBaseJs, gph);
+    let gphProtoMethods = collectPrototypeMethods(
+      parsedBaseJs,
+      gph,
+      globalArray.globalArrayData,
+      globalArray.globalArrayName
+    ).map(n => {
+      const rawCode = generate(n).replace("};;", "};").replace("};\n;", "};\n");
+      return ensureVarDeclaration(n, rawCode);
+    }).join("\n");
 
-      while (queue.size > 0) {
-        const [name] = queue;
-        queue.delete(name);
-
-        if (name === preChallengeName || name === challengeName) continue;
-        if (processed.has(name)) continue;
-
-        const node = findMethodByName(parsedBaseJs, name);
-        if (!node) continue;
-
-        const code = generate(node).replace("};;", "};").replace("};\n;", "};\n");
-        collectedCode += code + "\n";
-        processed.add(name);
-
-        const parsed = acorn.parse(entryCode + collectedCode, { ecmaVersion: 2020 });
-        const newUndeclared = getUndeclaredMethods(parsed, challengeName);
-
-        newUndeclared.forEach(n => {
-          if (!processed.has(n)) queue.add(n);
-        });
-      }
-      return collectedCode;
-    }
-
-    let additionalCode = collectDependencies(baseCode, challengeName)
-      .replaceAll(preChallengeName, "nFunction");
-
-    const finalPart =
-      "\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) +
-      ";\n var nFunction=function(nValue) { return " + challengeName + "(" + firstArg + ", nValue); };" +
-      baseCode +
-      additionalCode +
+    let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n" + "\n" +
+      "\n newObjectWithUrlObject['set']('n', nValue);\n";
+    let finalPart =
+      r +
+      gphProtoMethods +
+      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
       "\nreturn nFunction;";
-
+    // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
+    // console.warn(finalPart);
     let nFunction = new Function(finalPart);
     this.nfunction = nFunction();
   }
 }
-// function getUndeclaredMethodsJS(parsedBaseJs, undeclares, challengeName, preChallengeName) {
-//   let additionalCode = "\n";
-//   undeclares.forEach(name => {
-//     let processed = findMethodByName(parsedBaseJs, name)
-//     if (name === preChallengeName || name === challengeName || processed === null) return;
-//     additionalCode += generate(processed) + ";\n";
-//     additionalCode = additionalCode.replace("};;", "};").replace("};\n;", "};\n")
-//   })
-//   return additionalCode
-// }
 export default Innertube;
