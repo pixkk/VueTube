@@ -60,7 +60,6 @@ class Innertube {
     // if (baseJsUrl.indexOf("player-plasma") > 0) {
     // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
     // }
-    // https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js
 
       baseJsUrl = baseJsUrl.replace(
         /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
@@ -72,6 +71,7 @@ class Innertube {
       )
     // baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
     // baseJsUrl = baseJsUrl.replace("player_embed_es6", "player_ias");
+    // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
     // Get base.js content
     // 377ca75b
     const baseJs = await Http.get({
@@ -897,23 +897,33 @@ class Innertube {
 
   async makeDecipherFunctionWithAst(baseJs) {
     // let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
-    let decipherFunctionRegex = /([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]\)\);return [A-z0-9$]+.timedOut\+/gm;
+    let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
+    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);.*?([A-z0-9]+)\(([0-9]+),([0-9]+),([A-z0-9$]+\(.*?([A-z0-9$]+)\))\),/gm;
     let decipherFunction = decipherFunctionRegex.exec(baseJs.data);
 
     let decipherFunctionSecondArg = decipherFunction[3];
+    let decipherFunctionLastArgOfThirdPart = decipherFunction[5];
+    let decipherFunctionThirdPart = decipherFunction[4].replaceAll(decipherFunctionLastArgOfThirdPart, "sigValue");
+
     let decipherFunctionFirstArg = decipherFunction[2];
     let decipherFunctionName = decipherFunction[1];
 
-    let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
-
     let globalArray = findGlobalArray(parsedBaseJs);
 
-    let funcCode = findDecipherFunction(parsedBaseJs, decipherFunctionName)
-    let additionalCode = collectDependencies(generate(funcCode), decipherFunctionName, parsedBaseJs)
+    let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
+    let additionalCode = collectDependencies(generate(startFunc), decipherFunctionName, parsedBaseJs)
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
 
-    const finalPart =
-      "var g = {};\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + ", nValue); };" + generate(funcCode) + "; \n" + additionalCode + "\nreturn decodeUrl;";
-    // console.warn(finalPart);
+    let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n";
+      // "\n newObjectWithUrlObject['set']('n', nValue);\n";
+    let finalPart =
+      r +
+      gphProtoMethods +
+      "\nvar decodeUrl=function(sigValue) { " + prePart + " return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + "," + decipherFunctionThirdPart + "); };" +
+      "\nreturn decodeUrl;";
+    // const finalPart =
+    //   "var g = {};\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + ", nValue); };" + generate(startFunc) + "; \n" + additionalCode + "\nreturn decodeUrl;";
+    //console.warn(finalPart);
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
   }
@@ -930,6 +940,22 @@ class Innertube {
     let startFunc = findMethodByName(parsedBaseJs, funcName);
     let additionalCode = collectDependencies(generate(startFunc), funcName, parsedBaseJs)
 
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
+
+    let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n" + "\n" +
+      "\n newObjectWithUrlObject['set']('n', nValue);\n";
+    let finalPart =
+      r +
+      gphProtoMethods +
+      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
+      "\nreturn nFunction;";
+    // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
+    // console.warn(finalPart);
+    let nFunction = new Function(finalPart);
+    this.nfunction = nFunction();
+  }
+
+  generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs) {
     let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + additionalCode + "\n";
     let url = "https://youtube.com/watch?v=abcd123-";
 
@@ -945,18 +971,7 @@ class Innertube {
       const rawCode = generate(n).replace("};;", "};").replace("};\n;", "};\n");
       return ensureVarDeclaration(n, rawCode);
     }).join("\n");
-
-    let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n" + "\n" +
-      "\n newObjectWithUrlObject['set']('n', nValue);\n";
-    let finalPart =
-      r +
-      gphProtoMethods +
-      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
-      "\nreturn nFunction;";
-    // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
-    // console.warn(finalPart);
-    let nFunction = new Function(finalPart);
-    this.nfunction = nFunction();
+    return {r, url, gph, gphProtoMethods};
   }
 }
 export default Innertube;
