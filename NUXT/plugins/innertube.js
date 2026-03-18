@@ -794,12 +794,12 @@ class Innertube {
         try {
             nValue = "&n=" + this.nfunction(n)
           if (nValue === undefined) {
-            nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
+            // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
           }
         }
         catch (e) {
           // nValue = "&n=" + this.nfunction(1, n)
-          nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
+          // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
         }
       }
       searchParams.delete("n");
@@ -947,7 +947,7 @@ class Innertube {
     let finalPart =
       r +
       gphProtoMethods +
-      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
+      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9-]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
       "\nreturn nFunction;";
     // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
     // console.warn(finalPart);
