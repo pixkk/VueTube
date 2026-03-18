@@ -38,8 +38,8 @@
           :class="
             tabSelection == i && $store.state.tweaks.navigationShift
               ? $vuetify.theme.dark
-                ? 'tab primary darken-4'
-                : 'tab primary lighten-4'
+                ? 'tab primary darken-4 '
+                : 'tab primary lighten-4 '
               : ''
           "
         >
@@ -118,6 +118,21 @@
 
 <script>
 export default {
+  methods: {
+    moveIndicator(index) {
+      const buttons = this.$el.querySelectorAll('.navButton');
+      const pill = this.$el.querySelector('.link-anime');
+      if (!pill || !buttons[index]) return;
+
+      const navRect = this.$el.querySelector('.nav').getBoundingClientRect();
+      const btnRect = buttons[index].getBoundingClientRect();
+      const pillWidth = pill.offsetWidth;
+
+      const x = btnRect.left - navRect.left + btnRect.width / 2 - pillWidth / 2;
+      pill.style.transform = `translateX(${x}px)`;
+      pill.style.scale = '1';
+    }
+  },
   data() {
     return {
       tabSelection: 0,
@@ -159,13 +174,29 @@ export default {
     this.tabs[0].name = lang.home;
     this.tabs[1].name = lang.subscriptions;
     this.tabs[2].name = lang.library;
+    this.$nextTick(() => this.moveIndicator(this.tabSelection));
+
+    this._resizeObserver = new ResizeObserver(() => {
+      this.moveIndicator(this.tabSelection);
+    });
+    this._resizeObserver.observe(this.$el.querySelector('.nav'));
   },
+  beforeDestroy() {
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+    }
+  },
+  watch: {
+    tabSelection(i) {
+      this.moveIndicator(i);
+    }
+  }
 };
 </script>
 
 <style scoped>
 .link-anime {
-  right: 0;
+  left: 0;
   height: 2rem;
   width: 3.25rem;
   position: absolute;
@@ -177,19 +208,7 @@ export default {
   z-index: -1;
   scale: 0;
 }
-/* TODO: calculate inside <template></template> based on tabs.length */
-.nav .link:first-child.link-active ~ .link-anime {
-  transform: translateX(calc(-75vw + 50%));
-  scale: 1;
-}
-.nav .link:nth-child(2).link-active ~ .link-anime {
-  transform: translateX(calc(-50vw + 50%));
-  scale: 1;
-}
-.nav .link:nth-child(3).link-active ~ .link-anime {
-  transform: translateX(calc(-25vw + 50%));
-  scale: 1;
-}
+
 .bottomNav {
   /* box-shadow: inset 0 0 10rem var(--v-background-base) !important; */
   height: calc(4rem + env(safe-area-inset-bottom)) !important;
