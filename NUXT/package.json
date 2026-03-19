@@ -1,0 +1,36 @@
+{
+  "name": "vuetube",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt -p 3001",
+    "start": "nuxt generate",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "lint": "eslint --fix --ext .js,.vue --ignore-path .eslintignore ."
+  },
+  "dependencies": {
+    "@adeprez/capacitor-user-agent": "^0.1.3",
+    "@capacitor/device": "^7.0.1",
+    "@capacitor/splash-screen": "latest",
+    "@capacitor/status-bar": "latest",
+    "@nuxtjs/axios": "^5.13.6",
+    "acorn": "^8.15.0",
+    "acorn-walk": "^8.3.4",
+    "astring": "^1.9.0",
+    "core-js": "^3.25.0",
+    "nuxt": "^2.15.8",
+    "showdown": "^2.1.0",
+    "uuid": "^9.0.0",
+    "vue": "^2.7.10",
+    "vue-poll": "^0.1.8",
+    "vue-server-renderer": "^2.7.10",
+    "vue-template-compiler": "^2.7.10",
+    "vuetify": "^2.6.9",
+    "webpack": "^4.46.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/vuetify": "^1.12.3",
+    "prettier": "^2.5.1"
+  }
+}

@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+env:
+  NODE_VERSION: 19
+
+jobs:
+  build:
+    name: Build web assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm i; cd NUXT; npm i
+      - name: Set App Version
+        working-directory: NUXT
+        run: sed -i 's/dev-local/${{ github.sha }}/' nuxt.config.js
+      - name: Build web assets
+        working-directory: NUXT
+        run: npm run generate
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+  ios:
+    name: Build iOS platform
+    runs-on: macos-latest
+    needs: [build]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+      - name: Set up XCode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 14.2.0
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install app dependencies
+        run: npm install
+
+      - name: Capacitor update
+        run: npx cap update
+
+      - name: Capacitor copy
+        run: npx cap copy
+
+      - name: Add `GoogleService-Info.plist`
+        run: echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
+          
+      - name: Build project
+        run: xcodebuild -workspace './ios/App/App.xcworkspace' -scheme App -destination generic/platform=iOS -archivePath App.xcarchive archive -allowProvisioningUpdates
+
+      - name: 🍻 Assemble IPA
+        run: xcodebuild archive -archivePath App.xcarchive -exportArchive -exportOptionsPlist ./GoogleService-Info.plist -exportPath output -allowProvisioningUpdates
+
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: iOS
+          path: VueTube.ipa
