@@ -4,13 +4,11 @@
 
 //---   Modules/Imports   ---//
 import {Http} from "@capacitor-community/http";
-import Innertube from "./innertube";
-import constants from "./constants";
-import rendererUtils from "./renderers";
+import Innertube from "~/lib/innertube";
+import constants from "~/lib/constants";
+import rendererUtils from "~/lib/renderers";
 import {Buffer} from "buffer";
-import iconv from "iconv-lite";
 import {Toast} from "@capacitor/toast";
-import {createHash} from "crypto";
 
 function getEncoding(contentType) {
   // console.warn(contentType);
@@ -45,8 +43,8 @@ const searchModule = {
           try {
 
               const buffer = Buffer.from(res.data, "base64");
-              // convert res.data from iso-8859-1 to utf-8
-              const data = iconv.decode(buffer, getEncoding(contentType));
+              const decoder = new TextDecoder(getEncoding(contentType));
+              const data = decoder.decode(buffer);
               callback(data);
           }
           catch (e) {
@@ -71,12 +69,17 @@ const searchModule = {
         callback(err);
       });
   },
-  getSponsorBlock(id, callback) {
-    function sha256(content) {
-      return createHash("sha256").update(content).digest("hex");
+  async getSponsorBlock(id, callback) {
+    async function sha256(content) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(content);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
     }
 
-    let hashedVideoId = sha256(id).slice(0, 6);
+    let hashedVideoId = (await sha256(id)).slice(0, 6);
     Http.request({
       method: "GET",
       url:
@@ -473,7 +476,11 @@ const innertubeModule = {
 };
 
 //---   Start   ---//
-export default ({ app }, inject) => {
-  inject("youtube", { ...searchModule, ...innertubeModule });
-  inject("rendererUtils", rendererUtils);
-};
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      youtube: { ...searchModule, ...innertubeModule },
+      rendererUtils: rendererUtils,
+    },
+  };
+});

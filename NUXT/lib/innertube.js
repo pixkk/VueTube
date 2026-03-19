@@ -17,7 +17,7 @@ import {
   findGlobalArray,
   findMethodByName,
   getUndeclaredMethods
-} from "@/plugins/ast/ast";
+} from "~/lib/ast/ast";
 
 class Innertube {
   //--- Initiation ---//

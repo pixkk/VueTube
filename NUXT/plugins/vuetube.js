@@ -2,18 +2,11 @@
 import { Http } from "@capacitor-community/http";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { NavigationBar } from "@hugotomazi/capacitor-navigation-bar";
-import constants from "./constants";
-import { hexToRgb, rgbToHex, parseEmoji } from "./utils";
+import constants from "~/lib/constants";
+import { hexToRgb, rgbToHex, parseEmoji } from "~/lib/utils";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
-import Vue from "vue";
-import backHandler from "./classes/backHander";
-
-Vue.directive("emoji", {
-  inserted: function (el) {
-    const twemojiParse = parseEmoji(el.innerHTML);
-    if (twemojiParse) el.innerHTML = twemojiParse;
-  },
-});
+import backHandler from "~/lib/classes/backHander";
+import {defineNuxtPlugin} from "nuxt/app";
 
 let backActions;
 
@@ -218,6 +211,17 @@ const module = {
 };
 
 //---   Start   ---//
-export default ({ app }, inject) => {
-  inject("vuetube", module);
-};
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.directive("emoji", {
+    mounted(el) {
+      const twemojiParse = parseEmoji(el.innerHTML);
+      if (twemojiParse) el.innerHTML = twemojiParse;
+    },
+  });
+
+  return {
+    provide: {
+      vuetube: module,
+    },
+  };
+});

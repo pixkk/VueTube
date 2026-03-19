@@ -190,7 +190,7 @@ function humanFileSize(size) {
   return ( size / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 };
 
-module.exports = {
+export {
   getBetweenStrings,
   hexToRgb,
   rgbToHex,
@@ -200,5 +200,5 @@ module.exports = {
   delay,
   parseEmoji,
   humanFileSize,
-  convertTranscriptToVTT
+  convertTranscriptToVTT,
 };

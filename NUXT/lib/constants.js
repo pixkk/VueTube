@@ -87,7 +87,7 @@ const filesystem = {
   plugins: "plugins/",
 };
 
-module.exports = {
+export default {
   URLS: url,
   YT_API_VALUES: androidApiVal,
   fs: filesystem,

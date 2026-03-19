@@ -1,137 +1,100 @@
+import ar from "~/lib/languages/arabic";
+import az from "~/lib/languages/azerbaijan";
+import bn from "~/lib/languages/bengali";
+import pt from "~/lib/languages/brazilian-portuguese";
+import bg from "~/lib/languages/bulgarian";
+import zh from "~/lib/languages/chinese-simplified";
+import zh_TW from "~/lib/languages/chinese-traditional";
+import cs from "~/lib/languages/czech";
+import nl from "~/lib/languages/dutch";
+import en from "~/lib/languages/english";
+import et from "~/lib/languages/estonian";
+import fr from "~/lib/languages/french-fr";
+import de from "~/lib/languages/german";
+import hi from "~/lib/languages/hindi";
+import mr from "~/lib/languages/marathi";
+import hu from "~/lib/languages/hungarian";
+import id from "~/lib/languages/indonesian";
+import it from "~/lib/languages/italian";
+import ja from "~/lib/languages/japanese";
+import ko from "~/lib/languages/korean";
+import mk from "~/lib/languages/macedonian";
+import ms from "~/lib/languages/malay";
+import pl from "~/lib/languages/polish";
+import ro from "~/lib/languages/romanian";
+import ru from "~/lib/languages/russian";
+import sr from "~/lib/languages/serbian";
+import sl from "~/lib/languages/slovenian";
+import es from "~/lib/languages/spanish";
+import ta from "~/lib/languages/tamil";
+import tr from "~/lib/languages/turkish";
+import uk from "~/lib/languages/ukrainian";
+import vi from "~/lib/languages/vietnamese";
+
 const packs = {
-  ar: require("./languages/arabic"),
-  az: require("./languages/azerbaijan"),
-  bn: require("./languages/bengali"),
-  pt: require("./languages/brazilian-portuguese"),
-  bg: require("./languages/bulgarian"),
-  zh: require("./languages/chinese-simplified"),
-  zh_TW: require("./languages/chinese-traditional"),
-  cs: require("./languages/czech"),
-  nl: require("./languages/dutch"),
-  en: require("./languages/english"),
-  et: require("./languages/estonian"),
-  fr: require("./languages/french-fr"),
-  de: require("./languages/german"),
-  hi: require("./languages/hindi"),
-  mr: require("./languages/marathi"),
-  hu: require("./languages/hungarian"),
-  id: require("./languages/indonesian"),
-  it: require("./languages/italian"),
-  ja: require("./languages/japanese"),
-  ko: require("./languages/korean"),
-  mk: require("./languages/macedonian"),
-  ms: require("./languages/malay"),
-  pl: require("./languages/polish"),
-  ro: require("./languages/romanian"),
-  ru: require("./languages/russian"),
-  sr: require("./languages/serbian"),
-  sl: require("./languages/slovenian"),
-  es: require("./languages/spanish"),
-  ta: require("./languages/tamil"),
-  tr: require("./languages/turkish"),
-  uk: require("./languages/ukrainian"),
-  vi: require("./languages/vietnamese"),
+  ar, az, bn, pt, bg, zh, zh_TW, cs, nl, en, et, fr, de, hi, mr, hu,
+  id, it, ja, ko, mk, ms, pl, ro, ru, sr, sl, es, ta, tr, uk, vi,
 };
 
 function convertToISO() {
   const languageMap = {
-    arabic: "ar",
-    azerbaijan: "az",
-    bengali: "bn",
-    "brazilian-portuguese": "pt",
-    bulgarian: "bg",
-    "chinese-simplified": "zh",
-    "chinese-traditional": "zh-TW",
-    czech: "cs",
-    dutch: "nl",
-    english: "en",
-    estonian: "et",
-    "french-fr": "fr",
-    german: "de",
-    hindi: "hi",
-    marathi: "mr",
-    hungarian: "hu",
-    indonesian: "id",
-    italian: "it",
-    japanese: "ja",
-    korean: "ko",
-    macedonian: "mk",
-    malay: "ms",
-    polish: "pl",
-    romanian: "ro",
-    russian: "ru",
-    serbian: "sr",
-    slovenian: "sl",
-    spanish: "es",
-    tamil: "ta",
-    turkish: "tr",
-    ukrainian: "uk",
-    vietnamese: "vi"
+    arabic: "ar", azerbaijan: "az", bengali: "bn",
+    "brazilian-portuguese": "pt", bulgarian: "bg",
+    "chinese-simplified": "zh", "chinese-traditional": "zh-TW",
+    czech: "cs", dutch: "nl", english: "en", estonian: "et",
+    "french-fr": "fr", german: "de", hindi: "hi", marathi: "mr",
+    hungarian: "hu", indonesian: "id", italian: "it", japanese: "ja",
+    korean: "ko", macedonian: "mk", malay: "ms", polish: "pl",
+    romanian: "ro", russian: "ru", serbian: "sr", slovenian: "sl",
+    spanish: "es", tamil: "ta", turkish: "tr", ukrainian: "uk",
+    vietnamese: "vi",
   };
 
   const storedLang = localStorage.getItem("language");
   if (storedLang && languageMap[storedLang]) {
     localStorage.setItem("language", languageMap[storedLang]);
   }
-
 }
 
-function module(subPack, listPacks) {
-  convertToISO();
-  //---   List All Packs   ---//
-  if (listPacks === true) return packs;
-
-  //---   Return Language Pack   ---//
-  const selectedLanguage = localStorage.getItem("language") || "en";
-  let languagePack = mergeMissingKeysFlat(packs.en, packs[selectedLanguage]);
-
-  //---   Send Full Language Pack   ---//
-  if (!subPack) return languagePack;
-  //---   Allow Subpack Fallback   ---//
-  // let builtSubPack = new Object();
-  // for (const i in packs.en[subPack]) {
-  //   const englishEntry = packs.en[subPack][i];
-  //   const entry = languagePack[subPack][i];
-  //
-  //   if (!entry) {
-  //     builtSubPack[i] = englishEntry;
-  //   } else {
-  //     builtSubPack[i] = entry;
-  //   }
-  //
-  //
-  // }
-  //---   Return Built Subpack   ---//
-  languagePack = languagePack[subPack];
-  console.log("RETURNING:",languagePack)
-  return languagePack;
-}
 function mergeMissingKeysFlat(source, target) {
   const stack = [{ src: source, tgt: target }];
-
   while (stack.length) {
-    const {src, tgt} = stack.pop();
+    const { src, tgt } = stack.pop();
     for (const key in src) {
       if (!(key in tgt)) {
         tgt[key] =
-          typeof src[key] === 'object' && src[key] !== null
+          typeof src[key] === "object" && src[key] !== null
             ? {}
-            : `${src[key]} `; // need to be translated
+            : `${src[key]} `;
       }
-
       if (
-        typeof src[key] === 'object' &&
-        src[key] !== null &&
-        typeof tgt[key] === 'object' &&
-        tgt[key] !== null
+        typeof src[key] === "object" && src[key] !== null &&
+        typeof tgt[key] === "object" && tgt[key] !== null
       ) {
-        stack.push({src: src[key], tgt: tgt[key]});
+        stack.push({ src: src[key], tgt: tgt[key] });
       }
     }
   }
   return target;
 }
 
-export default ({ app }, inject) => {
-  inject("lang", module);
-};
+function langModule(subPack, listPacks) {
+  convertToISO();
+  if (listPacks === true) return packs;
+
+  const selectedLanguage = localStorage.getItem("language") || "en";
+  let languagePack = mergeMissingKeysFlat(packs.en, packs[selectedLanguage] || packs.en);
+
+  if (!subPack) return languagePack;
+  languagePack = languagePack[subPack];
+  console.log("RETURNING:", languagePack);
+  return languagePack;
+}
+
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      lang: langModule,
+    },
+  };
+});

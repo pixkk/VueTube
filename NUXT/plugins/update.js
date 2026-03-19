@@ -2,7 +2,7 @@
 import { Http } from "@capacitor-community/http";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
-module = (url) => {
+const updateModule = (url) => {
   return new Promise(async (resolve, reject) => {
     //---   Download File From GitHub & Save to Memory/RAM   ---//
     let data = await Http.get({
@@ -36,6 +36,10 @@ module = (url) => {
   });
 };
 //---   Start   ---//
-export default ({ app }, inject) => {
-  inject("update", module);
-};
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      update: updateModule,
+    },
+  };
+});

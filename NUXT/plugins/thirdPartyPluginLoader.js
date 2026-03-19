@@ -1,6 +1,9 @@
 //---   Modules/Imports   ---//
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
-import { fs } from "./constants";
+import constants from "~/lib/constants";
+import { getCpn } from "~/lib/utils";
+
+const { fs } = constants;
 
 //---   Set Up App Directory   ---//
 const APP_DIRECTORY = Directory.Data;
@@ -20,7 +23,7 @@ const ensureStructure = new Promise(async (resolve, reject) => {
   resolve();
 });
 
-const module = {
+const tpplModule = {
   //---   List Plugins   ---//
   list: new Promise(async (resolve, reject) => {
     await ensureStructure;
@@ -42,7 +45,7 @@ const module = {
   async addPlugin(content) {
     await ensureStructure;
     new Promise(async (resolve, reject) => {
-      const fileName = require("./utils").getCpn(); // Im not sure what this is actually meant for but im using it as a random string generator
+      const fileName = getCpn();
       console.log("Saving Plugin As" + fileName);
       await Filesystem.writeFile({
         path: fs.plugins + fileName + ".js",
@@ -68,6 +71,10 @@ const module = {
 };
 
 //---   Start   ---//
-export default ({ app }, inject) => {
-  inject("tppl", module);
-};
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      tppl: tpplModule,
+    },
+  };
+});

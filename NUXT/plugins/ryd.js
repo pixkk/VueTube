@@ -1,6 +1,6 @@
 //---   Modules/Imports   ---//
 import { Http } from "@capacitor-community/http";
-import constants from "./constants";
+import constants from "~/lib/constants";
 
 function generateUserID(length = 36) {
   const charset =
@@ -94,6 +94,10 @@ const rydModule = {
 };
 
 //---   Start   ---//
-export default ({ app }, inject) => {
-  inject("ryd", { ...rydModule });
-};
+export default defineNuxtPlugin(() => {
+  return {
+    provide: {
+      ryd: { ...rydModule },
+    },
+  };
+});

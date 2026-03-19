@@ -1,5 +1,5 @@
-import constants from "@/plugins/constants";
-import {getBetweenStrings} from "@/plugins/utils";
+import constants from "~/lib/constants";
+import {getBetweenStrings} from "~/lib/utils";
 
 export async function makeDecipherFunction(baseJs) {
   // Example:
