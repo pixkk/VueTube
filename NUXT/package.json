@@ -3,34 +3,38 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt -p 3001",
+    "dev": "nuxt dev -p 3001",
     "start": "nuxt generate",
-    "build": "nuxt build",
+    "build": "nuxi build",
     "generate": "nuxt generate",
     "lint": "eslint --fix --ext .js,.vue --ignore-path .eslintignore ."
   },
   "dependencies": {
     "@adeprez/capacitor-user-agent": "^0.1.3",
-    "@capacitor/device": "^7.0.1",
+    "@capacitor/device": "^8.0.1",
     "@capacitor/splash-screen": "latest",
     "@capacitor/status-bar": "latest",
-    "@nuxtjs/axios": "^5.13.6",
-    "acorn": "^8.15.0",
-    "acorn-walk": "^8.3.4",
+    "@mdi/font": "^7.4.47",
+    "@pinia/nuxt": "^0.11.3",
+    "acorn": "^8.16.0",
+    "acorn-walk": "^8.3.5",
     "astring": "^1.9.0",
-    "core-js": "^3.25.0",
-    "nuxt": "^2.15.8",
+    "buffer": "^6.0.3",
+    "core-js": "^3.49.0",
+    "nuxt": "^4.4.2",
+    "pinia": "^3.0.4",
     "showdown": "^2.1.0",
-    "uuid": "^9.0.0",
-    "vue": "^2.7.10",
-    "vue-poll": "^0.1.8",
-    "vue-server-renderer": "^2.7.10",
-    "vue-template-compiler": "^2.7.10",
-    "vuetify": "^2.6.9",
-    "webpack": "^4.46.0"
+    "uuid": "^13.0.0",
+    "vue": "^3.5.30",
+    "vue-poll": "^0.1.9",
+    "vuetify": "^4.0.2",
+    "vuetify-nuxt-module": "^0.18.6",
+    "webpack": "^5.105.4"
   },
   "devDependencies": {
-    "@nuxtjs/vuetify": "^1.12.3",
-    "prettier": "^2.5.1"
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "prettier": "^3.8.1",
+    "sass-embedded": "^1.98.0"
   }
 }
