@@ -69,6 +69,10 @@ class Innertube {
         /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
         'player-plasma-ias-phone-$1.vflset/base.js'
       )
+      baseJsUrl = baseJsUrl.replace(
+        /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+        'player-plasma-ias-phone-$1.vflset/base.js'
+      )
     // baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
     // baseJsUrl = baseJsUrl.replace("player_embed_es6", "player_ias");
     // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
