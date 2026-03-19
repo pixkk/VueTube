@@ -28,7 +28,7 @@
         <!-- element above removes artifacting from things like v-ripple by -->
         <!-- scrollbox below must be a standalone div -->
         <div ref="pgscroll" style="height: 100%">
-          <nuxt style="" />
+          <slot />
         </div>
       </div>
 
@@ -42,9 +42,9 @@
             <v-list-item v-for="item in response" :key="item[0]" class="px-0">
               <v-btn
                 v-emoji
-                text
-                tile
-                dense
+                variant="text"
+                rounded="0"
+                density="compact"
                 class="searchButton text-left text-none no-spacing"
                 @click="youtubeSearch(item)"
               >
@@ -64,10 +64,10 @@
 
 <script>
 import { App as CapacitorApp } from "@capacitor/app";
-import { mapState } from "vuex";
-import { linkParser } from "~/plugins/utils";
-import backType from "~/plugins/classes/backType";
+import { linkParser } from "~/lib/utils";
+import backType from "~/lib/classes/backType";
 import TopNavigation from "../components/topNavigation.vue";
+import { useTweaksStore } from "~/stores/tweaks";
 
 function fromBinary(str) {
   // Going backwards: from bytestream, to percent-encoding, to original string.
@@ -98,9 +98,9 @@ export default {
   }),
 
   computed: {
-    ...mapState({
-      roundTweak: (state) => state.tweaks.roundTweak,
-    }),
+    roundTweak() {
+      return useTweaksStore().roundTweak;
+    },
     page: function () {
       const splitPath = this.$route.path.split("/");
       // console.log(splitPath);
@@ -146,7 +146,7 @@ export default {
   },
 
   mounted() {
-    if (!process.browser) this.$vuetube.resetBackActions();
+    this.$vuetube.resetBackActions();
 
     const lang = this.$lang("pages");
     this.lang = lang;
@@ -181,7 +181,7 @@ export default {
     document.head.appendChild(plugin3);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.backHandler) this.backHandler.remove();
   },
 

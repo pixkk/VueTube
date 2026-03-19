@@ -229,7 +229,7 @@ getTabIndexes() {
       this.$set(this.loadedContent, index, this.arrayWithTabs.videos);
       this.tabsIndexes.videoTab = 1;
     },
-    beforeDestroy() {
+    beforeUnmount() {
       this.executedTabs = new Set();
     }
   }

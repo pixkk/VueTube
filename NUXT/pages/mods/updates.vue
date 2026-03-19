@@ -116,6 +116,7 @@
 import { Device } from "@capacitor/device";
 import showdown from "showdown";
 import constants from "../../plugins/constants";
+import {useRuntimeConfig} from "nuxt/app";
 
 export default {
   layout: "empty",
@@ -123,9 +124,11 @@ export default {
     window.openExternal = this.openExternal;
   },
   data() {
+
+    const config = useRuntimeConfig();
     return {
-      installedVersion: process.env.version,
-      installedChannel: process.env.channel,
+      installedVersion: config.public.version,
+      installedChannel: config.public.channel,
       latestVersion: {
         assets: []
       },

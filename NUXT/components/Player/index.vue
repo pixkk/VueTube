@@ -394,11 +394,11 @@ import fullscreen from "~/components/Player/fullscreen.vue";
 import progressbar from "~/components/Player/progressbar.vue";
 import sponsorblock from "~/components/Player/sponsorblock.vue";
 
-import backType from "~/plugins/classes/backType";
-import constants from "@/plugins/constants";
+import backType from "~/lib/classes/backType";
+import constants from "~/lib/constants";
 import { Http } from "@capacitor-community/http";
-import { convertTranscriptToVTT } from "~/plugins/utils";
-import $youtube from "@/plugins/innertube";
+import { convertTranscriptToVTT } from "~/lib/utils";
+import $youtube from "~/lib/innertube";
 import Endscreen from "./endscreen.vue";
 
 export default {
@@ -767,7 +767,7 @@ export default {
       this.fullscreenHandler(false)
     );
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.cleanup();
   },
   methods: {

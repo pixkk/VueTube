@@ -1,7 +1,6 @@
 <template>
   <div class="yt-text-formatter">
     <p v-html="formatTitle">
-      {{ textRuns.content }}
     </p>
   </div>
 </template>
@@ -44,7 +43,7 @@ export default {
               ),
               commandRun.onTap.innertubeCommand.urlEndpoint.url,
             ]);
-          }
+        }
         });
 
         const duplicates = [];
@@ -68,7 +67,7 @@ export default {
               j--;
             }
           }
-        }
+      }
 
         // Replacing urls in description
         arrayWithReplaceParts.forEach((text) => {
@@ -101,7 +100,7 @@ export default {
               new RegExp(`\\b${text[0]}\\b`, "g"),
               newUrl
             );
-          } else {
+      } else {
             let params = new Proxy(new URLSearchParams(text[1]), {
               get: (searchParams, prop) => searchParams.get(prop),
             });

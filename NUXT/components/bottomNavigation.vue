@@ -94,7 +94,7 @@
                 : 'tab primary lighten-4'
               : ''
           "
-          v-text="item.icon"
+          :icon="item.icon"
         />
         <!-- + (tabSelection == i ? '' : '-outline') -->
       </v-btn>
@@ -181,7 +181,7 @@ export default {
     });
     this._resizeObserver.observe(this.$el.querySelector('.nav'));
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
     }

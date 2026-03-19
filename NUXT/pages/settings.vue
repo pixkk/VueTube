@@ -21,7 +21,7 @@
             $store.state.tweaks.roundTweak > 0 ? '' : '1.5rem !important',
         }"
       >
-        <v-icon size="30px" class="icon" v-text="item.icon" />
+        <v-icon size="30px" class="icon" :icon="item.icon" />
         {{ item.name }}
       </v-btn>
     </v-list-item>

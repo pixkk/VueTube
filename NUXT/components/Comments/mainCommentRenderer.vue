@@ -64,7 +64,7 @@ import commentsHeaderRenderer from "~/components/Comments/commentsHeaderRenderer
 import mainCommentReplyRenderer from "~/components/Comments/mainCommentReplyRenderer.vue";
 import continuationItemRenderer from "~/components/observer.vue";
 
-import backType from "~/plugins/classes/backType";
+import backType from "~/lib/classes/backType";
 
 export default {
   components: {

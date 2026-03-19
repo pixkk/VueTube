@@ -84,7 +84,7 @@ export default {
     })
 
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener('resize', this.updateRootDimensions);
   },
   methods: {

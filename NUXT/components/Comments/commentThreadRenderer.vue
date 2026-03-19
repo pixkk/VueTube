@@ -56,14 +56,14 @@
             </span>
           </div>
           <template
-            v-for="(badge, index) in commentRenderer.authorCommentBadge"
+            v-for="(badge, index) in commentRenderer.authorCommentBadge"  :key="index"
           >
-            <author-comment-badge-renderer :metadata="badge" :key="index" />
+            <author-comment-badge-renderer :metadata="badge"/>
           </template>
           <template
-            v-for="(badge, index) in commentRenderer.sponsorCommentBadge"
+            v-for="(badge, index) in commentRenderer.sponsorCommentBadge"  :key="index"
           >
-            <sponsor-comment-badge-renderer :metadata="badge" :key="index" />
+            <sponsor-comment-badge-renderer :metadata="badge" />
           </template>
         </div>
         &middot;
@@ -171,7 +171,7 @@
   font-weight: bold;
 }
 
-.toolbar--button::v-deep.v-btn--active .v-btn__content {
+.toolbar--button:deep(.v-btn--active) .v-btn__content {
   color: var(--v-primary-base);
 }
 </style>
@@ -181,8 +181,14 @@ import collapsableText from "~/components/UtilRenderers/collapsableText.vue";
 import YtTextFormatter from "~/components/UtilRenderers/YtTextFormatter.vue";
 import AuthorCommentBadgeRenderer from "~/components/Comments/authorCommentBadgeRenderer.vue";
 import SponsorCommentBadgeRenderer from "~/components/Comments/sponsorCommentBadgeRenderer.vue";
+import $rendererUtils from "../../lib/renderers";
 
 export default {
+  computed: {
+    $rendererUtils() {
+      return $rendererUtils
+    }
+  },
   components: {
     collapsableText,
     YtTextFormatter,

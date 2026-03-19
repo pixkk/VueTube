@@ -27,7 +27,7 @@ export default {
       default: null,
     },
   },
-  method: {
+  methods: {
     exit() {
       App.exitApp()
     }

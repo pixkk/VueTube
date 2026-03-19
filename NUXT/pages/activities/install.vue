@@ -77,6 +77,7 @@
 
 <script>
 import language from "~/components/Settings/language.vue";
+import {useRuntimeConfig} from "nuxt/app";
 export default {
   components: {
     language,
@@ -125,11 +126,13 @@ export default {
   },
   methods: {
     next() {
+
+      const config = useRuntimeConfig();
       this.$refs["stage" + this.stage].style.display = "none";
       this.stage++;
 
       if (!this.$refs["stage" + this.stage]) {
-        localStorage.setItem("lastRunVersion", process.env.version);
+        localStorage.setItem("lastRunVersion", config.public.version);
         localStorage.setItem("firstTimeSetupComplete", true);
         this.recommendationsFix = false;
         this.$router.replace("/");

@@ -100,12 +100,15 @@
 <script>
 import {Device} from "@capacitor/device";
 import {UserAgent} from '@adeprez/capacitor-user-agent';
+import {useRuntimeConfig} from "nuxt/app";
 
 export default {
   data() {
+
+    const config = useRuntimeConfig();
     return {
-      version: process.env.version,
-      release: process.env.channel,
+      version: config.public.version,
+      release: config.public.channel,
       deviceInfo: "",
       lang: {},
       ua: "",

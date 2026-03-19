@@ -38,11 +38,15 @@
 </style>
 
 <script>
+import {useRuntimeConfig} from "nuxt/app";
+
 export default {
   data() {
+
+    const config = useRuntimeConfig();
     return {
       plugins: [],
-      installedVersion: process.env.version,
+      installedVersion: config.public.version,
     };
   },
   async mounted() {
@@ -57,7 +61,7 @@ export default {
     };
 
     this.rebuildList();
-    
+
   },
   methods: {
     async rebuildList() {

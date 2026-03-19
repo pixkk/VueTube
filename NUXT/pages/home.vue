@@ -28,6 +28,7 @@
 import horizontalListRenderer from "~/components/ListRenderers/horizontalListRenderer.vue";
 import VidLoadRenderer from "~/components/vidLoadRenderer.vue";
 import Observer from "~/components/observer.vue";
+import {useTheme} from "vuetify/framework";
 export default {
   components: { horizontalListRenderer, VidLoadRenderer, Observer },
   data: () => ({
@@ -81,36 +82,6 @@ export default {
       this.$store.commit("playlist/initPlaylists");
       await this.$vuetube.launchBackHandling();
 
-      //---   Load Theming   ---//
-
-      setTimeout(() => {
-        this.$vuetify.theme.dark =
-          JSON.parse(localStorage.getItem("darkTheme")) === true;
-        if (localStorage.getItem("primaryDark") != null)
-          this.$vuetify.theme.themes.dark.primary =
-            localStorage.getItem("primaryDark");
-        if (localStorage.getItem("primaryLight") != null)
-          this.$vuetify.theme.themes.light.primary =
-            localStorage.getItem("primaryLight");
-        if (localStorage.getItem("backgroundDark") != null)
-          this.$vuetify.theme.themes.dark.background =
-            localStorage.getItem("backgroundDark");
-        if (localStorage.getItem("backgroundLight") != null)
-          this.$vuetify.theme.themes.light.background =
-            localStorage.getItem("backgroundLight");
-
-        this.$vuetube.navigationBar.setTheme(
-          this.$vuetify.theme.currentTheme.background,
-          !this.$vuetify.theme.dark
-        );
-        this.$vuetube.statusBar.setTheme(
-          this.$vuetify.theme.currentTheme.background,
-          this.$vuetify.theme.dark
-        );
-
-        // this.$vuetube.navigationBar.setTransparent();
-        // this.$vuetube.statusBar.setTransparent();
-      }, 0)
       await this.$youtube.getAPI();
     }
     if (!this.recommends.length) {
@@ -132,6 +103,34 @@ export default {
         });
     }
   },
+  async setup() {
+    const { $vuetube } = useNuxtApp()
+    const theme = useTheme()
+
+    const isDark = JSON.parse(localStorage.getItem("darkTheme")) === true
+
+    // theme.global.name.value = isDark ? 'dark' : 'light'
+    theme.change(isDark ? 'dark' : 'light')
+
+    if (localStorage.getItem("primaryDark"))
+      theme.themes.value.dark.colors.primary = localStorage.getItem("primaryDark")
+
+    if (localStorage.getItem("primaryLight"))
+      theme.themes.value.light.colors.primary = localStorage.getItem("primaryLight")
+
+    if (localStorage.getItem("backgroundDark"))
+      theme.themes.value.dark.colors.background = localStorage.getItem("backgroundDark")
+
+    if (localStorage.getItem("backgroundLight"))
+      theme.themes.value.light.colors.background = localStorage.getItem("backgroundLight")
+
+    const current = theme.current.value.colors
+    const backgroundColor = current.background || '#121212'
+
+    $vuetube.navigationBar.setTheme(backgroundColor, !isDark)
+    $vuetube.statusBar.setTheme(backgroundColor, isDark)
+
+  }
 };
 </script>
 <style>

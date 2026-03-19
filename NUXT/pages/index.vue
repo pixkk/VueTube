@@ -57,7 +57,8 @@
 
 <script>
 import UpdateChecker from "../components/updateChecker.vue";
-
+import {useRuntimeConfig} from "nuxt/app";
+import { useTheme } from 'vuetify'
 export default {
   components: {UpdateChecker},
   layout: "empty",
@@ -66,6 +67,9 @@ export default {
     progressMsg: "...",
   }),
   async mounted() {
+
+
+    const config = useRuntimeConfig();
     //---   Init Stuff   ---//
     this.progressMsg = this.$lang("index").connecting;
     this.$store.commit("initTelemetryPreference");
@@ -76,13 +80,14 @@ export default {
     this.$store.commit("playlist/initPlaylists");
     await this.$vuetube.launchBackHandling();
 
+    // return 1
     //---   Load Theming   ---//
-    await this.theming();
+    // await this.theming();
 
     //---   Update Screen   ---//
     if (
       localStorage.getItem("lastRunVersion") != null &&
-      localStorage.getItem("lastRunVersion") != process.env.version
+      localStorage.getItem("lastRunVersion") != config.public.version
     )
       return this.$router.replace("/activities/update");
 
@@ -119,41 +124,35 @@ export default {
       let brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
       return brightness > 128;
     },
-    theming() {
-      return new Promise((resolve) =>
-        // Set timeout is required for $vuetify.theme... dont ask me why -Front
-        setTimeout(() => {
-          this.$vuetify.theme.dark =
-            JSON.parse(localStorage.getItem("darkTheme")) === true;
-          if (localStorage.getItem("primaryDark") != null)
-            this.$vuetify.theme.themes.dark.primary =
-              localStorage.getItem("primaryDark");
-          if (localStorage.getItem("primaryLight") != null)
-            this.$vuetify.theme.themes.light.primary =
-              localStorage.getItem("primaryLight");
-          if (localStorage.getItem("backgroundDark") != null)
-            this.$vuetify.theme.themes.dark.background =
-              localStorage.getItem("backgroundDark");
-          if (localStorage.getItem("backgroundLight") != null)
-            this.$vuetify.theme.themes.light.background =
-              localStorage.getItem("backgroundLight");
-
-          this.$vuetube.navigationBar.setTheme(
-            this.$vuetify.theme.currentTheme.background,
-            !this.$vuetify.theme.dark
-          );
-          this.$vuetube.statusBar.setTheme(
-            this.$vuetify.theme.currentTheme.background,
-            this.$vuetify.theme.dark
-          );
-
-          // this.$vuetube.navigationBar.setTransparent();
-          // this.$vuetube.statusBar.setTransparent();
-          resolve();
-        }, 0)
-      );
-    },
   },
+  async setup() {
+    const { $vuetube } = useNuxtApp()
+      const theme = useTheme()
+
+      const isDark = JSON.parse(localStorage.getItem("darkTheme")) === true
+
+      // theme.global.name.value = isDark ? 'dark' : 'light'
+      theme.change(isDark ? 'dark' : 'light')
+
+      if (localStorage.getItem("primaryDark"))
+        theme.themes.value.dark.colors.primary = localStorage.getItem("primaryDark")
+
+      if (localStorage.getItem("primaryLight"))
+        theme.themes.value.light.colors.primary = localStorage.getItem("primaryLight")
+
+      if (localStorage.getItem("backgroundDark"))
+        theme.themes.value.dark.colors.background = localStorage.getItem("backgroundDark")
+
+      if (localStorage.getItem("backgroundLight"))
+        theme.themes.value.light.colors.background = localStorage.getItem("backgroundLight")
+
+      const current = theme.current.value.colors
+      const backgroundColor = current.background || '#121212'
+
+      $vuetube.navigationBar.setTheme(backgroundColor, !isDark)
+      $vuetube.statusBar.setTheme(backgroundColor, isDark)
+
+  }
 };
 </script>
 

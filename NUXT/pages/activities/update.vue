@@ -24,6 +24,7 @@
 
 <script>
 import language from "~/components/Settings/language.vue";
+import {useRuntimeConfig} from "nuxt/app";
 export default {
   layout: "empty",
   components: {
@@ -37,14 +38,17 @@ export default {
     };
   },
   mounted() {
+    const config = useRuntimeConfig();
     this.lang = this.$lang("events");
 
     this.oldVer = localStorage.getItem("lastRunVersion").substring(0, 7);
-    this.newVer = process.env.version.substring(0, 7);
+    this.newVer = config.public.version.substring(0, 7);
   },
   methods: {
     okay() {
-      localStorage.setItem("lastRunVersion", process.env.version);
+
+      const config = useRuntimeConfig();
+      localStorage.setItem("lastRunVersion", config.public.version);
       this.$router.replace("/");
     },
   },

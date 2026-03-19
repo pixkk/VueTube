@@ -23,6 +23,8 @@
 </style>
 
 <script>
+import {useRuntimeConfig} from "nuxt/app";
+
 export default {
   data() {
     return {
@@ -33,9 +35,10 @@ export default {
   },
 
   async mounted() {
+    const config = useRuntimeConfig();
     const releases = await this.$vuetube.checkForUpdates();
-    const appVersion = process.env.version;
-    const appChannel = process.env.channel;
+    const appVersion = config.public.version;
+    const appChannel = config.public.channel;
     if (appVersion !== releases[0]?.tag_name && appVersion !== "dev-local" && appChannel !== "Unstable") {
       this.updateSnackbar = true;
     }

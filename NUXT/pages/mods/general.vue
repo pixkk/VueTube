@@ -350,6 +350,7 @@
 
 <script>
 import language from "~/components/Settings/language.vue";
+import {useRuntimeConfig} from "nuxt/app";
 export default {
   components: {
     language,
@@ -432,10 +433,12 @@ export default {
     },
 
     registryBackup() {
+
+      const config = useRuntimeConfig();
       const file = JSON.stringify({
         scheme: "VueTube Backup",
-        version: process.env.version,
-        channel: process.env.channel,
+        version: config.public.version,
+        channel: config.public.channel,
         date: Date.now(),
         registry: this.getRegistry(),
       });
