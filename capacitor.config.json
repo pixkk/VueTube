@@ -1,7 +1,7 @@
 {
   "appId": "com.Frontesque.vuetube",
   "appName": "VueTube",
-  "webDir": "dist",
+  "webDir": "NUXT/.output/public",
   "bundledWebRuntime": false,
 
   "server": {
