@@ -9,7 +9,7 @@ on:
         type: string
 
 env:
-  NODE_VERSION: 16
+  NODE_VERSION: 24
   GOOGLE_SERVICE_INFO_PLIST: ${{secrets.GOOGLE_SERVICE_INFO_PLIST}}
 jobs:
   build:
