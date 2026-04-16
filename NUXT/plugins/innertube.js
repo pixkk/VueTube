@@ -912,6 +912,11 @@ class Innertube {
     let decipherFunctionFirstArg = decipherFunction[2];
     let decipherFunctionName = decipherFunction[1];
 
+    console.warn("decipherFunction", decipherFunction);
+    console.warn("decipherFunctionSecondArg", decipherFunctionSecondArg);
+    console.warn("decipherFunctionThirdPart", decipherFunctionThirdPart);
+    console.warn("decipherFunctionFirstArg", decipherFunctionFirstArg);
+    console.warn("decipherFunctionName", decipherFunctionName);
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
@@ -927,7 +932,7 @@ class Innertube {
       "\nreturn decodeUrl;";
     // const finalPart =
     //   "var g = {};\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + ", nValue); };" + generate(startFunc) + "; \n" + additionalCode + "\nreturn decodeUrl;";
-    //console.warn(finalPart);
+    console.warn(finalPart);
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
   }
@@ -965,8 +970,14 @@ class Innertube {
 
     let firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
     let gph = firstPoint[1];
-    // let gphFunc = findMethodByName(parsedBaseJs, gph);
-    let gphProtoMethods = collectPrototypeMethods(
+
+    // Explicitly include the constructor definition
+    const ctorNode = findMethodByName(parsedBaseJs, gph);
+    const ctorCode = ctorNode
+      ? ensureVarDeclaration(ctorNode, generate(ctorNode).replace("};;", "};").replace("};\n;", "};\n"))
+      : "";
+
+    const protoMethodsCode = collectPrototypeMethods(
       parsedBaseJs,
       gph,
       globalArray.globalArrayData,
@@ -975,6 +986,12 @@ class Innertube {
       const rawCode = generate(n).replace("};;", "};").replace("};\n;", "};\n");
       return ensureVarDeclaration(n, rawCode);
     }).join("\n");
+
+    // Collect deps for constructor + prototype methods (e.g. g.** used in clone())
+    // These may not be in **'s dep chain and would otherwise be missing at runtime
+    const gphDeps = collectDependencies(ctorCode + "\n" + protoMethodsCode, gph, parsedBaseJs);
+
+    let gphProtoMethods = gphDeps + "\n" + ctorCode + "\n" + protoMethodsCode;
     return {r, url, gph, gphProtoMethods};
   }
 }
