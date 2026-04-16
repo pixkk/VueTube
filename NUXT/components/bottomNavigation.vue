@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="!$route.path.includes('/mods') || $route.path.includes('/tweaks')"
+    v-if="(!$route.path.includes('/mods') || !$route.path.includes('/install')) || $route.path.includes('/tweaks')"
     class="bottomNav background"
     ref="navRoot"
   >
@@ -124,17 +124,21 @@
 export default {
   methods: {
     moveIndicator(index) {
-      const buttons = this.$refs.navRoot.querySelectorAll('.navButton');
-      const pill = this.$refs.navRoot.querySelector('.link-anime');
-      if (!pill || !buttons[index]) return;
+      try {
+        const buttons = this.$refs.navRoot.querySelectorAll('.navButton');
+        const pill = this.$refs.navRoot.querySelector('.link-anime');
+        if (!pill || !buttons[index]) return;
 
-      const navRect = this.$refs.navRoot.querySelector('.nav').getBoundingClientRect();
-      const btnRect = buttons[index].getBoundingClientRect();
-      const pillWidth = pill.offsetWidth;
+        const navRect = this.$refs.navRoot.querySelector('.nav').getBoundingClientRect();
+        const btnRect = buttons[index].getBoundingClientRect();
+        const pillWidth = pill.offsetWidth;
 
-      const x = btnRect.left - navRect.left + btnRect.width / 2 - pillWidth / 2;
-      pill.style.transform = `translateX(${x}px)`;
-      pill.style.scale = '1';
+        const x = btnRect.left - navRect.left + btnRect.width / 2 - pillWidth / 2;
+        pill.style.transform = `translateX(${x}px)`;
+        pill.style.scale = '1';
+      } catch (e) {
+
+      }
     }
   },
   data() {

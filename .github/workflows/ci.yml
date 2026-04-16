@@ -99,23 +99,29 @@ jobs:
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 16.1.0
+          xcode-version: 15.4.0
       - name: Add `GoogleService-Info.plist`
         run: echo "${{ env.GOOGLE_SERVICE_INFO_PLIST }}" > ios/App/App/GoogleService-Info.plist
       - name: Build and archive with xcodebuild
         working-directory: ios
-        run: xcodebuild
-          -workspace App/App.xcworkspace
-          -scheme App
-          -archivePath App/build/App.xarchive
-          clean build archive
-          -destination 'generic/platform=iOS'
-          CODE_SIGN_IDENTITY=""
-          CODE_SIGNING_REQUIRED=NO
-          CODE_SIGNING_ALLOWED="NO"
-          CODE_SIGN_ENTITLEMENTS=""
+        run: |
+          xcodebuild \
+            -workspace App/App.xcworkspace \
+            -scheme App \
+            -destination 'generic/platform=iOS' \
+            -archivePath App/build/App.xarchive \
+            clean build archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED="NO" \
+            CODE_SIGN_ENTITLEMENTS=""
       - name: Make IPA
-        run: mkdir Payload && mv ~/Library/Developer/Xcode/DerivedData/App-*/Build/Products/Debug-iphoneos/App.app/ Payload && zip -r Payload.zip Payload && mv Payload.zip VueTube.ipa
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R App/build/App.xarchive/Products/Applications/App.app Payload/
+          cd Payload
+          zip -r ../VueTube.ipa .
     
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
