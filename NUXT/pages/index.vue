@@ -95,7 +95,7 @@ export default {
       if (localStorage.getItem("lastRunVersion") === "dev-local") {
         throw e;
       }
-      this.progressMsg = "Error: " + e + ". Checking for updates";
+      this.progressMsg = "Error: " + e + ", " + localStorage.getItem("baseJsVersion") + ". Checking for updates";
       setTimeout(() => {
         this.$router.replace("/mods/updates");
       }, 3000);
