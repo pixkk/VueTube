@@ -1,8 +1,9 @@
 <template>
   <v-btn
-    fab
-    text
-    large
+      elevation="0"
+    icon
+    variant="text"
+    size="large"
     color="white"
     :loading="Boolean(buffering)"
     @click="

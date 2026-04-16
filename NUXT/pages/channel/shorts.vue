@@ -7,11 +7,13 @@
   <div style="display: flex; flex-wrap: wrap">
     <!--   Video Loading Animation   -->
     <vid-load-renderer v-if="shorts.contents && shorts.contents.length == 0" :count="10" />
-    <div v-if="shorts.contents" v-for="(section, index) in shorts.contents" :key="index" v-show="section.richItemRenderer" class="shorts-grid-item">
+    <template v-if="shorts.contents">
+    <div v-for="(section, index) in shorts.contents" :key="index" v-show="section.richItemRenderer" class="shorts-grid-item">
       <shorts-renderer v-if="section.richItemRenderer?.content?.shortsLockupViewModel"
       :shorts="section.richItemRenderer?.content?.shortsLockupViewModel" style="display: flex; flex-direction: column"
       />
     </div>
+    </template>
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
       v-else-if="shorts.contents && shorts.contents.length > 0"

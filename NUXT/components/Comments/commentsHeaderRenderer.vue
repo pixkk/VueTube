@@ -12,7 +12,7 @@
     </div>
     <div
       class="placeholder-text background--text"
-      :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+      :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
       v-text="
         boxRenderer.placeholderText.runs[
           boxRenderer.placeholderText.runs.length - 1

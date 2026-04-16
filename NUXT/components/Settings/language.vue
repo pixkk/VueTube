@@ -14,14 +14,14 @@
       }"
       :label="lang.mods.general.applanguage"
       :items="langs"
-      outlined
+      variant="outlined"
     />
 
     <v-dialog v-model="restart" width="500">
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">{{ lang.global.restart }}</v-card-title>
@@ -29,8 +29,10 @@
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn text @click="restart = false">{{ lang.global.later }}</v-btn>
-          <v-btn color="primary" text @click="restartApp()">{{
+          <v-btn
+      elevation="0" variant="text" @click="restart = false">{{ lang.global.later }}</v-btn>
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="restartApp()">{{
             lang.global.restart
           }}</v-btn>
         </v-card-actions>

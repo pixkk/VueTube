@@ -3,9 +3,9 @@
     class="author-comment-badge-renderer"
     v-if="metadata && iconTypeMap.hasOwnProperty(metadata.icon)"
   >
-    <v-tooltip top>
-      <template v-slot:activator="{ on, attrs }">
-        <v-icon v-bind="attrs" v-on="on" class="author-badge" small>{{
+    <v-tooltip location="top">
+      <template v-slot:activator="{ props: activatorProps }">
+        <v-icon v-bind="activatorProps" class="author-badge" size="small">{{
           iconTypeMap[metadata.icon.iconType]
         }}</v-icon>
       </template>

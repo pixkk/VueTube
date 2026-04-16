@@ -2,6 +2,7 @@
   <div
     v-if="!$route.path.includes('/mods') || $route.path.includes('/tweaks')"
     class="bottomNav background"
+    ref="navRoot"
   >
     <v-divider v-if="!$store.state.tweaks.roundTweak" />
     <v-bottom-navigation
@@ -13,15 +14,17 @@
       "
       class="transparent nav"
       :shift="$store.state.tweaks.navigationShift"
+
     >
       <v-btn
+      elevation="0"
         v-for="(item, i) in tabs"
         :key="i"
         v-ripple="false"
         active-class="link-active"
         class="navButton link"
         :to="item.link"
-        plain
+        variant="plain"
       >
         <span v-if="$store.state.tweaks.navigationText" v-text="item.name" />
         <div
@@ -31,13 +34,13 @@
             color:
               tabSelection == i
                 ? 'var(--v-primary-base)'
-                : $vuetify.theme.dark
+                : $vuetify.theme.current.dark
                 ? 'var(--v-background-lighten4)'
                 : 'var(--v-background-darken4)',
           }"
           :class="
             tabSelection == i && $store.state.tweaks.navigationShift
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'tab primary darken-4 '
                 : 'tab primary lighten-4 '
               : ''
@@ -83,13 +86,13 @@
           :color="
             tabSelection == i
               ? 'primary'
-              : $vuetify.theme.dark
+              : $vuetify.theme.current.dark
               ? 'background lighten-4'
               : 'background darken-4'
           "
           :class="
             tabSelection == i && $store.state.tweaks.navigationShift
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'tab primary darken-4'
                 : 'tab primary lighten-4'
               : ''
@@ -106,6 +109,7 @@
         class="link-anime"
       ></div>
       <!-- <v-btn
+      elevation="0"
         text
         class="navButton mr-2 fill-height"
         color="white"
@@ -120,11 +124,11 @@
 export default {
   methods: {
     moveIndicator(index) {
-      const buttons = this.$el.querySelectorAll('.navButton');
-      const pill = this.$el.querySelector('.link-anime');
+      const buttons = this.$refs.navRoot.querySelectorAll('.navButton');
+      const pill = this.$refs.navRoot.querySelector('.link-anime');
       if (!pill || !buttons[index]) return;
 
-      const navRect = this.$el.querySelector('.nav').getBoundingClientRect();
+      const navRect = this.$refs.navRoot.querySelector('.nav').getBoundingClientRect();
       const btnRect = buttons[index].getBoundingClientRect();
       const pillWidth = pill.offsetWidth;
 
@@ -179,7 +183,7 @@ export default {
     this._resizeObserver = new ResizeObserver(() => {
       this.moveIndicator(this.tabSelection);
     });
-    this._resizeObserver.observe(this.$el.querySelector('.nav'));
+    this._resizeObserver.observe(this.$refs.navRoot.querySelector('.nav'));
   },
   beforeUnmount() {
     if (this._resizeObserver) {

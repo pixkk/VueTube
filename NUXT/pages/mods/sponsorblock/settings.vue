@@ -11,6 +11,7 @@
       }"
     >
       <v-btn
+      elevation="0"
         text
         class="entry text-left setting-btn no-spacing"
         :to="item.to"

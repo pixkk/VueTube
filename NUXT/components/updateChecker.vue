@@ -3,11 +3,11 @@
     <v-snackbar v-model="updateSnackbar" class="updateBar" :timeout="updateSnackbarTimeout" rounded>
       {{ updateSnackbarText }}
 
-      <template #action="{ attrs }">
+      <template #actions>
         <v-btn
+      elevation="0"
           color="primary"
-          text
-          v-bind="attrs"
+          variant="text"
           to="/mods/updates?nowait=true"
           >Update</v-btn
         >

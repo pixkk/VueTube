@@ -11,6 +11,7 @@
       }"
     >
       <v-btn
+      elevation="0"
         text
         class="entry text-left setting-btn no-spacing"
         :to="item.to"
@@ -35,6 +36,7 @@
     >
       <!--   Dev Mode Open   -->
       <v-btn
+      elevation="0"
         v-if="!devmode"
         text
         class="entry"
@@ -47,6 +49,7 @@
       />
 
       <v-btn
+      elevation="0"
         v-if="devmode"
         text
         class="entry text-left setting-btn no-spacing"

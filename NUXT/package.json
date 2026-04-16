@@ -16,6 +16,7 @@
     "@capacitor/status-bar": "latest",
     "@mdi/font": "^7.4.47",
     "@pinia/nuxt": "^0.11.3",
+    "@vue/compat": "^3.5.30",
     "acorn": "^8.16.0",
     "acorn-walk": "^8.3.5",
     "astring": "^1.9.0",

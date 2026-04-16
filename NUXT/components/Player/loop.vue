@@ -1,5 +1,6 @@
 <template>
-  <v-btn fab text small @click="$emit('loop')">
+  <v-btn
+      elevation="0" icon variant="text" size="small" @click="$emit('loop')">
     <v-icon
       color="white"
       style="transition: transform 0.5s"

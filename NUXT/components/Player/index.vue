@@ -88,6 +88,7 @@
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
+      elevation="0"
       v-touch="{
         up: () => {
           if (!isFullscreen) fullscreenHandler(true);
@@ -99,8 +100,8 @@
         right: () => (contain = true),
         left: () => (contain = false),
       }"
-      text
-      tile
+      variant="text"
+      rounded="0"
       color="white"
       :class="skipping == -10 ? '' : 'invisible'"
       style="
@@ -122,6 +123,7 @@
     </v-btn>
 
     <v-btn
+      elevation="0"
       v-touch="{
         up: () => {
           if (!isFullscreen) fullscreenHandler(true);
@@ -133,8 +135,8 @@
         right: () => (contain = false),
         left: () => (contain = true),
       }"
-      text
-      tile
+      variant="text"
+      rounded="0"
       color="white"
       :class="skipping == 10 ? '' : 'invisible'"
       style="
@@ -160,9 +162,9 @@
       class="d-flex justify-center"
       style="width: 100%; top: 0.5rem; position: absolute; font-size: 0.66rem"
     >
-      <v-icon small class="pr-2">mdi-rewind</v-icon>
+      <v-icon size="small" class="pr-2">mdi-rewind</v-icon>
       Double tap left or right to skip 10 seconds
-      <v-icon small class="pl-2">mdi-fast-forward</v-icon>
+      <v-icon size="small" class="pl-2">mdi-fast-forward</v-icon>
     </div>
 
     <!-- controls container -->
@@ -228,9 +230,10 @@
         "
       >
         <v-btn
+      elevation="0"
           v-if="!verticalFullscreen"
-          fab
-          text
+          icon
+          variant="text"
           color="white"
           class="mx-12"
           disabled
@@ -245,9 +248,10 @@
           @pause="pauseHandler"
         />
         <v-btn
+      elevation="0"
           v-if="!verticalFullscreen"
-          fab
-          text
+          icon
+          variant="text"
           color="white"
           class="mx-12"
           @click="
@@ -317,7 +321,8 @@
           "
         />
         <!-- placeholder for moving fullscreen button above -->
-        <v-btn fab text small @click="fullscreenHandler(true)"> </v-btn>
+        <v-btn
+      elevation="0" icon variant="text" size="small" @click="fullscreenHandler(true)"> </v-btn>
       </div>
       <!-- bottom controls row -->
     </div>
@@ -369,7 +374,7 @@
         top: 50%;
       "
       color="primary"
-      :value="buffered"
+      :model-value="buffered"
       :rotate="-90"
       :size="64"
     >

@@ -9,7 +9,7 @@
       class="mx-4 my-2 px-4 py-2 d-flex flex-row background"
       style="transition-duration: 0.3s; transition-property: border-radius"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{
         borderRadius: `${roundTweak / 2}rem`,
@@ -17,7 +17,7 @@
     >
       <h3
         class="my-auto background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
         {{ lang.fullscreen }}
       </h3>
@@ -38,7 +38,7 @@
       class="mx-4 my-2 px-4 py-2 d-flex flex-row background"
       style="transition-duration: 0.3s; transition-property: border-radius"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{
         borderRadius: `${roundTweak / 2}rem`,
@@ -46,7 +46,7 @@
     >
       <h3
         class="my-auto background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
         {{ lang.navbarblur }}
       </h3>
@@ -65,7 +65,7 @@
     <h3 class="ml-8 mt-8">{{ lang.roundedcorners }}</h3>
 
     <v-card
-      flat
+      variant="flat"
       class="mx-4 mt-2 mb-6 background"
       style="
         transition-duration: 0.3s;
@@ -78,10 +78,10 @@
     >
       <!-- margin: $store.state.tweaks.roundTweak > 0 ? '0 1rem' : '0', -->
       <v-card
-        flat
+        variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
@@ -103,10 +103,10 @@
         />
       </v-card>
       <v-card
-        flat
+        variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
@@ -134,15 +134,15 @@
         step=".25"
         thumb-size="64"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
         }"
-        @input="$vuetube.haptics.hapticsImpactLight(0)"
+        @update:modelValue="$vuetube.haptics.hapticsImpactLight(0)"
       >
         <template #label>
-          <div :class="roundTweak > 0 ? 'primary--text' : ''">
+          <div :class="roundTweak > 0 ? 'text-primary' : ''">
             {{ lang.radius }}
           </div>
         </template>
@@ -163,7 +163,7 @@
     <h3 class="ml-8 mt-8">{{ lang.launchscreen }}</h3>
 
     <v-card
-      flat
+      variant="flat"
       class="mx-4 mt-2 mb-6 background d-flex flex-row"
       style="overflow: hidden"
       :style="{
@@ -171,12 +171,12 @@
       }"
     >
       <v-card
-        flat
+        variant="flat"
         class="mr-1 pa-4 d-flex flex-column align-center justify-space-between"
         style="width: calc(100% / 3) !important"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? $vuetify.theme.current.dark
               ? launchTheme === 0
                 ? 'primary darken-4'
                 : 'background lighten-1'
@@ -194,7 +194,7 @@
           style="transition: transform 0.25s; width: 3rem; height: 3rem"
           :style="{
             transform: launchTheme === 0 ? 'scale(1.5)' : '',
-            color: launchTheme === 0 ? $vuetify.theme.currentTheme.primary : '',
+            color: launchTheme === 0 ? $vuetify.theme.current.primary : '',
           }"
         >
           mdi-align-horizontal-center
@@ -204,12 +204,12 @@
         </span>
       </v-card>
       <v-card
-        flat
+        variant="flat"
         class="mr-1 pa-4 d-flex flex-column align-center justify-space-between"
         style="width: calc(100% / 3) !important"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? $vuetify.theme.current.dark
               ? launchTheme === 1
                 ? 'primary darken-4'
                 : 'background lighten-1'
@@ -231,7 +231,7 @@
           style="transition: transform 0.25s; width: 3rem; height: 3rem"
           :style="{
             transform: launchTheme === 1 ? 'scale(1.5)' : '',
-            color: launchTheme === 1 ? $vuetify.theme.currentTheme.primary : '',
+            color: launchTheme === 1 ? $vuetify.theme.current.primary : '',
           }"
         >
           mdi-align-vertical-distribute
@@ -241,7 +241,7 @@
         </span>
       </v-card>
       <v-card
-        flat
+        variant="flat"
         class="ml-4 pa-4 pt-6 d-flex flex-column align-center justify-space-between"
         style="width: calc(100% / 3) !important"
         :class="
@@ -270,7 +270,7 @@
           style="transition: scale 0.25s; border-radius: 0 !important"
           :style="{
             scale: launchIconTheme ? 1.25 : 1,
-            color: launchIconTheme ? $vuetify.theme.currentTheme.primary : '',
+            color: launchIconTheme ? $vuetify.theme.current.primary : '',
           }"
         >
           <g>
@@ -293,7 +293,7 @@
 
     <h3 class="ml-8 mt-8">{{ lang.bottomnavigation }}</h3>
     <v-card
-      flat
+      variant="flat"
       class="mx-4 mt-2 mb-6 background d-flex flex-column"
       style="overflow: hidden"
       :style="{
@@ -301,7 +301,7 @@
       }"
     >
       <v-card
-        flat
+        variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
           roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
@@ -327,7 +327,7 @@
         />
       </v-card>
       <v-card
-        flat
+        variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
           roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
@@ -354,7 +354,7 @@
       </v-card>
       <div class="mb-1 d-flex flex-row">
         <v-card
-          flat
+          variant="flat"
           class="mr-1 pa-4 d-flex flex-row align-center background"
           :class="
             roundTweak > 0
@@ -392,7 +392,7 @@
           </v-icon>
         </v-card>
         <v-card
-          flat
+          variant="flat"
           class="pa-4 d-flex flex-row align-center background"
           :class="
             roundTweak > 0
@@ -448,7 +448,7 @@
       </div>
       <div class="d-flex flex-row">
         <v-card
-          flat
+          variant="flat"
           class="mr-1 pa-4 d-flex flex-row align-center background"
           :class="
             roundTweak > 0
@@ -502,7 +502,7 @@
           </svg>
         </v-card>
         <v-card
-          flat
+          variant="flat"
           class="pa-4 d-flex flex-row align-center background"
           :class="
             roundTweak > 0

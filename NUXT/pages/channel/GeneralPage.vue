@@ -4,7 +4,8 @@
       v-if="!isLoading"
         :src="this.$props.bannerUrl"
         class=""
-        :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+      style="position: relative; width: 100%; height: max-content"
         contain
         position="top center"
     ></v-img>
@@ -12,7 +13,7 @@
     <v-avatar
         size="60"
         class="mt-2 background"
-        :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
     >
       <img
           v-if="!isLoading"
@@ -21,7 +22,8 @@
       <v-progress-circular v-else indeterminate color="primary" size="60" />
     </v-avatar>
     <h2 class="mt-2">{{ this.$props.title }}</h2>
-    <v-btn :aria-label="this.$props.subscribeAlt" class="py-2" text color="primary">
+    <v-btn
+      elevation="0" :aria-label="this.$props.subscribeAlt" class="py-2" variant="text" color="primary">
       {{ this.$props.subscribeText }}
     </v-btn>
     <div v-if="!isLoading" style="font-size: 0.75rem">
@@ -30,15 +32,15 @@
     </div>
     <v-card
         v-if="!isLoading"
-        flat
+        variant="flat"
         style="font-size: 0.75rem; text-oveflow: ellipsis; overflow: hidden"
         class="background background--text text-center px-4"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
     >
       {{ this.$props.descriptionPreview.slice(0, this.$props.descriptionPreview.indexOf(".") || 100) }}...
       <v-icon
           class="background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         mdi-chevron-right
       </v-icon>

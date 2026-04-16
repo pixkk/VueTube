@@ -10,7 +10,8 @@
 <!--        </template>-->
 <!--      </v-toolbar-title>-->
 <!--      <v-spacer></v-spacer>-->
-<!--      <v-btn icon @click="$emit('changeState', false)">-->
+<!--      <v-btn
+      elevation="0" icon @click="$emit('changeState', false)">-->
 <!--        <v-icon>mdi-close</v-icon>-->
 <!--      </v-btn>-->
 <!--    </template>-->

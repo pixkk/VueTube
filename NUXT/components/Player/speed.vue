@@ -4,32 +4,32 @@
       v-model="sheet"
       :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777"
-      scrollable
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props: activatorProps }">
         <v-btn
-          fab
-          text
-          small
+      elevation="0"
+          icon
+          variant="text"
+          size="small"
           :color="$route.name === 'watch' ? 'white' : ''"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="activatorProps"
         >
           {{ currentSpeed }}X
         </v-btn>
       </template>
       <v-card class="background">
-        <v-subheader
+        <v-list-subheader
           v-touch="{
             down: () => (sheet = false),
           }"
         >
           Playback Speed
           <v-spacer />
-          <v-btn fab text small color="white" @click="sheet = false">
+          <v-btn
+      elevation="0" icon variant="text" size="small" color="white" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-subheader>
+        </v-list-subheader>
         <v-divider />
         <v-card-text style="height: 50vh" class="pa-0">
           <v-list-item
@@ -37,19 +37,18 @@
             :key="sped"
             @click="(sheet = false), $emit('speed', sped)"
           >
-            <!-- // TODO: save playbackRate to localStorage and manage via store/video/index.js -->
-            <v-list-item-avatar>
+            <v-avatar>
               <v-icon
                 :color="
                   currentSpeed === sped
                     ? 'primary'
-                    : $vuetify.theme.dark
+                    : $vuetify.theme.current.dark
                     ? 'background lighten-2'
                     : 'background darken-2'
                 "
                 v-text="currentSpeed === sped ? 'mdi-check' : 'mdi-speedometer'"
               ></v-icon>
-            </v-list-item-avatar>
+            </v-avatar>
             <v-list-item-title>{{ sped }}X</v-list-item-title>
           </v-list-item>
         </v-card-text>

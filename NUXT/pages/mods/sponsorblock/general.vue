@@ -5,7 +5,7 @@
 
 <!--    <v-card-title style="padding-bottom: 0 !important">SponsorBlock</v-card-title>-->
     <v-card
-      flat
+      variant="flat"
       class="d-flex flex-row mx-4 mb-4 pr-4 background"
       style="overflow: hidden; position: relative; padding-bottom: 0 !important"
       :class="

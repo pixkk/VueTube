@@ -5,32 +5,32 @@
       v-model="sheet"
       :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777"
-      scrollable
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props: activatorProps }">
         <v-btn
-          fab
-          text
-          small
+      elevation="0"
+          icon
+          variant="text"
+          size="small"
           color="white"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="activatorProps"
         >
           <v-icon>mdi-movie-open-settings-outline</v-icon>
         </v-btn>
       </template>
       <v-card class="background">
-        <v-subheader
+        <v-list-subheader
           v-touch="{
             down: () => (sheet = false),
           }"
         >
           Settings for player
           <v-spacer />
-          <v-btn fab text small @click="sheet = false">
+          <v-btn
+      elevation="0" icon variant="text" size="small" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-subheader>
+        </v-list-subheader>
         <v-divider />
         <v-card-text
           style="max-height: 50vh; flex-direction: column !important"
@@ -40,7 +40,7 @@
                style="width: 50%; align-self: center;">
             <span class="slider-label">Volume:</span>
             <v-slider
-              @input="handleVolumeChange"
+              @update:modelValue="handleVolumeChange"
               ref="volumeSlider"
               :max="1"
               :step="0.01"
@@ -54,7 +54,7 @@
                style="width: 50%; align-self: center;">
             <span class="slider-label">Brightness:</span>
             <v-slider
-              @input="handleBrightnessChange"
+              @update:modelValue="handleBrightnessChange"
               ref="brightnessSlider"
               v-model="brightness"
               :max="1"

@@ -1,5 +1,5 @@
 <template>
-  <v-card flat class="dialog-base background">
+  <v-card variant="flat" class="dialog-base background">
     <div
       class="toolbar-container d-flex flex-column background"
       style="flex-direction: column !important"

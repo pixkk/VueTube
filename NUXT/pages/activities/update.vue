@@ -2,11 +2,12 @@
   <div style="padding: 2em;">
 
 
-    <v-icon x-large color="primary" style="padding-bottom: 0.25em;">mdi-cellphone-arrow-down</v-icon>
+    <v-icon size="x-large" color="primary" style="padding-bottom: 0.25em;">mdi-cellphone-arrow-down</v-icon>
     <h1>{{ lang.updated }}</h1>
     <p>{{ oldVer }} <v-icon>mdi-arrow-right</v-icon> {{ newVer }}</p>
     <div class="bottom">
-      <v-btn rounded color="primary" @click="okay()">{{ lang.awesome }}</v-btn>
+      <v-btn
+      elevation="0" rounded color="primary" @click="okay()">{{ lang.awesome }}</v-btn>
     </div>
 
 

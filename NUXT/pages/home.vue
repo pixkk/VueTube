@@ -16,6 +16,7 @@
       <vid-load-renderer v-if="recommends.length == 0" :count="10" />
       <div v-for="(section, index) in recommends" :key="index">
 <!--        {{section.contents[0]}}-->
+
         <horizontal-list-renderer :render="section.contents[0]" />
       </div>
       <vid-load-renderer v-if="loading" :count="1" />

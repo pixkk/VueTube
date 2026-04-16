@@ -12,7 +12,8 @@
     width: getWidth() + 'px',
     height: getHeight() + 'px',
   }">
-      <div v-if="endscreen?.endscreenRenderer?.elements" v-for="element in endscreen?.endscreenRenderer?.elements"
+      <template v-if="endscreen?.endscreenRenderer?.elements">
+      <div v-for="element in endscreen?.endscreenRenderer?.elements"
       >
         {{updatePlayerStyles()}}
         <div :style="{
@@ -29,6 +30,7 @@
         </div>
         <!--      </div>-->
       </div>
+      </template>
     </div>
 
 

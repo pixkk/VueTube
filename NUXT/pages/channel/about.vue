@@ -7,7 +7,8 @@
     <h3 class="my-2" v-if="fullChannelInfo.customLinksLabel">{{fullChannelInfo.customLinksLabel.content}}</h3>
     <div v-ripple class="py-2 d-flex flex-column">
       <!--      <span class="ml-4 primary&#45;&#45;text">Social Media</span>-->
-      <div v-for="link in fullChannelInfo.links" class="mb-1" v-if="fullChannelInfo.links">
+      <template v-if="fullChannelInfo.links">
+      <div v-for="link in fullChannelInfo.links" class="mb-1">
 
         <a
           @click.stop.prevent="
@@ -15,7 +16,7 @@
           "
         >
 <!--          <v-icon x-large class="actionIcon">mdi-github</v-icon>-->
-          <v-avatar tile size="24" color="none">
+          <v-avatar rounded="0" size="24" color="none">
             <v-img
               alt="John"
               :src=link.channelExternalLinkViewModel.favicon.sources[1].url
@@ -24,6 +25,7 @@
           {{ link.channelExternalLinkViewModel.title.content }} - {{link.channelExternalLinkViewModel.link.content}}</a
         >
       </div>
+      </template>
     </div>
     <br />
     <h3 class="my-2">{{fullChannelInfo.additionalInfoLabel.content}}</h3>

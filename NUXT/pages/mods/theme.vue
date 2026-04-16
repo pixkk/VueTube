@@ -8,19 +8,19 @@
         content-class="background rounded-lg"
       >
         <v-color-picker
-          v-model="$vuetify.theme.currentTheme[pickerMode]"
-          :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+          v-model="$vuetify.theme.current[pickerMode]"
+          :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
           style="min-width: 100%"
           class="background"
           hide-mode-switch
           dot-size="50"
           mode="hexa"
-          flat
+          elevation="0"
         />
       </v-dialog>
       <!-- ----Primary Colors---- -->
       <v-radio-group
-        v-model="$vuetify.theme.currentTheme.primary"
+        v-model="$vuetify.theme.current.primary"
         style="max-height: 2rem"
       >
         <div
@@ -28,12 +28,12 @@
           style="max-width: 100%; overflow-x: auto"
         >
           <v-radio
-            v-for="color in $vuetify.theme.dark ? primaryDark : primaryLight"
+            v-for="color in $vuetify.theme.current.dark ? primaryDark : primaryLight"
             :key="color"
             color="background"
             on-icon="mdi-check"
-            :light="$vuetify.theme.dark"
-            :dark="!$vuetify.theme.dark"
+            :light="$vuetify.theme.current.dark"
+            :dark="!$vuetify.theme.current.dark"
             active-class="border-primary"
             style="transition-duration: 0.3s"
             :style="{
@@ -45,12 +45,11 @@
           />
           <!-- Custom Primary -->
           <v-btn
+      elevation="0"
             icon
             class="background"
             style="height: 1.75rem; width: 1.75rem"
-            :class="$vuetify.theme.dark ? 'lighten-2' : 'darken-2'"
-            v-bind="attrs"
-            v-on="on"
+            :class="$vuetify.theme.current.dark ? 'lighten-2' : 'darken-2'"
             @click="(pickerState = true), (pickerMode = 'primary')"
           >
             <v-icon>mdi-plus</v-icon>
@@ -58,13 +57,13 @@
         </div>
       </v-radio-group>
       <!-- ----Background Colors---- -->
-      <v-radio-group v-model="$vuetify.theme.currentTheme.background">
+      <v-radio-group v-model="$vuetify.theme.current.background">
         <div
           class="d-flex flex-row px-2 no-wrap"
           style="max-width: 100%; overflow-x: auto"
         >
           <div
-            v-for="background in $vuetify.theme.dark
+            v-for="background in $vuetify.theme.current.dark
               ? backgroundsDark
               : backgroundsLight"
             :key="background.color"
@@ -91,22 +90,23 @@
               active-class="px-6 border-primary primary"
               style="transition-duration: 0.3s"
               :style="{
-                background: $vuetify.theme.dark
+                background: $vuetify.theme.current.dark
                   ? 'var(--v-primary-darken4) !important'
                   : 'var(--v-primary-lighten4) !important',
-                border: $vuetify.theme.dark
+                border: $vuetify.theme.current.dark
                   ? '2px solid var(--v-primary-darken4)'
                   : '2px solid var(--v-primary-lighten4)',
                 borderRadius: `${$store.state.tweaks.roundTweak / 3}rem`,
               }"
               class="pa-4 ma-2"
-              :value="$vuetify.theme.dark ? adaptiveDark : adaptiveLight"
+              :value="$vuetify.theme.current.dark ? adaptiveDark : adaptiveLight"
             />
             {{ lang.adaptive }}
           </div>
           <div class="text-center" style="font-size: 0.75rem">
             <!-- Custom Background -->
             <v-btn
+      elevation="0"
               icon
               class="ma-2 background border-primary"
               style="height: 3.75rem; width: 3.75rem"
@@ -126,7 +126,7 @@
       <!-- ----Mode Switch---- -->
       <v-divider v-if="!$store.state.tweaks.roundTweak" />
       <v-card
-        flat
+        variant="flat"
         class="d-flex flex-row mx-4 mb-4 pa-4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
@@ -209,14 +209,14 @@ export default {
     "$vuetify.theme.dark"(value) {
       localStorage.setItem("darkTheme", value);
     },
-    "$vuetify.theme.currentTheme.background"(value) {
+    "$vuetify.theme.current.background"(value) {
       this.$vuetify.theme.dark
         ? localStorage.setItem("backgroundDark", value)
         : localStorage.setItem("backgroundLight", value);
       this.$vuetube.statusBar.setTheme(value, this.$vuetify.theme.dark);
       this.$vuetube.navigationBar.setTheme(value, !this.$vuetify.theme.dark);
       // WIP: luma-based light-dark auto-switching
-      // let bg = this.$vuetify.theme.currentTheme.background;
+      // let bg = this.$vuetify.theme.current.background;
       // console.log(this.$vuetube.hexToRgb(bg));
       // let luma =
       //   0.2126 * this.$vuetube.hexToRgb(bg).r +
@@ -224,10 +224,10 @@ export default {
       //   0.0722 * this.$vuetube.hexToRgb(bg).b;
       // if (luma < 40) {
       //   this.$vuetify.theme.dark = true;
-      //   this.vuetify.theme.currentTheme.background = bg;
+      //   this.vuetify.theme.current.background = bg;
       // }
     },
-    "$vuetify.theme.currentTheme.primary"(value) {
+    "$vuetify.theme.current.primary"(value) {
       if (value != undefined) {
         this.$vuetify.theme.dark
           ? localStorage.setItem("primaryDark", value)
@@ -235,10 +235,10 @@ export default {
         let tempD = this.adaptiveDark;
         let tempL = this.adaptiveLight;
         this.adapt();
-        if (this.$vuetify.theme.currentTheme.background === tempD)
-          this.$vuetify.theme.currentTheme.background = this.adaptiveDark;
-        if (this.$vuetify.theme.currentTheme.background === tempL)
-          this.$vuetify.theme.currentTheme.background = this.adaptiveLight;
+        if (this.$vuetify.theme.current.background === tempD)
+          this.$vuetify.theme.current.background = this.adaptiveDark;
+        if (this.$vuetify.theme.current.background === tempL)
+          this.$vuetify.theme.current.background = this.adaptiveLight;
       }
     },
   },
@@ -267,15 +267,15 @@ export default {
       this.adaptiveLight = hexL.substring(1).toUpperCase();
       setTimeout(() => {
         if (
-          this.$vuetify.theme.currentTheme.background ==
+          this.$vuetify.theme.current.background ==
           hexD.substring(1).toUpperCase()
         )
-          this.$vuetify.theme.currentTheme.background = this.adaptiveDark;
+          this.$vuetify.theme.current.background = this.adaptiveDark;
         if (
-          this.$vuetify.theme.currentTheme.background ==
+          this.$vuetify.theme.current.background ==
           hexL.substring(1).toUpperCase()
         )
-          this.$vuetify.theme.currentTheme.background = this.adaptiveLight;
+          this.$vuetify.theme.current.background = this.adaptiveLight;
       }, 0);
     },
   },

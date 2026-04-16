@@ -6,7 +6,7 @@
           <v-img
             width="69px"
             src="/icon.svg"
-            :class="$vuetify.theme.dark ? '' : 'invert'"
+            :class="$vuetify.theme.current.dark ? '' : 'invert'"
           />
         </div>
         <h1 style="font-size: 2rem">VueTube</h1>
@@ -15,10 +15,10 @@
 
     <!--   App Information   -->
     <v-card
-      flat
+      variant="flat"
       class="obj"
       :class="
-        $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
       "
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
@@ -35,10 +35,10 @@
 
     <!--   Device Information   -->
     <v-card
-      flat
+      variant="flat"
       class="obj"
       :class="
-        $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
       "
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
@@ -70,27 +70,29 @@
     <!--   App Links   --->
     <div class="obj d-flex flex-row gap-1 full-width">
       <v-btn
+      elevation="0"
         depressed
         class="action flex-grow-1"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
         :style="{ borderRadius: `${roundTweak / 2}rem` }"
         @click="openExternal('https://github.com/pixkk/VueTube')"
       >
-        <v-icon x-large class="actionIcon">mdi-github</v-icon>
+        <v-icon size="x-large" class="actionIcon">mdi-github</v-icon>
         {{ lang.github }}
       </v-btn>
       <v-btn
+      elevation="0"
         depressed
         class="action flex-grow-1 ml-4"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
         :style="{ borderRadius: `${roundTweak / 2}rem` }"
         @click="openExternal('https://discord.gg/7P8KJrdd5W')"
       >
-        <v-icon x-large class="actionIcon">mdi-forum</v-icon>
+        <v-icon size="x-large" class="actionIcon">mdi-forum</v-icon>
         {{ lang.discord }}
       </v-btn>
     </div>

@@ -5,7 +5,7 @@
     class="entry gridVideoRenderer background"
     :class="
       roundThumb && roundTweak > 0
-        ? $vuetify.theme.dark
+        ? $vuetify.theme.current.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -43,16 +43,17 @@
 
         <div
           class="caption background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
           v-text="parseBottom(video)"
         />
       </v-card-text>
       <v-btn
-        fab
-        text
-        elevation="0"
+      elevation="0"
+        icon
+        variant="text"
+        :elevation="0"
         class="background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
         style="width: 50px !important; height: 50px !important; z-index: 420"
       >
         <v-icon>mdi-share-outline</v-icon>

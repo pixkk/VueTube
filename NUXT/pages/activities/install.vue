@@ -5,7 +5,7 @@
         src="/icon.svg"
         width="10rem"
         height="10rem"
-        :class="$vuetify.theme.dark ? '' : 'invert'"
+        :class="$vuetify.theme.current.dark ? '' : 'invert'"
       />
       <div style="height: 3rem" />
       <h1>{{ lang.welcome }}</h1>
@@ -38,7 +38,7 @@
           watchTelemetry ? 'Enabled' : 'Disabled'
         }`"
         style="width: 80%"
-        dense
+        density="compact"
       />
       <!-- TODO: translate -->
       <!-- :label="`${lang.enabletelem} ${watchTelemetry ? ..." -->
@@ -47,13 +47,13 @@
         :label="lang.enableryd"
         style="width: 80%"
         disabled
-        dense
+        density="compact"
       />
       <v-checkbox
         v-model="sponsorBlockIntegration"
         :label="lang.enablespb"
         style="width: 80%"
-        dense
+        density="compact"
       />
     </center>
     <center ref="stage3" class="container hidden" style="width: 80%">
@@ -65,6 +65,7 @@
     </center>
 
     <v-btn
+      elevation="0"
       class="primary nextButton"
       style="border-radius: 0.75rem"
       @click="next()"

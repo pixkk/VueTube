@@ -11,7 +11,7 @@
       id="scrubber"
       hide-details
       height="2"
-      dense
+      density="compact"
       :disabled="disabled"
       color="transparent"
       thumb-color="primary"
@@ -25,11 +25,11 @@
       "
       :thumb-size="0"
       :max="duration"
-      :value="currentTime"
+      :model-value="currentTime"
       @start="$emit('seeking')"
       @end="$emit('seeking')"
       @change="$emit('scrub', $event)"
-      @input="seeking ? seek($event) : ''"
+      @update:modelValue="seeking ? seek($event) : ''"
     >
       <!--    Fast preview-->
       <template #thumb-label="{ value }">

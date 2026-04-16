@@ -1,7 +1,8 @@
 <template>
   <div>
     <div style="margin: 1em">
-      <v-btn style="width: 100%" class="primary text-none" @click="pickFile()">
+      <v-btn
+      elevation="0" style="width: 100%" class="primary text-none" @click="pickFile()">
         <v-icon style="margin-right: 0.5em">mdi-sd</v-icon>
         Install from storage
       </v-btn>
@@ -18,7 +19,8 @@
       <v-card-title>{{ plugin }}</v-card-title>
 
       <v-card-actions>
-        <v-btn style="width: 100%" class="error text-none" @click="remove(plugin)">
+        <v-btn
+      elevation="0" style="width: 100%" class="error text-none" @click="remove(plugin)">
           <v-icon style="margin-right: 0.5em">mdi-delete</v-icon>
           Uninstall
         </v-btn>

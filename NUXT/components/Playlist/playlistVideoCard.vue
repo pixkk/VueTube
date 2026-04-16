@@ -5,7 +5,7 @@
     style="height: 4.5rem !important"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.dark
+        ? $vuetify.theme.current.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -25,7 +25,7 @@
         :src="thumbnail"
         aspect-ratio="1.7778"
         style="position: relative; width: 8rem"
-        :class="$vuetify.theme.dark ? 'lighten-3' : 'darken-3'"
+        :class="$vuetify.theme.current.dark ? 'lighten-3' : 'darken-3'"
         :style="{
           borderRadius: $store.state.tweaks.roundThumb
             ? `${$store.state.tweaks.roundTweak / 3}rem`
@@ -56,7 +56,7 @@
         </b>
         <div
           class="background--text caption mt-2 text-left d-inline-block text-truncate"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="
 
               height: 0.75rem;
@@ -71,9 +71,10 @@
     <v-spacer></v-spacer>
     <div class="d-flex w-50 flex-column">
       <v-btn
-        text
-        tile
-        elevation="0"
+      elevation="0"
+        variant="text"
+        rounded="0"
+        :elevation="0"
         class="flex-grow-1"
         style="width: 2rem !important"
         @click="deleted"

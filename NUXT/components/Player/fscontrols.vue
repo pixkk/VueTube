@@ -9,11 +9,12 @@
     :class="verticalFullscreen ? 'd-flex flex-column justify-end' : ''"
   >
     <v-btn
+      elevation="0"
       v-for="(item, index) in interactions"
       :key="index"
-      fab
-      text
-      small
+      icon
+      variant="text"
+      size="small"
       color="white"
       :class="verticalFullscreen ? 'ma-2' : 'mr-2'"
       :disabled="item.disabled"

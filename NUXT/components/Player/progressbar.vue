@@ -8,7 +8,7 @@
     background-opacity="0.5"
     background-color="white"
     :buffer-value="buffered"
-    :value="(currentTime / duration) * 100"
+    :model-value="(currentTime / duration) * 100"
     :class="!fullscreen || controls ? '' : 'invisible'"
     color="primary"
     :height="seeking ? 4 : 2"

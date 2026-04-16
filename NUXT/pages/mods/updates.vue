@@ -1,6 +1,6 @@
 <template>
   <div style="padding: 2rem; padding-bottom: 4rem">
-    <v-icon x-large color="primary" style="padding-bottom: 0.25rem">
+    <v-icon size="x-large" color="primary" style="padding-bottom: 0.25rem">
       mdi-cellphone-arrow-down
     </v-icon>
 
@@ -25,8 +25,10 @@
       <h1>{{ lang.noupdate }}</h1>
       <p>{{ lang.noupdatemessage }}</p>
       <div class="bottom">
-        <v-btn rounded @click="getLatest">{{ lang.refresh }}</v-btn>
         <v-btn
+      elevation="0" rounded @click="getLatest">{{ lang.refresh }}</v-btn>
+        <v-btn
+      elevation="0"
           rounded
           depressed
           color="primary"
@@ -51,7 +53,7 @@
       <div
         style="margin-top: 1em"
         class="background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         <div>
           {{ lang.published }}:
@@ -73,11 +75,11 @@
       <div
         style="margin-top: 1em"
         class="background--text"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         <b>Changelog</b>
       </div>
-      <div class="background--text" :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion?.body)?.replace(/\[![A-Za-z0-9]+\]/i, '')">
+      <div class="background--text" :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion?.body)?.replace(/\[![A-Za-z0-9]+\]/i, '')">
       </div>
 
       <v-progress-linear
@@ -89,16 +91,18 @@
 
       <div v-if="!downloading" class="bottom">
         <v-btn
+      elevation="0"
           rounded
           depressed
           :class="
-            $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+            $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
           "
           @click="navigateBack"
         >
           {{ lang.later }}
         </v-btn>
         <v-btn
+      elevation="0"
           rounded
           depressed
           class="background--text ml-2"
@@ -115,7 +119,6 @@
 <script>
 import { Device } from "@capacitor/device";
 import showdown from "showdown";
-import constants from "../../plugins/constants";
 import {useRuntimeConfig} from "nuxt/app";
 
 export default {

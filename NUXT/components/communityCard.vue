@@ -1,11 +1,11 @@
 <template>
   <v-card
     v-ripple
-    flat
+    variant="flat"
     class="background"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.dark
+        ? $vuetify.theme.current.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -28,16 +28,17 @@
         <b>{{ channelName }}</b>
         <div
           class="background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
         >
           {{ publishedTime }}
         </div>
       </div>
       <v-spacer />
       <v-btn
-        fab
-        text
-        elevation="0"
+      elevation="0"
+        icon
+        variant="text"
+        :elevation="0"
         style="width: 50px !important; height: 50px !important"
       >
         <v-icon>mdi-share-outline</v-icon>
@@ -55,7 +56,7 @@
         v-if="backstageAttachment?.backstageAttachment?.backstageImageRenderer"
       contain
       class="background my-4"
-      :class="$vuetify.theme.dark ? 'lighten-2' : 'darken-2'"
+      :class="$vuetify.theme.current.dark ? 'lighten-2' : 'darken-2'"
       style="max-height: 15rem"
       :style="{
         borderRadius: `${$store.state.tweaks.roundTweak / 4}rem`,

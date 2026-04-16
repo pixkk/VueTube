@@ -41,6 +41,7 @@
           <div v-if="search" style="min-width: 180px">
             <v-list-item v-for="item in response" :key="item[0]" class="px-0">
               <v-btn
+      elevation="0"
                 v-emoji
                 variant="text"
                 rounded="0"
@@ -262,9 +263,8 @@ export default {
 </script>
 
 <style>
-* {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+*{
+  font-family:Arial,Helvetica,sans-serif!important
 }
 *:focus::before {
   opacity: 0 !important;

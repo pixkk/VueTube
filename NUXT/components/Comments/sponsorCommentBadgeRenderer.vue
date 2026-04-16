@@ -3,11 +3,10 @@
     class="author-comment-badge-renderer"
     v-if="metadata && metadata.customBadge"
   >
-    <v-tooltip top>
-      <template v-slot:activator="{ on, attrs }">
+    <v-tooltip location="top">
+      <template v-slot:activator="{ props: activatorProps }">
         <img
-          v-bind="attrs"
-          v-on="on"
+          v-bind="activatorProps"
           class="badge"
           :src="metadata.customBadge.thumbnails[0].url"
           :alt="metadata.tooltip"

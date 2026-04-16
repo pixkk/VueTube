@@ -1,5 +1,6 @@
 <template>
-  <v-btn fab text small color="white" @click.stop="$emit('fullscreen')">
+  <v-btn
+      elevation="0" icon variant="text" size="small" color="white" @click.stop="$emit('fullscreen')">
     <v-icon size="1.25rem">{{
       fullscreen ? "mdi-fullscreen-exit" : "mdi-fullscreen"
     }}</v-icon>

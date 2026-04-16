@@ -2,7 +2,8 @@
   <div>
 
 <!--    <vid-load-renderer v-if="communityData.contents.length == 0" :count="10" />-->
-    <div v-if="community?.contents[0]?.itemSectionRenderer?.contents[0]" v-for="(section, index) in community.contents[0].itemSectionRenderer.contents" :key="index">
+    <template v-if="community?.contents[0]?.itemSectionRenderer?.contents[0]">
+    <div v-for="(section, index) in community.contents[0].itemSectionRenderer.contents" :key="index">
 <!--        {{-->
 <!--        section.backstagePostThreadRenderer.post.backstagePostRenderer}}-->
       <community-card
@@ -22,11 +23,12 @@
         !($store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0)
       "
         class="separator-bottom background"
-        :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
         style="height: 4px"
       ></div>
 
     </div>
+    </template>
 
     <vid-load-renderer v-if="loading" :count="1" />
     <observer

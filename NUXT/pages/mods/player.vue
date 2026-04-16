@@ -17,7 +17,7 @@
       </h3>
 
       <v-card
-        flat
+        variant="flat"
         class="mx-4 mt-2 mb-8 background"
         :style="{
           border: preload
@@ -27,11 +27,11 @@
         }"
       >
         <v-card
-          flat
+          variant="flat"
           class="pa-4 d-flex flex-row background"
           :class="
             $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'lighten-1'
                 : 'darken-1'
               : ''
@@ -57,7 +57,7 @@
             <div
               class="background--text"
               :class="
-                $vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'
+                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
               "
               style="font-size: 0.75rem"
             >
@@ -91,7 +91,7 @@
             width: `calc(100% - 2rem - ${$store.state.tweaks.roundTweak}rem)`,
             left: `${$store.state.tweaks.roundTweak / 2 + 1}rem`,
           }"
-          @input="$vuetube.haptics.hapticsImpactLight(0)"
+          @update:modelValue="$vuetube.haptics.hapticsImpactLight(0)"
         >
         </v-slider>
       </v-card>
@@ -107,7 +107,7 @@
       </h3>
 
       <v-card
-        flat
+        variant="flat"
         class="mx-4 my-2 background"
         style="overflow: hidden"
         :style="{
@@ -115,11 +115,11 @@
         }"
       >
         <v-card
-          flat
+          variant="flat"
           class="mb-1 pa-4 d-flex flex-row background"
           :class="
             $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'lighten-1'
                 : 'darken-1'
               : ''
@@ -137,7 +137,7 @@
             <div
               class="background--text pr-4"
               :class="
-                $vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'
+                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
               "
               style="font-size: 0.75rem"
             >
@@ -153,13 +153,13 @@
             inset
           />
         </v-card>
-        <v-card flat class="d-flex flex-row background">
+        <v-card variant="flat" class="d-flex flex-row background">
           <speed
             class="background mr-1 px-4 d-flex justify-center align-center"
             :current-speed="speed"
             :class="
               $store.state.tweaks.roundTweak > 0
-                ? $vuetify.theme.dark
+                ? $vuetify.theme.current.dark
                   ? 'lighten-1'
                   : 'darken-1'
                 : ''
@@ -179,7 +179,7 @@
             :max="16"
             :class="
               $store.state.tweaks.roundTweak > 0
-                ? $vuetify.theme.dark
+                ? $vuetify.theme.current.dark
                   ? 'lighten-1'
                   : 'darken-1'
                 : ''
@@ -187,7 +187,7 @@
             :style="{
               borderRadius: `${$store.state.tweaks.roundTweak / 12}rem`,
             }"
-            @input="$vuetube.haptics.hapticsImpactLight(0)"
+            @update:modelValue="$vuetube.haptics.hapticsImpactLight(0)"
           >
             <template #thumb-label="{ value }">
               <b class="background--text" style="font-size: 1.15rem">
@@ -210,7 +210,7 @@
       </h3>
 
       <v-card
-        flat
+        variant="flat"
         class="mx-4 my-2 background"
         style="overflow: hidden"
         :style="{
@@ -218,7 +218,7 @@
         }"
       >
         <v-card
-          flat
+          variant="flat"
           class="pa-4 d-flex flex-row justify-space-between background"
           :class="
             $store.state.tweaks.roundTweak > 0
@@ -280,7 +280,7 @@
 <!--          </b>-->
 <!--        </marquee>-->
         <v-card
-          flat
+          variant="flat"
           class="pa-4 d-flex flex-row justify-space-between background"
           :class="
             $store.state.tweaks.roundTweak > 0
@@ -333,7 +333,7 @@
       </h3>
 
       <v-card
-        flat
+        variant="flat"
         class="mx-4 mt-2 mb-6 background d-flex flex-row"
         style="overflow: hidden"
         :style="{
@@ -343,7 +343,7 @@
         <v-card
           v-for="(toggl, i) in toggles"
           :key="i"
-          flat
+          variant="flat"
           class="mr-1 px-4 py-6 d-flex flex-column align-center background"
           style="width: calc(100% / 4) !important"
           :class="
@@ -369,7 +369,7 @@
           >
         </v-card>
         <v-card
-          flat
+          variant="flat"
           class="px-4 py-6 d-flex flex-column align-center"
           style="width: calc(100% / 4) !important"
           :class="

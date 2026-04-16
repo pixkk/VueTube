@@ -21,7 +21,7 @@
         'overflow-y-hidden': showComments,
       }"
     >
-      <v-card v-if="loaded" class="background rounded-0" flat>
+      <v-card v-if="loaded" class="background rounded-0" variant="flat">
         <div
           v-ripple
           class="d-flex justify-space-between align-start px-4 pt-4"
@@ -38,7 +38,7 @@
               style="font-size: 0.75rem"
               class="background--text pa-0"
               :class="
-                $vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'
+                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
               "
             >
               <div>
@@ -58,7 +58,7 @@
           class="d-flex justify-space-around"
           :class="
             $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'background lighten-1'
                 : 'background darken-1'
               : ''
@@ -75,12 +75,12 @@
           }"
         >
           <v-btn
+            elevation="0"
             v-for="(item, index) in interactions"
             :key="index"
-            text
-            fab
+            variant="text"
+            icon
             class="vertical-button"
-            elevation="0"
             style="
               width: 4.2rem !important;
               height: 4.2rem !important;
@@ -89,7 +89,7 @@
             :disabled="item.disabled"
             @click="callMethodByName(item.actionName)"
           >
-            <v-icon v-text="item.icon" />
+            <v-icon :icon="item.icon" />
             <div
               class="mt-1"
               style="font-size: 0.6rem"
@@ -105,7 +105,8 @@
           style="z-index: 9999999"
         >
           <v-sheet style="padding: 12px">
-            <v-btn block @click="showMore = !showMore"
+            <v-btn
+      elevation="0" block @click="showMore = !showMore"
               ><v-icon>mdi-chevron-down</v-icon></v-btn
             ><br />
 
@@ -134,11 +135,11 @@
       <!--   Channel Bar   -->
       <div v-if="loaded">
         <v-card
-          flat
+          variant="flat"
           class="channel-section py-2 px-3 background"
           :class="
             $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
+              ? $vuetify.theme.current.dark
                 ? 'background lighten-1'
                 : 'background darken-1'
               : ''
@@ -165,7 +166,7 @@
               <div
                 class="caption background--text"
                 :class="
-                  $vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'
+                  $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
                 "
                 v-text="video.channelSubs + ' subscribers'"
               />
@@ -215,7 +216,7 @@
 <!--          class="comment-renderer px-3 background"-->
 <!--          :class="-->
 <!--            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0-->
-<!--              ? $vuetify.theme.dark-->
+<!--              ? $vuetify.theme.current.dark-->
 <!--                ? 'background lighten-1'-->
 <!--                : 'background darken-1'-->
 <!--              : ''-->
@@ -287,7 +288,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">Save To Playlist</v-card-title>
@@ -303,7 +304,8 @@
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="saveDialog = false"> Done </v-btn>
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="saveDialog = false"> Done </v-btn>
         </v-card-actions>
       </v-card></v-dialog
     >

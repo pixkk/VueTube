@@ -2,10 +2,10 @@
   <div class="mainContainer pt-1">
     <!--   Language Picker   -->
     <v-card
-      flat
+      variant="flat"
       class="pb-5 background"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
@@ -18,12 +18,12 @@
     <!-- Personalized Recommendations / Watch Time Telemetry -->
     <v-divider v-if="!$store.state.tweaks.roundTweak" />
     <v-card
-      flat
+      variant="flat"
       class="d-flex flex-row mx-4 mb-4 pr-4 background"
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.dark
+          ? $vuetify.theme.current.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -68,7 +68,7 @@
         class="my-auto pa-4 ml-n4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? $vuetify.theme.current.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -85,7 +85,7 @@
         <div class="mb-4">{{ lang.personalizedrecommendations }}</div>
         <div
           class="background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
           {{ lang.personalizedrecommendationsinfo }}
@@ -102,12 +102,12 @@
     <!-- SponsorBlockSettings -->
     <v-divider v-if="!$store.state.tweaks.roundTweak" />
     <v-card
-      flat
+      variant="flat"
       class="d-flex flex-row mx-4 mb-4 pr-4 background"
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.dark
+          ? $vuetify.theme.current.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -145,7 +145,7 @@
         class="my-auto pa-4 ml-n4 background ma-0"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? $vuetify.theme.current.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -162,7 +162,7 @@
         <div class="mb-4">SponsorBlock Settings</div>
         <div
           class="background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
           Open settings related with SponsorBlock integration.
@@ -179,12 +179,12 @@
     <!-- Recommendations fix -->
     <v-divider v-if="!$store.state.tweaks.roundTweak" />
     <v-card
-      flat
+      variant="flat"
       class="d-flex flex-row mx-4 mb-4 pr-4 background"
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.dark
+          ? $vuetify.theme.current.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -229,7 +229,7 @@
         class="my-auto pa-4 ml-n4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? $vuetify.theme.current.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -264,6 +264,7 @@
     <!-- <v-dialog v-model="dialog" class="ma-0">
       <template #activator="{ on, attrs }">
         <v-btn
+      elevation="0"
           class="mx-4"
           color="background"
           :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
@@ -295,6 +296,7 @@
         <v-divider></v-divider>
         <v-card-actions class="pa-none">
           <v-btn
+      elevation="0"
             text
             color="primary"
             :style="{
@@ -305,6 +307,7 @@
           >
           <v-spacer></v-spacer>
           <v-btn
+      elevation="0"
             text
             :color="
               $vuetify.theme.dark
@@ -335,6 +338,7 @@
       </v-card-text>
       <v-card-actions>
         <v-btn
+      elevation="0"
           rounded
           depressed
           class="background--text ml-2"
@@ -342,7 +346,8 @@
           @click="registryBackup"
           >{{ lang.backup }}</v-btn
         >
-        <v-btn rounded @click="registryRestore">{{ lang.restore }}</v-btn>
+        <v-btn
+      elevation="0" rounded @click="registryRestore">{{ lang.restore }}</v-btn>
       </v-card-actions>
     </v-card> -->
   </div>

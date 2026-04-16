@@ -3,8 +3,10 @@
     <center style="padding: 10% 0;">
       <v-icon size="100">mdi-heart-broken</v-icon>
       <h1>Something went wrong</h1>
-      <v-btn rounded to="/" color="primary darken-2"><v-icon>mdi-restart</v-icon>Restart</v-btn>
-      <v-btn rounded @click="exit"><v-icon>mdi-close</v-icon>Exit</v-btn>
+      <v-btn
+      elevation="0" rounded to="/" color="primary darken-2"><v-icon>mdi-restart</v-icon>Restart</v-btn>
+      <v-btn
+      elevation="0" rounded @click="exit"><v-icon>mdi-close</v-icon>Exit</v-btn>
 
       <div style="margin-top: 5em; color: #999; font-size: 0.75em">
         <div style="font-size: 1.4em">Crash Information</div>

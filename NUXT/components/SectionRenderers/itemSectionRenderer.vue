@@ -19,7 +19,7 @@
         !($store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0)
       "
       class="separator-bottom background"
-      :class="$vuetify.theme.dark ? 'lighten-1' : 'darken-1'"
+      :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
       :style="{ height: render.separatorDetails.height + 'px' }"
     ></div>
   </div>

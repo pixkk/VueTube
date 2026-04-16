@@ -12,7 +12,7 @@
       class="intro iconsvgstuff"
       :style="{
         color: $store.state.tweaks.launchIconTheme
-          ? $vuetify.theme.currentTheme.primary
+          ? $vuetify.theme.current.primary
           : '',
       }"
     >

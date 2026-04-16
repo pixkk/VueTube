@@ -1,7 +1,7 @@
 <template>
   <v-card style="display: flex" class="rounded-0 pa-3 topNav background">
     <!-- opacity with vue 😉 -->
-    <!-- :style="{ background: $vuetify.theme.currentTheme.primary + '55' }" -->
+    <!-- :style="{ background: $vuetify.theme.current.primary + '55' }" -->
     <h3
       v-show="!search"
       class="my-auto ml-4"
@@ -15,6 +15,7 @@
     />
 
     <v-btn
+      elevation="0"
       v-if="search"
       icon
       class="mr-3 my-auto"
@@ -26,22 +27,22 @@
     <v-text-field
       v-if="search"
       v-model="text"
-      solo
-      dense
-      flat
+      variant="solo"
+      density="compact"
       autofocus
       label="Search"
       style="margin-top: 7px"
       :background-color="
-        $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
       "
-      @input="$emit('text-changed', text)"
+      @update:modelValue="$emit('text-changed', text)"
       @keyup.enter="$emit('search-btn', text)"
     />
 
     <v-spacer v-if="!search" />
 
     <v-btn
+      elevation="0"
       v-if="!search && $route.path.includes('/home')"
       icon
       tile
@@ -52,6 +53,7 @@
       <v-icon>mdi-refresh</v-icon>
     </v-btn>
     <v-btn
+      elevation="0"
       v-if="$route.name !== 'settings' && !$route.path.includes('/mods')"
       icon
       tile
@@ -63,6 +65,7 @@
       <v-icon>mdi-magnify</v-icon>
     </v-btn>
     <v-btn
+      elevation="0"
       v-show="!search"
       icon
       tile

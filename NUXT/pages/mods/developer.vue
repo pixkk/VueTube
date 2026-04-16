@@ -3,7 +3,7 @@
     <!--   Top Notice   -->
     <center style="margin: 2em">
       <h1>{{ lang.registryeditor }}</h1>
-      <v-alert text outlined type="warning">
+      <v-alert variant="outlined" type="warning">
         {{ lang.registrywarning }}
       </v-alert>
     </center>
@@ -11,6 +11,7 @@
     <!--   Add New Key Button   -->
     <center>
       <v-btn
+      elevation="0"
       rounded
         @click="
           addDialog = !addDialog;
@@ -28,7 +29,7 @@
       <v-card
         class="card"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
         :style="{ borderRadius: `${roundTweak / 2}rem` }"
       >
@@ -36,10 +37,12 @@
         <v-card-text v-text="item.value" />
         <v-card-actions>
           <v-spacer />
-          <v-btn text class="actionButton" @click="confirmEdit(item)"
+          <v-btn
+      elevation="0" variant="text" class="actionButton" @click="confirmEdit(item)"
             ><v-icon color="primary">mdi-pencil</v-icon></v-btn
           >
-          <v-btn text class="actionButton" @click="confirmDelete(item)"
+          <v-btn
+      elevation="0" variant="text" class="actionButton" @click="confirmDelete(item)"
             ><v-icon color="error">mdi-delete</v-icon></v-btn
           >
         </v-card-actions>
@@ -51,7 +54,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">{{ lang.confirmdelete }}</v-card-title>
@@ -62,10 +65,12 @@
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="deleteDialog = false">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="deleteDialog = false">
             {{ lang.cancel }}
           </v-btn>
-          <v-btn color="primary" text @click="deleteKey()">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="deleteKey()">
             {{ lang.delete }}
           </v-btn>
         </v-card-actions>
@@ -77,20 +82,22 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5" v-text="selectedKey" />
         <v-card-text>
-          <v-text-field v-model="selectedKeyData" label="Value" solo />
+          <v-text-field v-model="selectedKeyData" label="Value" variant="solo" />
         </v-card-text>
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="editDialog = false">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="editDialog = false">
             {{ lang.cancel }}
           </v-btn>
-          <v-btn color="primary" text @click="updateKey()">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="updateKey()">
             {{ lang.change }}
           </v-btn>
         </v-card-actions>
@@ -102,26 +109,28 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.dark ? 'background lighten-1' : 'background darken-1'
+          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">{{ lang.createentryfull }}</v-card-title>
         <v-card-text>
-          <v-text-field v-model="selectedKey" :label="lang.key" solo />
+          <v-text-field v-model="selectedKey" :label="lang.key" variant="solo" />
           <v-text-field
             v-model="selectedKeyData"
             :label="lang.value"
-            solo
+            variant="solo"
             style="margin-bottom: -2em"
           />
         </v-card-text>
         <v-divider />
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="primary" text @click="addDialog = false">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="addDialog = false">
             {{ lang.cancel }}
           </v-btn>
-          <v-btn color="primary" text @click="createKey()">
+          <v-btn
+      elevation="0" color="primary" variant="text" @click="createKey()">
             {{ lang.create }}
           </v-btn>
         </v-card-actions>

@@ -1,14 +1,16 @@
 <template>
   <dialog-base>
     <template v-slot:header>
-      <v-btn icon @click="$emit('changeState', false)">
+      <v-btn
+      elevation="0" icon @click="$emit('changeState', false)">
         <v-icon>mdi-arrow-left</v-icon>
       </v-btn>
       <v-toolbar-title>
         <h5 style="margin-bottom: 0!important; font-weight: normal;">Replies</h5>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-<!--      <v-btn icon @click="$emit('closeComments')">-->
+<!--      <v-btn
+      elevation="0" icon @click="$emit('closeComments')">-->
 <!--        <v-icon>mdi-close</v-icon>-->
 <!--      </v-btn>-->
     </template>

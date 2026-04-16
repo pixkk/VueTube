@@ -1,5 +1,6 @@
 <template>
   <v-btn
+      elevation="0"
     v-ripple
     text
     class="background d-flex flex-row overflow-hidden mb-4 mx-7 mainCard px-0"
@@ -7,7 +8,7 @@
     style="height: 6rem !important"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.dark
+        ? $vuetify.theme.current.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -24,7 +25,7 @@
       :src="thumbnail"
       class="background"
       style="position: relative; max-width: 8rem !important"
-      :class="$vuetify.theme.dark ? 'lighten-3' : 'darken-3'"
+      :class="$vuetify.theme.current.dark ? 'lighten-3' : 'darken-3'"
       :style="{
         borderRadius: $store.state.tweaks.roundThumb
           ? `${$store.state.tweaks.roundTweak / 3}rem`
@@ -44,7 +45,7 @@
 
       <div
         class="background--text caption mt-2"
-        :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         Updated: {{ getTimeOfPlaylist(playlist?.time) }} <br />
         {{ playlist.videos.length }} videos
@@ -53,6 +54,7 @@
     <v-spacer></v-spacer>
     <div class="d-flex flex-column">
       <!-- <v-btn
+      elevation="0"
         text
         tile
         elevation="0"
@@ -62,6 +64,7 @@
         <v-icon>mdi-share-outline</v-icon>
       </v-btn>
       <v-btn
+      elevation="0"
         text
         tile
         elevation="0"

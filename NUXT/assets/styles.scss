@@ -40,5 +40,33 @@
     margin: 0;
   }
 }
+.v-btn--icon {
+  width: 36px;
+  height: 36px;
+}
 
+.v-theme--light.v-btn.v-btn--icon {
+  color: rgba(0, 0, 0, 0.54);
+}
+.v-img__img {
+  background: #c6c6c6;
 
+}
+.v-card-text {
+  letter-spacing: 0.0071428571em;
+}
+.caption {
+  font-size: 0.75rem !important;
+  font-weight: 400;
+  letter-spacing: 0.0333333333em !important;
+  line-height: 1.25rem;
+  font-family: "Roboto", sans-serif !important;
+}
+.text--darken-4 {
+  color: #919191 !important;
+  caret-color: #919191 !important;
+}
+.v-avatar img {
+  height: inherit;
+  width: inherit;
+}

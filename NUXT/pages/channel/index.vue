@@ -6,7 +6,7 @@
         v-model="activeTab"
         mobile-breakpoint="0"
         background-color="background"
-        :color="$vuetify.theme.dark ? 'white' : 'black'"
+        :color="$vuetify.theme.current.dark ? 'white' : 'black'"
       >
         <v-tab
           v-for="(tab, index) in tabs"
@@ -19,8 +19,8 @@
     </div>
 
     <div style="padding-top: calc(3rem + env(safe-area-inset-top)); left: 0; right: 0; ">
-      <v-tabs-items v-model="activeTab">
-        <v-tab-item
+      <v-window v-model="activeTab">
+        <v-window-item
           v-for="(tab, index) in tabs"
           :key="tab[0]"
         >
@@ -71,8 +71,8 @@
 
             </v-card-text>
           </v-card>
-        </v-tab-item>
-      </v-tabs-items>
+        </v-window-item>
+      </v-window>
     </div>
   </div>
 </template>
@@ -173,7 +173,7 @@ getTabIndexes() {
     async doSomethingWithToken(token, index) {
       // setTimeout(() => {
       let res = await this.$youtube.getChannelTab(this.$store.state.channel.channelRequest, token);
-      this.$set(this.loadedContent, index, res);
+      this.loadedContent[index] = res;
       if (res.frameworkUpdates) {
         this.channelData = this.$store.state.channel.channelData;
         this.arrayWithTabs.channelData = this.channelData;
@@ -226,12 +226,12 @@ getTabIndexes() {
       let res = this.getDataChannel();
       this.arrayWithTabs.videos = res.videoList;
       this.$store.state.channel.videoData = this.arrayWithTabs.videos;
-      this.$set(this.loadedContent, index, this.arrayWithTabs.videos);
+      this.loadedContent[index] = this.arrayWithTabs.videos;
       this.tabsIndexes.videoTab = 1;
     },
-    beforeUnmount() {
-      this.executedTabs = new Set();
-    }
+  },
+  beforeUnmount() {
+    this.executedTabs = new Set();
   }
 };
 </script>

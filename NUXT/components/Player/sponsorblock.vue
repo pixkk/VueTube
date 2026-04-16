@@ -4,7 +4,7 @@
       v-for="block in blocks.segments"
       :key="block.UUID"
       :buffer-value="(block.segment[1] / duration) * 100"
-      :value="(block.segment[0] / duration) * 100"
+      :model-value="(block.segment[0] / duration) * 100"
       style="
         position: absolute;
         pointer-events: none;
