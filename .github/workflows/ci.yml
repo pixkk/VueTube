@@ -63,9 +63,12 @@ jobs:
       - name: Set App Version in build.gradle
         working-directory: android/app
         run: sed -i 's/dev-local/${{ github.sha }}/' build.gradle
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > key.jks
+
       - name: Build with Gradle
         working-directory: android
-        run: chmod +x gradlew; ./gradlew clean assembleRelease -x test -Pandroid.injected.signing.store.file=/home/runner/work/VueTube/VueTube/android/key.jks -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_STORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: chmod +x gradlew; ./gradlew clean assembleRelease -x test -Pandroid.injected.signing.store.file=key.jks -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_STORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
