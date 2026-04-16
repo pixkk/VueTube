@@ -105,11 +105,12 @@ jobs:
       - name: Build and archive with xcodebuild
         working-directory: ios
         run: |
+          ARCHIVE_PATH="App/build/App.xcarchive"
           xcodebuild \
             -workspace App/App.xcworkspace \
             -scheme App \
             -destination 'generic/platform=iOS' \
-            -archivePath App/build/App.xarchive \
+            -archivePath "$ARCHIVE_PATH" \
             clean build archive \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -118,8 +119,14 @@ jobs:
       - name: Make IPA
         working-directory: ios
         run: |
+          APP_PATH="App/build/App.xcarchive/Products/Applications/App.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Archive product not found at $APP_PATH"
+            ls -la App/build || true
+            exit 1
+          fi
           mkdir -p Payload
-          cp -R App/build/App.xarchive/Products/Applications/App.app Payload/
+          cp -R "$APP_PATH" Payload/
           cd Payload
           zip -r ../VueTube.ipa .
     
