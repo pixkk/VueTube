@@ -96,7 +96,6 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: [
         "buffer",
-        "@capacitor-community/http",
         "@capacitor/toast",
         "@capacitor/status-bar",
         "@hugotomazi/capacitor-navigation-bar",

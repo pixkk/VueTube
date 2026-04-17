@@ -1,5 +1,5 @@
 //---   Modules/Imports   ---//
-import { Http } from "@capacitor-community/http";
+import { CapacitorHttp as Http } from "@capacitor/core";
 import constants from "~/lib/constants";
 
 function generateUserID(length = 36) {

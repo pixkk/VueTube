@@ -1,5 +1,5 @@
 //---   Modules/Imports   ---//
-import { Http } from "@capacitor-community/http";
+import { CapacitorHttp as Http } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { NavigationBar } from "@hugotomazi/capacitor-navigation-bar";
 import constants from "~/lib/constants";

@@ -5,7 +5,7 @@
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
-import {Http} from "@capacitor-community/http";
+import { CapacitorHttp as Http } from "@capacitor/core";
 import {delay, getBetweenStrings, getCpn} from "./utils";
 import rendererUtils from "./renderers";
 import constants from "./constants";

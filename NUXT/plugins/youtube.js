@@ -3,7 +3,7 @@
 // contribute to the library here: https://github.com/VueTubeApp/Vuetube-Extractor
 
 //---   Modules/Imports   ---//
-import {Http} from "@capacitor-community/http";
+import { CapacitorHttp as Http } from "@capacitor/core";
 import Innertube from "~/lib/innertube";
 import constants from "~/lib/constants";
 import rendererUtils from "~/lib/renderers";
