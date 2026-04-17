@@ -134,4 +134,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: VueTube
-          path: VueTube.ipa
+          path: ios/VueTube.ipa
