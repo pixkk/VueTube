@@ -79,8 +79,8 @@ const tvApiVal = {
 // openPopupAction.popup.sharingEmbedRenderer.encryptedEmbedConfig exists encryptedEmbedConfig. use it in "enc"
 const clientConfigs = [
   webEmbeddedApiVal,
-  tvApiVal,
   androidVrApiVal,
+  tvApiVal,
   MWEB
 ];
 const filesystem = {

@@ -127,7 +127,7 @@ jobs:
           fi
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
-          cd Payload
+#          cd Payload
           zip -r ../VueTube.ipa .
     
       - name: Upload artifacts
