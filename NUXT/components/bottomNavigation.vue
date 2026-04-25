@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="(!$route.path.includes('/mods') || !$route.path.includes('/install')) || $route.path.includes('/tweaks')"
+    v-if="!$route.path.includes('/mods') || $route.path.includes('/tweaks')"
     class="bottomNav background"
     ref="navRoot"
   >

@@ -1,12 +1,14 @@
 //---   Modules/Imports   ---//
-import { CapacitorHttp as Http } from "@capacitor/core";
+import { CapacitorHttp as Http, registerPlugin } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
-import { NavigationBar } from "@hugotomazi/capacitor-navigation-bar";
 import constants from "~/lib/constants";
 import { hexToRgb, rgbToHex, parseEmoji } from "~/lib/utils";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import backHandler from "~/lib/classes/backHander";
 import {defineNuxtPlugin} from "nuxt/app";
+import {NavigationBar} from "@capgo/capacitor-navigation-bar";
+
+const NavigationBarVisibility = registerPlugin("NavigationBarVisibility");
 
 let backActions;
 
@@ -134,16 +136,16 @@ const module = {
 
   navigationBar: {
     async hide() {
-      return await NavigationBar.hide();
+      return await NavigationBarVisibility.hide();
     },
     async show() {
-      return await NavigationBar.show();
+      return await NavigationBarVisibility.show();
     },
     async setTheme(color, darkButtons) {
-      return await NavigationBar.setColor({ color, darkButtons });
+      return await NavigationBar.setNavigationBarColor({ color, darkButtons });
     },
     async setTransparent() {
-      return NavigationBar.setTransparency({ isTransparent: true });
+      return await NavigationBar.setNavigationBarColor({ color: "transparent" });
     },
   },
 
