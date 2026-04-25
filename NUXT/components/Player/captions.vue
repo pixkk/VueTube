@@ -3,12 +3,11 @@
   <div>
     <v-bottom-sheet
       v-model="sheet"
-      :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777"
     >
       <template #activator="{ props: activatorProps }">
         <v-btn
-      elevation="0"
+          elevation="0"
           icon
           variant="text"
           size="small"
@@ -18,39 +17,41 @@
           <v-icon>mdi-closed-caption-outline</v-icon>
         </v-btn>
       </template>
-      <v-card class="background">
-        <v-list-subheader
+      <v-card class="bg-background">
+        <div
+          class="d-flex align-center px-4 py-2"
           v-touch="{
             down: () => (sheet = false),
           }"
         >
-          Captions for current video
+          <span class="text-subtitle-2">Captions for current video</span>
           <v-spacer />
           <v-btn
-      elevation="0" icon variant="text" size="small" @click="sheet = false">
+            elevation="0" icon variant="text" size="small" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-list-subheader>
+        </div>
         <v-divider />
         <v-card-text
-          style="max-height: 50vh; flex-direction: column !important"
-          class="pa-0 d-flex flex-column-reverse"
+          style="max-height: 50vh; overflow-y: auto;"
+          class="pa-0 d-flex flex-column"
         >
-          <v-list
+          <div
             v-for="src in captions"
             :key="src.name?.runs ? src.name?.runs[0]?.text : src.name.simpleText"
-            >
+            class="overflow-visible"
+          >
             <v-list-item
               @click="(sheet = false), $emit('captionsHandler', src)">
 
-                <v-list-item-title >
-                  {{src.name?.runs ? src.name?.runs[0]?.text : src.name.simpleText}}
-                </v-list-item-title>
+              <v-list-item-title >
+                {{src.name?.runs ? src.name?.runs[0]?.text : src.name.simpleText}}
+              </v-list-item-title>
 
             </v-list-item>
 
             <v-divider />
-          </v-list>
+          </div>
 
         </v-card-text>
       </v-card>

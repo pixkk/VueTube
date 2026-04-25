@@ -1,7 +1,7 @@
 <template>
-  <v-card variant="flat" class="dialog-base background">
+  <v-card variant="flat" class="dialog-base bg-background">
     <div
-      class="toolbar-container d-flex flex-column background"
+      class="toolbar-container d-flex flex-column bg-background"
       style="flex-direction: column !important"
       v-if="$slots.header"
     >
@@ -10,7 +10,7 @@
       </v-toolbar>
       <v-divider></v-divider>
     </div>
-    <div class="dialog-body background">
+    <div class="dialog-body bg-background">
       <slot></slot>
     </div>
     <v-expand-transition>

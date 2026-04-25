@@ -3,7 +3,6 @@
   <div>
     <v-bottom-sheet
       v-model="sheet"
-      :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777;"
     >
       <template #activator="{ props: activatorProps }">
@@ -11,14 +10,7 @@
           v-ripple
           variant="flat"
           rounded="0"
-          class="comment-renderer px-3 background"
-          :class="
-            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.current.dark
-                ? 'background lighten-1'
-                : 'background darken-1'
-              : ''
-          "
+          class="comment-renderer px-3 bg-background"
           :style="{
             borderRadius: $store.state.tweaks.roundWatch
               ? `${$store.state.tweaks.roundTweak / 2}rem !important`
@@ -32,44 +24,40 @@
           v-bind="activatorProps"
         >
           <v-card-text class="comment-count keep-spaces px-0">
-            <template v-for="text in comments.carouselTitles">
-              <template>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}</template>
-            </template>
+            <span v-for="(text, i) in comments.carouselTitles" :key="i">
+              {{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}
+            </span>
           </v-card-text>
           <v-icon size="small">mdi-unfold-more-horizontal</v-icon>
         </v-card>
       </template>
-      <v-card class="background"
+      <v-card class="bg-background"
       :style="{
             minHeight: 60 + 'vh',}"
       >
-        <v-list-subheader
+        <div
+          class="d-flex align-center px-4 py-2"
           v-touch="{
-          }"
-        >
-          <template v-for="text in comments.carouselTitles" >
-            <v-col
-              :style="{
-                padding: 0 + '!important',
-              }"
-              v-touch="{
             down: () => (sheet = false),
           }"
-            ><h3>{{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}</h3></v-col>
-          </template>
+        >
+          <h3 v-for="(text, i) in comments.carouselTitles" :key="i" class="text-subtitle-1 font-weight-bold">
+            {{ text.carouselTitleViewModel.title }} {{ "(" + text.carouselTitleViewModel?.subtitle + ")" }}
+          </h3>
           <v-spacer />
           <v-btn
       elevation="0" icon variant="text" size="small" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-list-subheader>
-<v-divider/>
+        </div>
+        <v-divider/>
         <v-card-text
-          style="max-height: 60vh; flex-direction: column !important"
-          class="pa-0 d-flex flex-column-reverse"
+          style="max-height: 60vh; overflow-y: auto;"
+          class="pa-0 d-flex flex-column"
         >
           <mainCommentRenderer
-            v-model="showComments"
+            :showComments="showComments"
+            @changeState="showComments = $event"
             :comment-data="comments"
             :default-continuation="commentsContinuations"
           ></mainCommentRenderer>
@@ -86,7 +74,7 @@ export default {
   components: {MainCommentRenderer},
   props: {
     comments: {
-      type: Array,
+      type: Object,
     },
     commentsContinuations : {
 
@@ -95,6 +83,7 @@ export default {
   emits: ["commentsHandler"],
   data: () => ({
     sheet: false,
+    showComments: false,
   }),
 }
 </script>

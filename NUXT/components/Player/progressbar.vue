@@ -1,23 +1,20 @@
 <template>
-  <v-progress-linear
-    style="
-      position: absolute;
-      background: #ffffff22;
-      transform: translateY(50%);
-    "
-    background-opacity="0.5"
-    background-color="white"
-    :buffer-value="buffered"
-    :model-value="(currentTime / duration) * 100"
-    :class="!fullscreen || controls ? '' : 'invisible'"
-    color="primary"
-    :height="seeking ? 4 : 2"
-    :style="
-      fullscreen
-        ? 'width: calc(100% - 2rem); left: 1rem; bottom: 3.5rem;'
-        : 'width: 100%; left: 0; bottom: 1px;'
-    "
-  />
+  <!-- Thin progress bar: sits at the very bottom of the player.
+       Visible only when controls are hidden — when controls appear, the seekbar takes over. -->
+  <div
+    :class="controls ? 'invisible' : ''"
+    style="position: absolute; z-index: 5; width: 100%; left: 0; bottom: 0;"
+  >
+    <v-progress-linear
+      style="background: #ffffff22;"
+      background-opacity="0.5"
+      background-color="white"
+      :buffer-value="buffered"
+      :model-value="(currentTime / duration) * 100"
+      color="primary"
+      :height="seeking ? 4 : 2"
+    />
+  </div>
 </template>
 <script>
 export default {

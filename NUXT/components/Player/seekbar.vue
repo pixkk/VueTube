@@ -6,30 +6,39 @@
       autoplay
       style="display: none"
     />
+    <!-- Scrubber wrapper: pointer-events:none so buttons below are reachable;
+         the v-slider itself has pointer-events:auto and handles all drag input. -->
+    <div
+      :class="!controls && !fullscreen && !isScrubbing ? 'invisible' : ''"
+      style="position: absolute; z-index: 30; overflow: visible; pointer-events: none;"
+      :style="
+        fullscreen
+          ? 'width: calc(100% - 2rem); left: 1rem; bottom: 55px; height: 3rem;'
+          : 'width: calc(100% - 0.5rem); left: 0.25rem; bottom: 2.5rem; height: 3rem;'
+      "
+    >
+      <!-- Buffer indicator: renders behind the slider track.
+           The v-slider empty track is transparent so this bar is visible in the un-played region. -->
+      <div
+        style="position: absolute; bottom: 13px; left: 0; height: 4px; border-radius: 2px; pointer-events: none; background: rgba(255,255,255,0.28); transition: width 0.3s linear;"
+        :style="{ width: `${buffered || 0}%` }"
+      />
     <!-- Scrubber -->
     <v-slider
       id="scrubber"
       hide-details
-      height="2"
       density="compact"
       :disabled="disabled"
-      color="transparent"
+      color="primary"
       thumb-color="primary"
       track-color="transparent"
-      :class="!controls && !fullscreen && !seeking ? 'invisible' : ''"
-      style="position: absolute; z-index: 69420"
-      :style="
-        fullscreen
-          ? 'width: calc(100% - 2rem); left: 1rem; bottom: 55px;'
-          : 'width: calc(100% - 0.5rem); left: 0.25rem; bottom: 0;'
-      "
-      :thumb-size="0"
+      style="width: 100%; position: absolute; bottom: 0; pointer-events: auto;"
+      :thumb-size="isScrubbing ? 16 : 12"
       :max="duration"
-      :model-value="currentTime"
-      @start="$emit('seeking')"
-      @end="$emit('seeking')"
-      @change="$emit('scrub', $event)"
-      @update:modelValue="seeking ? seek($event) : ''"
+      :model-value="isScrubbing ? scrubValue : currentTime"
+      @start="startScrubbing"
+      @end="endScrubbing"
+      @update:modelValue="onScrubMove"
     >
       <!--    Fast preview-->
       <template #thumb-label="{ value }">
@@ -52,6 +61,7 @@
         </div>
       </template>
     </v-slider>
+    </div>
   </div>
 </template>
 
@@ -83,16 +93,40 @@ export default {
     },
     storyboards: {
       default: null
-    }
+    },
+    buffered: {
+      type: Number,
+      default: 0,
+    },
   },
   emits: ["scrub", "seeking"],
   data: () => ({
     vidWrs: "",
+    isScrubbing: false,
+    scrubValue: 0,
   }),
   mounted() {
-    this.vidWrs = this.sources[0].url;
+    if (this.sources && this.sources[0]) {
+      this.vidWrs = this.sources[0].url;
+    }
   },
   methods: {
+    startScrubbing(v) {
+      this.scrubValue = this.currentTime;
+      this.isScrubbing = true;
+      this.$emit('seeking');
+    },
+    endScrubbing(v) {
+      this.isScrubbing = false;
+      this.$emit('scrub', v);
+      this.$emit('seeking');
+    },
+    onScrubMove(v) {
+      if (this.isScrubbing) {
+        this.scrubValue = v;
+        this.seek(v);
+      }
+    },
     fastPreviewGetFrame(returnType, spec, videoLength) {
       let storyboardArray = [];
       let storyBoardUrl = spec.split("|");
@@ -240,6 +274,7 @@ export default {
 
     },
     seek(e) {
+      if (!this.storyboards) return;
       console.log(`scrubbing ${e}`);
       console.warn(this.storyboards)
       // let vid = this.$refs.playerfake;

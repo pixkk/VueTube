@@ -96,7 +96,7 @@ function convertTranscriptToVTT(transcript) {
   let textElements = transcript.match(/<text start="([\d.]+)" dur="([\d.]+)">([^<]+)<\/text>/g);
 if (textElements == null) {
   isOkay = false;
-  textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)" wp="[\d.]+" ws="[\d.]+">([\s\S]*?)<\/p>/g);
+  textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)".*?>(.*)<\/p>/g);
   if (textElements == null) {
     textElements = transcript.match(/<p t="([\d.]+)" d="([\d.]+)">([^<]+)<\/p>/g);
   }
@@ -120,7 +120,7 @@ if (textElements == null) {
       contentMatch = textElement.match(/>([^<]+)<\/p>/)
     }
     if (contentMatch == null) {
-      contentMatch = textElement.match(/<s[^>]*>([\s\S]*?)<\/s>/)
+      contentMatch =[...textElement.matchAll(/<s[^>]*>([\s\S]*?)<\/s>/g)]
     }
 
     if (startMatch && durMatch && contentMatch) {
@@ -134,7 +134,18 @@ if (textElements == null) {
         start = parseInt(startMatch[1]);
         duration = parseInt(durMatch[1]);
       }
-      let content = decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
+      let content = ""
+      // console.warn(contentMatch);
+      if (typeof contentMatch[0] !== "string" || contentMatch.length > 1) {
+        for (let j = 0; j < contentMatch.length; j++) {
+          content += decodeHtmlEntities(contentMatch[j][1].replace(/\+/g, ' '));
+        }
+      }
+      else {
+        content += decodeHtmlEntities(contentMatch[1].replace(/\+/g, ' ')); // Decode HTML entities
+      }
+      // for (let j = 0; j < contentMatch.length; j++) {
+      // }
 
       let end;
       if (i+1 >= textElements.length) {

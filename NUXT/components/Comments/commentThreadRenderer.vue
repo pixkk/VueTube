@@ -2,7 +2,7 @@
   <div
     v-if="commentRenderer"
     v-ripple
-    class="comment-thread px-3"
+    class="comment-thread px-0"
     @click="$emit('showReplies', comment)"
   >
     <v-btn
@@ -88,9 +88,7 @@
         </yt-text-formatter>
       </collapsable-text>
       <div class="toolbar mt-2">
-        <v-btn-toggle
-          elevation="0"
-          v-model="voteStatus" group>
+        <div>
           <div class="toolbar--item mr-1">
             <v-icon size="small">mdi-thumb-up-outline</v-icon>
             <span
@@ -100,7 +98,7 @@
             ></span>
             <v-icon class="ml-2" size="small">mdi-thumb-down-outline</v-icon>
           </div>
-        </v-btn-toggle>
+        </div>
         <div class="toolbar--item ml-6" v-if="commentRenderer.replyCount">
           <v-icon size="small">mdi-comment-outline</v-icon>
           <span

@@ -14,22 +14,23 @@
 <!--        <v-icon>mdi-close</v-icon>-->
 <!--      </v-btn>-->
     </template>
-    <template>
+    <div>
       <comment-thread-renderer :comment="parentComment" />
       <v-divider></v-divider>
       <comment-thread-renderer
         v-for="(comment, index) in comments"
         :key="index"
         :comment="comment"
-        :continuationToken="defaultContinuation"
+        :continuationToken="currentContinuation"
         :ref="`comment-${index}`"
+        class="ms-5 me-5"
       />
       <observer
         v-if="comments.length > 0"
         @intersect="paginate"
         :target="$refs[`comment-${lastComment}`]"
       />
-    </template>
+    </div>
   </dialog-base>
 </template>
 
@@ -52,15 +53,13 @@ export default {
     return {
       loading: false,
       comments: [],
-      defaultContinuation: null,
+      currentContinuation: null,
     };
   },
-  model: {
-    prop: "showReplies",
-    event: "changeState",
-  },
+  emits: ["changeState"],
   props: ["defaultContinuation", "parentComment", "showReplies"],
   mounted() {
+    this.currentContinuation = this.defaultContinuation;
     this.paginate();
   },
   computed: {
@@ -71,10 +70,10 @@ export default {
   methods: {
     paginate() {
       // console.warn(this.parentComment);
-      if (this.defaultContinuation) {
+      if (this.currentContinuation) {
         this.loading = true;
         this.$youtube
-          .getContinuation(this.defaultContinuation, "next", "web")
+          .getContinuation(this.currentContinuation, "next", "web")
           .then((result) => {
             let processed;
             processed = result.data.onResponseReceivedEndpoints.map(
@@ -89,7 +88,7 @@ export default {
               };
               delete this.comments[i].commentRenderer;
             }
-            this.defaultContinuation = this.findContinuation(processed);
+            this.currentContinuation = this.findContinuation(processed);
             if (this.comments) this.loading = false;
           });
       }

@@ -2,7 +2,6 @@
   <div>
     <v-bottom-sheet
       v-model="sheet"
-      :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777"
     >
       <template #activator="{ props: activatorProps }">
@@ -17,19 +16,20 @@
           {{ currentSpeed }}X
         </v-btn>
       </template>
-      <v-card class="background">
-        <v-list-subheader
+      <v-card class="bg-background">
+        <div
+          class="d-flex align-center px-4 py-2"
           v-touch="{
             down: () => (sheet = false),
           }"
         >
-          Playback Speed
+          <span class="text-subtitle-2">Playback Speed</span>
           <v-spacer />
           <v-btn
-      elevation="0" icon variant="text" size="small" color="white" @click="sheet = false">
+      elevation="0" icon variant="text" size="small" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-list-subheader>
+        </div>
         <v-divider />
         <v-card-text style="height: 50vh" class="pa-0">
           <v-list-item

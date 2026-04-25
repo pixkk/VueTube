@@ -2,7 +2,7 @@
   <!-- // TODO: down: () => minimize, -->
   <div
     ref="vidcontainer"
-    class="d-flex flex-column black justify-center"
+    class="d-flex flex-column bg-black justify-center"
     style="position: relative"
     :style="{
       width: 'auto',
@@ -78,7 +78,6 @@
     <button id="skipButton"
             ref="skipButton" class="skip-button"
     :style="{
-      backgroundColor: 'primary',
       display: isSegment ? 'block' : 'none',
     }"
 
@@ -167,15 +166,18 @@
       <v-icon size="small" class="pl-2">mdi-fast-forward</v-icon>
     </div>
 
-    <!-- controls container -->
+    <!-- controls container: covers full player area with z-index 20.
+         Seekbar (z-index 30) sits above this but only in the bottom 3rem strip. -->
     <div
       v-if="$refs.player && $refs.player.currentSrc"
-      style="transition: opacity 0.15s ease-in-out"
+      class="player-controls-overlay"
+      style="transition: opacity 0.15s ease-in-out; position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 20;"
       :style="
         controls && !seeking
-          ? 'opacity: 1;'
-          : 'opacity: 0; pointer-events: none'
+          ? 'opacity: 1; pointer-events: auto;'
+          : 'opacity: 0; pointer-events: none;'
       "
+      @click.self="controlsHandler()"
     >
       <!-- top controls row -->
       <div
@@ -191,8 +193,6 @@
         </div>
         <v-spacer />
         <settings
-            disabled="disabled"
-            aria-disabled="true"
           v-if="$refs.player"
           class="mx-2"
           @volumeHandler="volumeHandler($event)"
@@ -265,11 +265,13 @@
       </div>
       <!-- center controls row end -->
 
-      <!-- time & fullscreen row -->
+      <!-- combined bottom row: time · quality · speed · fullscreen
+           In non-fullscreen sits at the very bottom (0.5rem).
+           In fullscreen rises above the seekbar wrapper (seekbar bottom=55px + height=3rem ≈ 6.4rem). -->
       <div
-        :style="isFullscreen ? 'bottom: 4.25rem' : 'bottom: 0.5rem'"
+        :style="isFullscreen ? 'bottom: 7rem' : 'bottom: 0.5rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
-        style="position: absolute; width: 100% ;  filter: drop-shadow(0 0 0.5rem #000)"
+        style="position: absolute; width: 100%; filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"
       >
         <watchtime
@@ -279,26 +281,6 @@
           :controls="controls"
         />
         <v-spacer />
-        <fullscreen
-          style="z-index: 2"
-          :fullscreen="isFullscreen"
-          @fullscreen="fullscreenHandler(true)"
-        />
-      </div>
-      <!-- time & fullscreen row end -->
-
-      <!-- bottom controls row -->
-      <div
-        style="position: absolute; width: 100%; bottom: 0.5rem;  filter: drop-shadow(0 0 0.5rem #000)"
-        class="d-flex justify-between align-center px-2"
-        @click.self="controlsHandler()"
-      >
-        <fscontrols
-          :is-fullscreen="isFullscreen"
-          :vertical-fullscreen="verticalFullscreen"
-        />
-        <v-spacer />
-        <!-- // TODO: merge the bottom 2 into 1 reusable component -->
         <quality
           v-if="$refs.player && $refs.player.currentSrc && (!hls || !dash)"
           :sources="sources"
@@ -320,11 +302,27 @@
                 : {}
           "
         />
-        <!-- placeholder for moving fullscreen button above -->
-        <v-btn
-      elevation="0" icon variant="text" size="small" @click="fullscreenHandler(true)"> </v-btn>
+        <fullscreen
+          style="z-index: 2"
+          :fullscreen="isFullscreen"
+          @fullscreen="fullscreenHandler(true)"
+        />
       </div>
-      <!-- bottom controls row -->
+      <!-- combined bottom row end -->
+
+      <!-- fullscreen-only interaction row (likes, share, etc.) — sits below seekbar -->
+      <div
+        v-if="isFullscreen"
+        style="position: absolute; width: 100%; bottom: 0.5rem; filter: drop-shadow(0 0 0.5rem #000)"
+        class="d-flex align-center px-2"
+        @click.self="controlsHandler()"
+      >
+        <fscontrols
+          :is-fullscreen="isFullscreen"
+          :vertical-fullscreen="verticalFullscreen"
+        />
+      </div>
+      <!-- fullscreen interaction row end -->
     </div>
     <!-- controls container end -->
 
@@ -359,6 +357,7 @@
       :seeking="seeking"
       :disabled="disabled"
       :storyboards="storyboards"
+      :buffered="buffered"
       @seeking="seeking = !seeking"
       @scrub="
         ($refs.player.currentTime = $event), ($refs.audio.currentTime = $event)
@@ -1287,6 +1286,13 @@ export default {
   opacity: 0;
 }
 
+/* Force white icons/text for all controls rendered on the dark video background */
+.player-controls-overlay .v-icon,
+.player-controls-overlay .v-btn__content,
+.player-controls-overlay .v-btn .v-icon {
+  color: white !important;
+}
+
 .chrome {
   video::cue {
     /* font-size: 13.4px; */
@@ -1301,12 +1307,12 @@ export default {
   bottom: 10px;
   right: 10px;
   margin-bottom: 5rem;
-  background-color: var(--v-primary-base);
-  color: white;
+  background-color: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
   border: none;
   border-radius: 5px;
+  padding: 6px 12px;
   cursor: pointer;
-  /* display: block; */
   z-index: 9999;
 }
 </style>

@@ -21,7 +21,7 @@
       :key="index"
       class="commentElement"
     >
-      <v-list-item class="px-0">
+      <v-list-item class="px-0 ms-5 me-5">
         <component
           :is="Object.keys(comment)[0]"
           v-if="comment && getComponents()[Object.keys(comment)[0]]"
@@ -47,7 +47,8 @@
     <template v-slot:reveal>
       <main-comment-reply-renderer
         v-if="showReply && replyData"
-        v-model="showReply"
+        :showReplies="showReply"
+        @changeState="showReply = $event"
         :parentComment="replyData.parent"
         :defaultContinuation="replyData.replyContinuation"
         class="transition-fast-in-fast-out v-card--reveal"
@@ -75,10 +76,7 @@ export default {
     mainCommentReplyRenderer,
     continuationItemRenderer,
   },
-  model: {
-    prop: "showComments",
-    event: "changeState",
-  },
+  emits: ["changeState"],
   props: ["defaultContinuation", "commentData", "showComments"],
 
   data: () => ({

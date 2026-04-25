@@ -5,6 +5,14 @@
   </div>
 </template>
 
+<style>
+/* Links in description use the active Vuetify theme primary color (Vuetify 4 CSS variable) */
+.yt-text-formatter a {
+  color: rgb(var(--v-theme-primary)) !important;
+  text-decoration: underline;
+}
+</style>
+
 <script>
 export default {
   props: {

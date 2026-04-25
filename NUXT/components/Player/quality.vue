@@ -2,7 +2,6 @@
   <div>
     <v-bottom-sheet
       v-model="sheet"
-      :attach="$parent.$refs.vidcontainer"
       style="z-index: 777777"
     >
       <template #activator="{ props: activatorProps }">
@@ -16,15 +15,15 @@
         </v-btn>
       </template>
 
-      <v-card class="background">
-        <v-list-subheader>
-          Quality for current video
+      <v-card class="bg-background">
+        <div class="d-flex align-center px-4 py-2">
+          <span class="text-subtitle-2">Quality for current video</span>
           <v-spacer />
           <v-btn
-      elevation="0" icon variant="text" size="small" color="white" @click="sheet = false">
+      elevation="0" icon variant="text" size="small" @click="sheet = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-list-subheader>
+        </div>
         <v-divider />
 
         <v-tabs v-model="tab" class="w-100">
@@ -39,21 +38,32 @@
                 v-for="src in sources"
                 :key="src.url"
                 @click="handleQualityClick(src)"
+                style="padding: 0 !important;"
               >
-                <v-avatar>
-                  <v-icon
-                    :color="currentSource.src === src.url ? 'primary' : 'grey'"
-                    v-text="currentSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
-                  ></v-icon>
-                </v-avatar>
-                  <v-list-item-title>
-                    {{ src.qualityLabel ? src.qualityLabel : "Auto" }} ({{ src.quality }})
-                    {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
-                    AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
-                  </v-list-item-subtitle>
+
+                <div class="d-flex flex-column">
+                  <div
+                    class="d-flex align-center px-4 py-2">
+                    <v-avatar>
+                      <v-icon
+                        :color="currentSource.src === src.url ? 'primary' : 'grey'"
+                      >{{currentSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
+                    </v-avatar>
+                    <div class="w-100">
+                      <v-list-item-title>
+                        {{ src.qualityLabel ? src.qualityLabel : "Auto" }} ({{ src.quality }})
+                        {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
+                        AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
+                      </v-list-item-subtitle>
+                    </div>
+
+                  </div>
+                  <v-divider v-if="!$store.state.tweaks.roundTweak" />
+                </div>
+
               </v-list-item>
             </v-card-text>
           </v-window-item>
@@ -64,21 +74,30 @@
                   v-for="src in audioSources"
                   :key="src.url"
                   @click="handleAudioQualityClick(src)"
+                  style="padding: 0 !important;"
                 >
-                  <v-avatar>
-                    <v-icon
-                      :color="currentAudioSource.src === src.url ? 'primary' : 'grey'"
-                      v-text="currentAudioSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
-                    ></v-icon>
-                  </v-avatar>
-                    <v-list-item-title>
-                      {{ src?.audioTrack?.displayName ? src?.audioTrack?.displayName : "" }} ({{ src.quality }})
-                      {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
-                      AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
-                    </v-list-item-subtitle>
+                  <div class="d-flex flex-column">
+                    <div
+                      class="d-flex align-center px-4 py-2">
+                      <v-avatar>
+                        <v-icon
+                          :color="currentAudioSource.src === src.url ? 'primary' : 'grey'"
+                        >{{currentAudioSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
+                      </v-avatar>
+                      <div class="w-100">
+                        <v-list-item-title>
+                          {{ src?.audioTrack?.displayName ? src?.audioTrack?.displayName : "" }} ({{ src.quality }})
+                          {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
+                          AVG bitrate: {{ (src.averageBitrate / 1000000).toFixed(2) }}Mbps
+                        </v-list-item-subtitle>
+                      </div>
+
+                    </div>
+                    <v-divider v-if="!$store.state.tweaks.roundTweak" />
+                  </div>
                 </v-list-item>
               </v-card-text>
           </v-window-item>
