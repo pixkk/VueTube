@@ -902,7 +902,7 @@ class Innertube {
   async makeDecipherFunctionWithAst(baseJs) {
     // let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
-    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);.*?([A-z0-9]+)\(([0-9]+),([0-9]+),([A-z0-9$]+\(.*?([A-z0-9$]+)\))\),/gm;
+    let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);.*?([A-z0-9$]+)\(([0-9]+),([0-9]+),([A-z0-9$]+\(.*?([A-z0-9$]+)\))\),/gm;
     let decipherFunction = decipherFunctionRegex.exec(baseJs.data);
 
     let decipherFunctionSecondArg = decipherFunction[3];
@@ -912,11 +912,11 @@ class Innertube {
     let decipherFunctionFirstArg = decipherFunction[2];
     let decipherFunctionName = decipherFunction[1];
 
-    console.warn("decipherFunction", decipherFunction);
-    console.warn("decipherFunctionSecondArg", decipherFunctionSecondArg);
-    console.warn("decipherFunctionThirdPart", decipherFunctionThirdPart);
-    console.warn("decipherFunctionFirstArg", decipherFunctionFirstArg);
-    console.warn("decipherFunctionName", decipherFunctionName);
+    // console.warn("decipherFunction", decipherFunction);
+    // console.warn("decipherFunctionSecondArg", decipherFunctionSecondArg);
+    // console.warn("decipherFunctionThirdPart", decipherFunctionThirdPart);
+    // console.warn("decipherFunctionFirstArg", decipherFunctionFirstArg);
+    // console.warn("decipherFunctionName", decipherFunctionName);
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
