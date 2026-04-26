@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     { src: "~/plugins/thirdPartyPluginLoader", mode: "client" },
     { src: "~/plugins/language", mode: "client" },
     { src: "~/plugins/update", mode: "client" },
+    { src: "~/plugins/theme-init.client" },
   ],
 
   generate: {

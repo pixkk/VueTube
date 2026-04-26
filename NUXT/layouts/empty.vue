@@ -1,5 +1,5 @@
 <template>
-  <v-app style="background: transparent !important">
+  <v-app>
     <slot />
   </v-app>
 </template>

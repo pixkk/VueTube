@@ -323,7 +323,6 @@ import SlimVideoDescriptionRenderer from "~/components/UtilRenderers/slimVideoDe
 
 import backType from "~/lib/classes/backType";
 import Comments from "../components/Player/comments.vue";
-import {useTheme} from "vuetify/framework";
 
 export default {
   components: {
@@ -383,34 +382,6 @@ export default {
     }
     this.mountedInit();
     this.$vuetube.resetBackActions();
-  },
-  async setup() {
-    const { $vuetube } = useNuxtApp()
-    const theme = useTheme()
-
-    const isDark = JSON.parse(localStorage.getItem("darkTheme")) === true
-
-    // theme.global.name.value = isDark ? 'dark' : 'light'
-    theme.change(isDark ? 'dark' : 'light')
-
-    if (localStorage.getItem("primaryDark"))
-      theme.themes.value.dark.colors.primary = localStorage.getItem("primaryDark")
-
-    if (localStorage.getItem("primaryLight"))
-      theme.themes.value.light.colors.primary = localStorage.getItem("primaryLight")
-
-    if (localStorage.getItem("backgroundDark"))
-      theme.themes.value.dark.colors.background = localStorage.getItem("backgroundDark")
-
-    if (localStorage.getItem("backgroundLight"))
-      theme.themes.value.light.colors.background = localStorage.getItem("backgroundLight")
-
-    const current = theme.current.value.colors
-    const backgroundColor = current.background || '#121212'
-
-    $vuetube.navigationBar.setTheme(backgroundColor, !isDark)
-    $vuetube.statusBar.setTheme(backgroundColor, isDark)
-
   },
   beforeUnmount() {
     clearInterval(this.interval);

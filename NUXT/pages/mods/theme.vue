@@ -213,6 +213,7 @@ export default {
       this.$vuetify.theme.dark
         ? localStorage.setItem("backgroundDark", value)
         : localStorage.setItem("backgroundLight", value);
+      document.documentElement.style.backgroundColor = value;
       this.$vuetube.statusBar.setTheme(value, this.$vuetify.theme.dark);
       this.$vuetube.navigationBar.setTheme(value, !this.$vuetify.theme.dark);
       // WIP: luma-based light-dark auto-switching

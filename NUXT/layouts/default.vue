@@ -332,9 +332,7 @@ export default {
 }
 html,
 body {
-  background: var(--v-background-base);
   -webkit-overflow-scrolling: touch !important;
-  //overflow-y: scroll !important;
   overflow-x: hidden !important;
 }
 
