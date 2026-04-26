@@ -120,7 +120,7 @@
   display: flex;
   flex-direction: row;
   flex-basis: auto;
-  width: 100%;
+  //width: 100%;
   padding: 10px 0;
 
   .avatar-thumbnail {
