@@ -79,7 +79,7 @@ const searchModule = {
         .join("");
     }
 
-    let hashedVideoId = (await sha256(id)).slice(0, 6);
+    let hashedVideoId = (await sha256(id)).slice(0, 8);
     Http.request({
       method: "GET",
       url:

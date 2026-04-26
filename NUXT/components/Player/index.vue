@@ -266,10 +266,10 @@
       <!-- center controls row end -->
 
       <!-- combined bottom row: time · quality · speed · fullscreen
-           In non-fullscreen sits at the very bottom (0.5rem).
+           In non-fullscreen is raised so seekbar stays below it.
            In fullscreen rises above the seekbar wrapper (seekbar bottom=55px + height=3rem ≈ 6.4rem). -->
       <div
-        :style="isFullscreen ? 'bottom: 7rem' : 'bottom: 0.5rem'"
+        :style="isFullscreen ? 'bottom: 7rem' : 'bottom: 1rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
         style="position: absolute; width: 100%; filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"

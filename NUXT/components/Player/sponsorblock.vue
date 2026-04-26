@@ -1,26 +1,31 @@
 <template>
-  <div>
-    <v-progress-linear
-      v-for="block in blocks.segments"
-      :key="block.UUID"
-      :buffer-value="(block.segment[1] / duration) * 100"
-      :model-value="(block.segment[0] / duration) * 100"
-      style="
-        position: absolute;
-        pointer-events: none;
-        background: transparent;
-        transform: translateY(50%);
-      "
-      :class="!fullscreen || controls ? '' : 'invisible'"
-      :background-color="colors[block.category]"
-      background-opacity="1"
-      color="transparent"
-      :height="seeking ? 4 : 2"
-      :style="
-        fullscreen
-          ? 'width: calc(100% - 2rem); left: 1rem; bottom: 3.5rem;'
-          : 'width: 100%; left: 0; bottom: 1px;'
-      "
+  <div
+    class="sponsorblock-segments"
+    :style="{
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: fullscreen
+        ? (controls ? '4rem' : '0')
+        : '0',
+      height: controls ? '4px' : (seeking ? '4px' : '2px'),
+      pointerEvents: 'none',
+      zIndex: 9999,
+    }"
+  >
+    <div
+      v-for="(block, i) in (blocks && blocks.segments) || []"
+      :key="block.UUID || i"
+      :style="{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: clampPercent((block.segment[0] / duration) * 100) + '%',
+        width: clampPercent(((block.segment[1] - block.segment[0]) / duration) * 100) + '%',
+        background: colors[block.category] || 'gray',
+        opacity: 0.95,
+        pointerEvents: 'none',
+      }"
     />
   </div>
 </template>
@@ -48,17 +53,23 @@ export default {
   },
   data: () => ({
     colors: {
-      sponsor: "green",
-      selfpromo: "yellow",
-      exclusive_access: "teal",
-      interaction: "fuchsia",
-      poi_highlight: "deeppink",
-      intro: "lightblue",
-      outro: "blue",
-      music_offtopic: "orange",
-      filter: "purple",
-      preview: "lightblue",
+      sponsor: "#00d400",
+      selfpromo: "#ffff00",
+      exclusive_access: "#008a8a",
+      interaction: "#cc00ff",
+      poi_highlight: "#ff1493",
+      intro: "#00ffff",
+      outro: "#0202ed",
+      music_offtopic: "#ff9900",
+      filter: "#735fb1",
+      preview: "#008fd6",
     },
   }),
+  methods: {
+    clampPercent(v) {
+      if (!isFinite(v) || isNaN(v)) return 0;
+      return Math.max(0, Math.min(100, v));
+    },
+  },
 };
 </script>

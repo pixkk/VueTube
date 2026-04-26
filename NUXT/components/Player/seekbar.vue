@@ -13,8 +13,8 @@
       style="position: absolute; z-index: 30; overflow: visible; pointer-events: none;"
       :style="
         fullscreen
-          ? 'width: calc(100% - 2rem); left: 1rem; bottom: 55px; height: 3rem;'
-          : 'width: calc(100% - 0.5rem); left: 0.25rem; bottom: 2.5rem; height: 3rem;'
+          ? 'width: 100%; left: 0; bottom: 55px; height: 3rem;'
+          : 'width: 100%; left: 0; bottom: -0.875rem; height: 3rem;'
       "
     >
       <!-- Buffer indicator: renders behind the slider track.
@@ -64,7 +64,13 @@
     </div>
   </div>
 </template>
+<style>
 
+.v-input__control {
+  margin: 0 !important;
+}
+
+</style>
 <script>
 export default {
   props: {
