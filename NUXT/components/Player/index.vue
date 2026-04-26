@@ -336,15 +336,6 @@
       :seeking="seeking"
     />
 
-    <sponsorblock
-      v-if="$refs.player && sponsorBlocks.videoID"
-      :duration="$refs.player.duration"
-      :fullscreen="isFullscreen"
-      :controls="controls"
-      :seeking="seeking"
-      :blocks="sponsorBlocks"
-    />
-
     <seekbar
       v-if="$refs.player"
       v-show="!isFullscreen || controls"
@@ -358,6 +349,7 @@
       :disabled="disabled"
       :storyboards="storyboards"
       :buffered="buffered"
+      :blocks="sponsorBlocks.videoID ? sponsorBlocks : null"
       @seeking="seeking = !seeking"
       @scrub="
         ($refs.player.currentTime = $event), ($refs.audio.currentTime = $event)

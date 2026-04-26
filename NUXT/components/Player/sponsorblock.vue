@@ -1,30 +1,17 @@
 <template>
+  <!-- Positioned at the track level inside the seekbar wrapper (bottom: 13px = track baseline) -->
   <div
     class="sponsorblock-segments"
-    :style="{
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: fullscreen
-        ? (controls ? '4rem' : '0')
-        : '0',
-      height: controls ? '4px' : (seeking ? '4px' : '2px'),
-      pointerEvents: 'none',
-      zIndex: 9999,
-    }"
+    style="position: absolute; bottom: 13px; left: 0; right: 0; height: 4px; pointer-events: none;"
   >
     <div
       v-for="(block, i) in (blocks && blocks.segments) || []"
       :key="block.UUID || i"
+      style="position: absolute; top: 0; bottom: 0; pointer-events: none; opacity: 0.95;"
       :style="{
-        position: 'absolute',
-        top: 0,
-        bottom: 0,
         left: clampPercent((block.segment[0] / duration) * 100) + '%',
         width: clampPercent(((block.segment[1] - block.segment[0]) / duration) * 100) + '%',
         background: colors[block.category] || 'gray',
-        opacity: 0.95,
-        pointerEvents: 'none',
       }"
     />
   </div>
@@ -34,22 +21,12 @@
 export default {
   props: {
     blocks: {
-      // type: Array,
       required: true,
     },
     duration: {
       type: Number,
       required: true,
     },
-    seeking: {
-      type: Boolean,
-      required: true,
-    },
-    fullscreen: {
-      type: Boolean,
-      required: true,
-    },
-    controls: {},
   },
   data: () => ({
     colors: {

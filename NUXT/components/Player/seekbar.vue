@@ -10,26 +10,36 @@
          the v-slider itself has pointer-events:auto and handles all drag input. -->
     <div
       :class="!controls && !fullscreen && !isScrubbing ? 'invisible' : ''"
-      style="position: absolute; z-index: 30; overflow: visible; pointer-events: none;"
+      style="position: absolute; z-index: 10000; overflow: visible; pointer-events: none;"
       :style="
         fullscreen
           ? 'width: 100%; left: 0; bottom: 55px; height: 3rem;'
           : 'width: 100%; left: 0; bottom: -0.875rem; height: 3rem;'
       "
     >
-      <!-- Buffer indicator: renders behind the slider track.
-           The v-slider empty track is transparent so this bar is visible in the un-played region. -->
+      <!-- Buffer indicator -->
       <div
         style="position: absolute; bottom: 13px; left: 0; height: 4px; border-radius: 2px; pointer-events: none; background: rgba(255,255,255,0.28); transition: width 0.3s linear;"
         :style="{ width: `${buffered || 0}%` }"
       />
-    <!-- Scrubber -->
+      <!-- Played progress (drawn here so it sits below segments; v-slider fill is hidden via CSS) -->
+      <div
+        style="position: absolute; bottom: 13px; left: 0; height: 4px; border-radius: 2px; pointer-events: none; transition: width 0.05s linear;"
+        :style="{ width: `${duration > 0 ? ((isScrubbing ? scrubValue : currentTime) / duration) * 100 : 0}%`, background: 'rgb(var(--v-theme-primary))' }"
+      />
+      <!-- Sponsorblock segments — above played bar, below thumb (DOM order ensures thumb wins) -->
+      <sponsorblock
+        v-if="blocks && blocks.segments"
+        :blocks="blocks"
+        :duration="duration"
+      />
+    <!-- Scrubber — last in DOM so the thumb paints above segments -->
     <v-slider
       id="scrubber"
       hide-details
       density="compact"
       :disabled="disabled"
-      color="primary"
+      color="transparent"
       thumb-color="primary"
       track-color="transparent"
       style="width: 100%; position: absolute; bottom: 0; pointer-events: auto;"
@@ -70,9 +80,17 @@
   margin: 0 !important;
 }
 
+/* Hide v-slider's built-in fill — we draw our own below the segments */
+#scrubber .v-slider-track__fill {
+  background: transparent !important;
+}
+
 </style>
 <script>
+import sponsorblock from "~/components/Player/sponsorblock.vue";
+
 export default {
+  components: { sponsorblock },
   props: {
     video: {},
     controls: {},
@@ -103,6 +121,9 @@ export default {
     buffered: {
       type: Number,
       default: 0,
+    },
+    blocks: {
+      default: null,
     },
   },
   emits: ["scrub", "seeking"],
