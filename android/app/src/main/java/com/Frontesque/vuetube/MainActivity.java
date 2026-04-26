@@ -1,4 +1,4 @@
-package com.Frontesque.vuetube;
+package com.pixkk.vuetube;
 
 import android.os.Bundle;
 

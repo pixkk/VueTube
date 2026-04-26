@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.Frontesque.vuetube"
+    namespace "com.pixkk.vuetube"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.Frontesque.vuetube"
+        applicationId "com.pixkk.vuetube"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

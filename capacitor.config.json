@@ -1,5 +1,5 @@
 {
-  "appId": "com.Frontesque.vuetube",
+  "appId": "com.pixkk.vuetube",
   "appName": "VueTube",
   "webDir": "NUXT/.output/public",
   "bundledWebRuntime": false,

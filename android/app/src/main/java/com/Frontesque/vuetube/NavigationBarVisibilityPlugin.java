@@ -1,4 +1,4 @@
-package com.Frontesque.vuetube;
+package com.pixkk.vuetube;
 
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
