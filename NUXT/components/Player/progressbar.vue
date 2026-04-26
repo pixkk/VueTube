@@ -14,10 +14,19 @@
       color="primary"
       :height="seeking ? 4 : 2"
     />
+    <!-- Sponsorblock segments over the thin bar -->
+    <sponsorblock
+      v-if="blocks && blocks.segments"
+      :blocks="blocks"
+      :duration="duration"
+    />
   </div>
 </template>
 <script>
+import sponsorblock from "~/components/Player/sponsorblock.vue";
+
 export default {
+  components: { sponsorblock },
   props: {
     duration: {
       type: Number,
@@ -39,6 +48,9 @@ export default {
     buffered: {
       type: Number,
       required: true,
+    },
+    blocks: {
+      default: null,
     },
   },
 };

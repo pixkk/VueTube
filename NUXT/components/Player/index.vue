@@ -334,6 +334,7 @@
       :controls="controls"
       :buffered="buffered"
       :seeking="seeking"
+      :blocks="sponsorBlocks.videoID ? sponsorBlocks : null"
     />
 
     <seekbar

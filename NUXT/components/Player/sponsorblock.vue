@@ -1,8 +1,8 @@
 <template>
-  <!-- Positioned at the track level inside the seekbar wrapper (bottom: 13px = track baseline) -->
+  <!-- Fills its parent container — the parent decides position and size -->
   <div
     class="sponsorblock-segments"
-    style="position: absolute; bottom: 13px; left: 0; right: 0; height: 4px; pointer-events: none;"
+    style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none;"
   >
     <div
       v-for="(block, i) in (blocks && blocks.segments) || []"

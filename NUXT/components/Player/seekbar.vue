@@ -28,11 +28,12 @@
         :style="{ width: `${duration > 0 ? ((isScrubbing ? scrubValue : currentTime) / duration) * 100 : 0}%`, background: 'rgb(var(--v-theme-primary))' }"
       />
       <!-- Sponsorblock segments — above played bar, below thumb (DOM order ensures thumb wins) -->
-      <sponsorblock
+      <div
         v-if="blocks && blocks.segments"
-        :blocks="blocks"
-        :duration="duration"
-      />
+        style="position: absolute; bottom: 13px; left: 0; right: 0; height: 4px;"
+      >
+        <sponsorblock :blocks="blocks" :duration="duration" />
+      </div>
     <!-- Scrubber — last in DOM so the thumb paints above segments -->
     <v-slider
       id="scrubber"
