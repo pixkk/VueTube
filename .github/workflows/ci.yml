@@ -92,10 +92,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: Install dependencies
         run: npm i
-      - name: Copy web assets to native platform
-        run: npx cap copy ios
-      - name: Update native platform
-        run: npx cap update ios
+      - name: Prepare iOS native dependencies
+        run: |
+          npx cap copy ios
+          for podspec in ios/capacitor-cordova-ios-plugins/CordovaPlugins.podspec ios/capacitor-cordova-ios-plugins/CordovaPluginsStatic.podspec; do
+            if [ -f "$podspec" ]; then
+              perl -0777 -i -pe "s/s\.ios\.deployment_target\s*=\s*'[^']+'/s.ios.deployment_target  = '15.0'/g" "$podspec"
+            fi
+          done
+          cd ios/App
+          pod install
       - name: Set up XCode
         uses: maxim-lobanov/setup-xcode@v1
         with:
