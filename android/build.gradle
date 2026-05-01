@@ -24,6 +24,24 @@ allprojects {
     }
 }
 
+subprojects { subproject ->
+    subproject.plugins.withId('com.android.library') {
+        def androidExt = subproject.extensions.findByName('android')
+        if (androidExt != null && (!androidExt.hasProperty('namespace') || androidExt.namespace == null || androidExt.namespace.toString().trim().isEmpty())) {
+            def manifestFile = new File(subproject.projectDir, "src/main/AndroidManifest.xml")
+            def fallbackNamespace = "autogen.${subproject.name.replace('-', '_')}"
+            if (manifestFile.exists()) {
+                def manifest = new XmlSlurper().parse(manifestFile)
+                def manifestPackage = manifest.@package?.text()
+                if (manifestPackage != null && !manifestPackage.trim().isEmpty()) {
+                    fallbackNamespace = manifestPackage.trim()
+                }
+            }
+            androidExt.namespace = fallbackNamespace
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

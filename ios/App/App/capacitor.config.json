@@ -36,7 +36,7 @@
 		"SplashScreenPlugin",
 		"StatusBarPlugin",
 		"ToastPlugin",
-		"NavigationBarPlugin",
+		"CapgoNavigationBarPlugin",
 		"CDVPlugin"
 	]
 }
