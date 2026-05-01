@@ -1,7 +1,8 @@
 ext {
     minSdkVersion = 24
-    compileSdkVersion = 34
-    targetSdkVersion = 34
+    // Capacitor 8.x references Build.VERSION_CODES.VANILLA_ICE_CREAM (API 35); compileSdk must be ≥ 35
+    compileSdkVersion = 35
+    targetSdkVersion = 35
     androidxActivityVersion = '1.9.0'
     androidxAppCompatVersion = '1.7.0'
     androidxCoordinatorLayoutVersion = '1.1.0'
