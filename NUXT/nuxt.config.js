@@ -99,7 +99,7 @@ export default defineNuxtConfig({
         "buffer",
         "@capacitor/toast",
         "@capacitor/status-bar",
-        "@hugotomazi/capacitor-navigation-bar",
+        "@capgo/capacitor-navigation-bar",
         "@capacitor/haptics",
         "@capacitor/filesystem",
         "@capacitor/app",
