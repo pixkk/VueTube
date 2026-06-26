@@ -301,6 +301,8 @@
           :audioSources="audioSources"
           :current-source="$refs.player"
           :current-audio-source="$refs.audio"
+          :current-video-format="currentVideoFormat"
+          :current-audio-format="currentAudioFormat"
           @qualityInfo="qualityInfoHandler($event)"
           @qualityAudioInfo="audioQualityInfoHandler($event)"
         />
@@ -735,8 +737,7 @@ export default {
             if (source.audioTrack?.id.split(".")[0] === localStorage.getItem("audioTrackId").split(".")[0]) {
               this.audSrc = source.url;
               dubIsFound = true;
-            }
-            else {
+            } else {
               if (source.audioTrack.audioIsDefault === Boolean("true")) {
                 this.audSrc = source.url;
               }
@@ -744,37 +745,39 @@ export default {
           }
         }
       });
-    }
+      this.currentVideoFormat = this.sources[indexOfPreferredQuality];
+      this.currentAudioFormat = this.audioSources.find(s => s.url === this.audSrc) || this.audioSources[0];
 
-    this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+      this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
-    this.hls = this.video.hls;
-    this.dash = this.video.dash;
-    if (this.hls) {
-      this.hlsStream = new Hls();
-      this.hlsStream.loadSource(this.hls);
-      this.hlsStream.attachMedia(this.vid);
-    } else if (this.dash) {
-      this.dashStream = dashjs.MediaPlayer().create();
-      this.dashStream.initialize(this.vid, this.dash, true);
-    }
-
-    if (
-      this.video.metadata?.ustreamerConfig &&
-      this.video.metadata?.serverAbrStreamingUrl
-    ) {
-      let startTimeSec = 0;
-      const url = new URL(window.location.href);
-      const tParam = url.searchParams.get("t");
-      if (tParam) {
-        startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
+      this.hls = this.video.hls;
+      this.dash = this.video.dash;
+      if (this.hls) {
+        this.hlsStream = new Hls();
+        this.hlsStream.loadSource(this.hls);
+        this.hlsStream.attachMedia(this.vid);
+      } else if (this.dash) {
+        this.dashStream = dashjs.MediaPlayer().create();
+        this.dashStream.initialize(this.vid, this.dash, true);
       }
-      this.loadAudioViaSabr(null, startTimeSec);
-      this.loadVideoViaSabr(null, startTimeSec);
-    } else {
-      const url = new URL(window.location.href);
-      const tParam = url.searchParams.get("t");
-      this.setStartTime(tParam);
+
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl
+      ) {
+        let startTimeSec = 0;
+        const url = new URL(window.location.href);
+        const tParam = url.searchParams.get("t");
+        if (tParam) {
+          startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
+        }
+        this.loadAudioViaSabr(null, startTimeSec);
+        this.loadVideoViaSabr(null, startTimeSec);
+      } else {
+        const url = new URL(window.location.href);
+        const tParam = url.searchParams.get("t");
+        this.setStartTime(tParam);
+      }
     }
   },
   created() {
@@ -889,8 +892,16 @@ export default {
           this.video.metadata?.serverAbrStreamingUrl
         ) {
           const seekTime = this.$refs.player.currentTime;
-          this.loadVideoViaSabr(this.currentVideoFormat, seekTime);
-          this.loadAudioViaSabr(this.currentAudioFormat, seekTime);
+          const videoBuffered = this.isTimeBuffered(this.$refs.player, seekTime);
+          const audioBuffered = this.isTimeBuffered(this.$refs.audio, seekTime);
+          console.log('[SABR] seeked: videoBuffered =', videoBuffered, 'audioBuffered =', audioBuffered);
+
+          if (!videoBuffered) {
+            this.loadVideoViaSabr(this.currentVideoFormat, seekTime);
+          }
+          if (!audioBuffered) {
+            this.loadAudioViaSabr(this.currentAudioFormat, seekTime);
+          }
           this.bufferingDetected = false;
           return;
         }
@@ -1064,6 +1075,16 @@ export default {
         );
       }, 150);
     },
+    isTimeBuffered(el, time) {
+      if (!el) return false;
+      const buf = el.buffered;
+      for (let i = 0; i < buf.length; i++) {
+        if (time >= buf.start(i) && time <= buf.end(i) - 0.5) {
+          return true;
+        }
+      }
+      return false;
+    },
     userSeek(time) {
       console.log("[PLAYER] userSeek to", time);
       this.isUserSeeking = true;
@@ -1113,6 +1134,7 @@ export default {
       localStorage.setItem("videoQuality", q.qualityLabel);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("videoCodec", this.getCodecName(codec));
+      this.currentVideoFormat = q;
 
       if (
         this.video.metadata?.ustreamerConfig &&
@@ -1143,6 +1165,7 @@ export default {
       localStorage.setItem("audioQuality", q.itag);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
+      this.currentAudioFormat = q;
       this.audioSources.forEach((source) => {
         if (source.url === q.url && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
           localStorage.setItem("audioTrackId", source.audioTrack.id);
@@ -1365,7 +1388,7 @@ export default {
                   break;
                 }
               } else {
-                if (bufferAhead >= 15) {
+                if (bufferAhead >= 25) {
                   isWaiting = true;
                 } else {
                   break;
@@ -1427,9 +1450,21 @@ export default {
       this.videoAbortController = new AbortController();
       const signal = this.videoAbortController.signal;
 
-      const bestVideo = selectedFormat ||
-        this.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) ||
-        this.sources[0];
+      let bestVideo = selectedFormat;
+      if (!bestVideo) {
+        const videoSFromStorage = localStorage.getItem("videoQuality") || null;
+        const videoCodecFromStorage = localStorage.getItem("videoCodec") || null;
+        if (videoSFromStorage || videoCodecFromStorage) {
+          bestVideo = this.sources.find(s =>
+            s.mimeType?.includes('video') &&
+            (videoCodecFromStorage ? s.mimeType.includes(videoCodecFromStorage) : true) &&
+            (videoSFromStorage ? s.qualityLabel?.includes(videoSFromStorage) : true)
+          );
+        }
+        if (!bestVideo) {
+          bestVideo = this.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) || this.sources[0];
+        }
+      }
       if (!bestVideo) return;
 
       const mimeType = bestVideo.mimeType || 'video/mp4; codecs="avc1.42E01E"';
@@ -1554,10 +1589,22 @@ export default {
       this.audioAbortController = new AbortController();
       const signal = this.audioAbortController.signal;
 
-      const bestAudio = selectedFormat ||
-        this.audioSources.find(s => s.mimeType?.includes('opus') && s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
-        this.audioSources.find(s => s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
-        this.audioSources[0];
+      let bestAudio = selectedFormat;
+      if (!bestAudio) {
+        const audioSFromStorage = localStorage.getItem("audioQuality") || null;
+        const audioTrackIdFromStorage = localStorage.getItem("audioTrackId") || null;
+        if (audioTrackIdFromStorage) {
+          bestAudio = this.audioSources.find(s => s.audioTrack?.id === audioTrackIdFromStorage);
+        }
+        if (!bestAudio && audioSFromStorage) {
+          bestAudio = this.audioSources.find(s => s.itag.toString() === audioSFromStorage);
+        }
+        if (!bestAudio) {
+          bestAudio = this.audioSources.find(s => s.mimeType?.includes('opus') && s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+            this.audioSources.find(s => s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+            this.audioSources[0];
+        }
+      }
       if (!bestAudio) return;
 
       const mimeType = bestAudio.mimeType || 'audio/webm; codecs="opus"';

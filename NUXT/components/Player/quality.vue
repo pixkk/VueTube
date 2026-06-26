@@ -9,9 +9,9 @@
       <template #activator="{ on, attrs }">
         <v-btn fab text small color="white" v-bind="attrs" v-on="on">
           {{
-            sources.find((src) => src.url == currentSource.src)?.qualityLabel
-              ? sources.find((src) => src.url == currentSource.src)?.qualityLabel
-              : sources.find((src) => src.url == currentSource.src)?.quality || "Auto"
+            currentVideoFormat
+              ? (currentVideoFormat.qualityLabel || currentVideoFormat.quality)
+              : (sources.find((src) => src.url == currentSource.src)?.qualityLabel || sources.find((src) => src.url == currentSource.src)?.quality || "Auto")
           }}
         </v-btn>
       </template>
@@ -42,8 +42,8 @@
               >
                 <v-list-item-avatar>
                   <v-icon
-                    :color="currentSource.src === src.url ? 'primary' : 'grey'"
-                    v-text="currentSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
+                    :color="isVideoActive(src) ? 'primary' : 'grey'"
+                    v-text="isVideoActive(src) ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
                   ></v-icon>
                 </v-list-item-avatar>
                 <v-list-item-content>
@@ -70,8 +70,8 @@
                 >
                   <v-list-item-avatar>
                     <v-icon
-                      :color="currentAudioSource.src === src.url ? 'primary' : 'grey'"
-                      v-text="currentAudioSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
+                      :color="isAudioActive(src) ? 'primary' : 'grey'"
+                      v-text="isAudioActive(src) ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'"
                     ></v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
@@ -98,6 +98,14 @@ export default {
   props: {
     currentSource: {},
     currentAudioSource: {},
+    currentVideoFormat: {
+      type: Object,
+      default: null,
+    },
+    currentAudioFormat: {
+      type: Object,
+      default: null,
+    },
     sources: {
       type: Array,
       required: true,
@@ -118,6 +126,18 @@ export default {
     },
     prevTab() {
       if (this.tab > 0) this.tab--;
+    },
+    isVideoActive(src) {
+      if (this.currentVideoFormat) {
+        return this.currentVideoFormat.itag === src.itag;
+      }
+      return this.currentSource.src === src.url;
+    },
+    isAudioActive(src) {
+      if (this.currentAudioFormat) {
+        return this.currentAudioFormat.itag === src.itag;
+      }
+      return this.currentAudioSource.src === src.url;
     },
 
     handleAudioQualityClick(src) {
