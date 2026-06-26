@@ -5,6 +5,7 @@
 //---   Modules/Imports   ---//
 import {Http} from "@capacitor-community/http";
 import Innertube from "./innertube";
+import sabr from "./sabr/sabr";
 import constants from "./constants";
 import rendererUtils from "./renderers";
 import {Buffer} from "buffer";
@@ -470,13 +471,8 @@ const innertubeModule = {
   async saveApiStats(query, url) {
     await InnertubeAPI.apiStats(query, url);
   },
-
-  async downloadSabrFormat(opts) {
-    return await InnertubeAPI.downloadSabrFormat(opts);
-  },
-
   async streamSabrFormat(opts) {
-    return await InnertubeAPI.streamSabrFormat(opts);
+    return await sabr.streamSabrFormat(opts);
   },
 };
 

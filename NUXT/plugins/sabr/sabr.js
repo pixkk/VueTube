@@ -1,9 +1,7 @@
-// SABR (Server Adaptive Bitrate) Nuxt Plugin
-// Extracted from Components and Innertube integration
+// SABR (Server Adaptive Bitrate) library
 
-export default ({ app }, inject) => {
-  // --- SABR helper constants ---
-  const SABR_CLIENT_NAME_IDS = {
+// --- SABR helper constants ---
+const SABR_CLIENT_NAME_IDS = {
     WEB: 1, MWEB: 2, ANDROID: 3, IOS: 5, TVHTML5: 7,
     ANDROID_MUSIC: 21, WEB_MUSIC_EMBEDDED_PLAYER: 39,
     WEB_EMBEDDED_PLAYER: 56, WEB_CREATOR: 62, ANDROID_VR: 28,
@@ -271,7 +269,7 @@ export default ({ app }, inject) => {
   // --- Core SABR Methods ---
 
   async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
-    const yt = app.$youtube || (window.$nuxt ? window.$nuxt.$youtube : null);
+    const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
     const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
@@ -347,7 +345,7 @@ export default ({ app }, inject) => {
   }
 
   async function downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20 }) {
-    const yt = app.$youtube || (window.$nuxt ? window.$nuxt.$youtube : null);
+    const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
     const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
@@ -563,13 +561,8 @@ export default ({ app }, inject) => {
       console.log('[SABR] Video reuse existing MediaSource for seek to:', startTimeSec);
       try {
         component.videoSourceBuffer.abort();
-        if (component.videoSourceBuffer.buffered.length > 0) {
-          if (!component.videoSourceBuffer.updating) {
-            component.videoSourceBuffer.remove(0, component.videoMediaSource.duration || 100000);
-          }
-        }
       } catch (e) {
-        console.warn('[SABR] Video abort/remove error:', e);
+        console.warn('[SABR] Video abort error:', e);
       }
 
       const prevTime = startTimeSec;
@@ -731,13 +724,8 @@ export default ({ app }, inject) => {
       console.log('[SABR] Audio reuse existing MediaSource for seek to:', startTimeSec);
       try {
         component.audioSourceBuffer.abort();
-        if (component.audioSourceBuffer.buffered.length > 0) {
-          if (!component.audioSourceBuffer.updating) {
-            component.audioSourceBuffer.remove(0, component.audioMediaSource.duration || 100000);
-          }
-        }
       } catch (e) {
-        console.warn('[SABR] Audio abort/remove error:', e);
+        console.warn('[SABR] Audio abort error:', e);
       }
 
       const prevTime = startTimeSec;
@@ -843,14 +831,13 @@ export default ({ app }, inject) => {
     }
   }
 
-  // --- Exposed Nuxt Plugin Module ---
-  const sabrModule = {
-    streamSabrFormat,
-    downloadSabrFormat,
-    _sabrStartMse,
-    loadVideoViaSabr,
-    loadAudioViaSabr,
-  };
-
-  inject('sabr', sabrModule);
+// --- Exported SABR Module ---
+const sabr = {
+  streamSabrFormat,
+  downloadSabrFormat,
+  _sabrStartMse,
+  loadVideoViaSabr,
+  loadAudioViaSabr,
 };
+
+export default sabr;
