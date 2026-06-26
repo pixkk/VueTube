@@ -354,9 +354,7 @@
       :seeking="seeking"
       :disabled="disabled"
       @seeking="seeking = !seeking"
-      @scrub="
-        ($refs.player.currentTime = $event), ($refs.audio.currentTime = $event)
-      "
+      @scrub="userSeek($event)"
     />
 
     <v-progress-circular
@@ -464,6 +462,8 @@ export default {
       currentAudioFormat: null,
       videoAbortController: null,
       audioAbortController: null,
+      isUserSeeking: false,
+      isInternalSeek: false,
       hls: null,
       dash: null,
       hlsStream: null,
@@ -754,20 +754,23 @@ export default {
       this.dashStream = dashjs.MediaPlayer().create();
       this.dashStream.initialize(this.vid, this.dash, true);
     }
-    else {
-      const url = new URL(window.location.href);
-
-      const tParam = url.searchParams.get("t");
-
-      this.setStartTime(tParam);
-    }
 
     if (
       this.video.metadata?.ustreamerConfig &&
       this.video.metadata?.serverAbrStreamingUrl
     ) {
-      this.loadAudioViaSabr();
-      this.loadVideoViaSabr();
+      let startTimeSec = 0;
+      const url = new URL(window.location.href);
+      const tParam = url.searchParams.get("t");
+      if (tParam) {
+        startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
+      }
+      this.loadAudioViaSabr(null, startTimeSec);
+      this.loadVideoViaSabr(null, startTimeSec);
+    } else {
+      const url = new URL(window.location.href);
+      const tParam = url.searchParams.get("t");
+      this.setStartTime(tParam);
     }
   },
   created() {
@@ -857,9 +860,12 @@ export default {
     },
     seekingEvent() {
       console.log("seeking", this.$refs.player?.currentTime);
+      if (this.isInternalSeek) {
+        return;
+      }
       // Only pause for user-initiated seeks (when seeking data prop is true),
       // not for internal MSE browser seeks (gap-skipping between segments)
-      if (this.seeking) {
+      if (this.seeking || this.isUserSeeking) {
         this.bufferingDetected = true;
         this.$refs.player.pause();
         this.$refs.audio.pause();
@@ -867,7 +873,24 @@ export default {
     },
     seekedEvent() {
       console.log("seeked", this.$refs.player?.currentTime);
-      if (this.seeking) {
+      if (this.isInternalSeek) {
+        this.isInternalSeek = false;
+        return;
+      }
+
+      if (this.isUserSeeking) {
+        this.isUserSeeking = false;
+        if (
+          this.video.metadata?.ustreamerConfig &&
+          this.video.metadata?.serverAbrStreamingUrl
+        ) {
+          const seekTime = this.$refs.player.currentTime;
+          this.loadVideoViaSabr(this.currentVideoFormat, seekTime);
+          this.loadAudioViaSabr(this.currentAudioFormat, seekTime);
+          this.bufferingDetected = false;
+          return;
+        }
+
         setTimeout(() => {
           this.$refs.player.play();
           this.$refs.audio.play();
@@ -904,13 +927,11 @@ export default {
               this.endBlockTime = block.segment[1];
               this.isSegment = true;
               this.sBblockCategoryText = block.category;
-              this.$refs.skipButton.onclick = skipSegment.bind(null, this.$refs.player, this.vid.duration, this.$youtube, block.segment[1], block.category);
-
-              function skipSegment(param1, param2, param3, param4, param5) {
+              this.$refs.skipButton.onclick = () => {
                 console.log("skipped");
-                param1.currentTime = param4;
-                param3.showToast("Skipped " + param5 + " sponsor");
-              }
+                this.userSeek(block.segment[1]);
+                this.$youtube.showToast("Skipped " + block.category + " sponsor");
+              };
 
               // this.$refs.audio.currentTime = this.$refs.player.currentTime;
               return;
@@ -1035,6 +1056,12 @@ export default {
         );
       }, 150);
     },
+    userSeek(time) {
+      console.log("[PLAYER] userSeek to", time);
+      this.isUserSeeking = true;
+      this.$refs.player.currentTime = time;
+      this.$refs.audio.currentTime = time;
+    },
     // TODO: make accumulative onclick after first dblclick (don't set timeout untill stopped clicking)
     skipHandler(time) {
       this.skipping = time;
@@ -1042,8 +1069,7 @@ export default {
         this.skipping = false;
       }, 500);
 
-      this.$refs.player.currentTime += time;
-      this.$refs.audio.currentTime += time;
+      this.userSeek(this.$refs.player.currentTime + time);
     },
     controlsHandler() {
       if (!this.seeking)
@@ -1084,7 +1110,8 @@ export default {
         this.video.metadata?.ustreamerConfig &&
         this.video.metadata?.serverAbrStreamingUrl
       ) {
-        this.loadVideoViaSabr(q);
+        const currentTime = this.$refs.player.currentTime;
+        this.loadVideoViaSabr(q, currentTime);
         return;
       }
 
@@ -1118,7 +1145,8 @@ export default {
         this.video.metadata?.ustreamerConfig &&
         this.video.metadata?.serverAbrStreamingUrl
       ) {
-        this.loadAudioViaSabr(q);
+        const currentTime = this.$refs.player.currentTime;
+        this.loadAudioViaSabr(q, currentTime);
         return;
       }
 
@@ -1295,23 +1323,57 @@ export default {
     _sabrStartMse(mediaSource, mimeType, streamParams, signal) {
       const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
       let appendQueue = Promise.resolve();
+      let isWaiting = false;
 
       const appendChunk = (data) => {
-        appendQueue = appendQueue.then(() => new Promise((resolve, reject) => {
-          if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
-          sourceBuffer.timestampOffset = 0;
-          const onEnd = () => { sourceBuffer.removeEventListener('updateend', onEnd); resolve(); };
-          const onErr = () => { sourceBuffer.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
-          sourceBuffer.addEventListener('updateend', onEnd);
-          sourceBuffer.addEventListener('error', onErr);
-          try {
-            sourceBuffer.appendBuffer(data);
-          } catch (e) {
-            sourceBuffer.removeEventListener('updateend', onEnd);
-            sourceBuffer.removeEventListener('error', onErr);
-            reject(e);
+        appendQueue = appendQueue.then(async () => {
+          if (signal?.aborted) { throw new DOMException('Aborted', 'AbortError'); }
+
+          const el = this.$refs[streamParams.isAudio ? 'audio' : 'player'];
+          if (el) {
+            while (true) {
+              if (signal?.aborted) { throw new DOMException('Aborted', 'AbortError'); }
+              let bufferAhead = 0;
+              const time = el.currentTime;
+              const buf = el.buffered;
+              for (let i = 0; i < buf.length; i++) {
+                if (time >= buf.start(i) && time <= buf.end(i)) {
+                  bufferAhead = buf.end(i) - time;
+                  break;
+                }
+              }
+              if (isWaiting) {
+                if (bufferAhead < 5) {
+                  isWaiting = false;
+                  break;
+                }
+              } else {
+                if (bufferAhead >= 15) {
+                  isWaiting = true;
+                } else {
+                  break;
+                }
+              }
+              await new Promise(resolve => setTimeout(resolve, 250));
+            }
           }
-        }));
+
+          return new Promise((resolve, reject) => {
+            if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
+            sourceBuffer.timestampOffset = 0;
+            const onEnd = () => { sourceBuffer.removeEventListener('updateend', onEnd); resolve(); };
+            const onErr = () => { sourceBuffer.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
+            sourceBuffer.addEventListener('updateend', onEnd);
+            sourceBuffer.addEventListener('error', onErr);
+            try {
+              sourceBuffer.appendBuffer(data);
+            } catch (e) {
+              sourceBuffer.removeEventListener('updateend', onEnd);
+              sourceBuffer.removeEventListener('error', onErr);
+              reject(e);
+            }
+          });
+        });
         return appendQueue;
       };
 
@@ -1341,7 +1403,7 @@ export default {
       });
     },
 
-    async loadVideoViaSabr(selectedFormat = null) {
+    async loadVideoViaSabr(selectedFormat = null, startTimeSec = 0) {
       if (this.videoAbortController) {
         this.videoAbortController.abort();
       }
@@ -1377,7 +1439,7 @@ export default {
         });
 
         const objectUrl = URL.createObjectURL(mediaSource);
-        const prevTime = this.$refs.player?.currentTime || 0;
+        const prevTime = startTimeSec;
         const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         this.vidSrc = objectUrl;
@@ -1392,6 +1454,9 @@ export default {
         console.log('[SABR] Video sourceopen OK');
 
         if (this.$refs.player) {
+          if (this.$refs.player.currentTime !== prevTime) {
+            this.isInternalSeek = true;
+          }
           this.$refs.player.currentTime = prevTime;
           if (wasPlaying) {
             this.$refs.player.play().catch(() => {});
@@ -1407,6 +1472,7 @@ export default {
           isAudio: false,
           videoItag: bestVideo.itag,
           audioItag: audioItag,
+          playerTimeMs: Math.round(prevTime * 1000),
         }, signal);
       } catch (e) {
         if (e.name === 'AbortError') {
@@ -1417,7 +1483,7 @@ export default {
       }
     },
 
-    async loadAudioViaSabr(selectedFormat = null) {
+    async loadAudioViaSabr(selectedFormat = null, startTimeSec = 0) {
       if (this.audioAbortController) {
         this.audioAbortController.abort();
       }
@@ -1454,7 +1520,7 @@ export default {
         });
 
         const objectUrl = URL.createObjectURL(mediaSource);
-        const prevTime = this.$refs.audio?.currentTime || this.$refs.player?.currentTime || 0;
+        const prevTime = startTimeSec;
         const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         this.audSrc = objectUrl;
@@ -1484,6 +1550,7 @@ export default {
           isAudio: true,
           videoItag: videoItag,
           audioItag: bestAudio.itag,
+          playerTimeMs: Math.round(prevTime * 1000),
         }, signal);
       } catch (e) {
         if (e.name === 'AbortError') {

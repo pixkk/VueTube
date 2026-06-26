@@ -1019,7 +1019,7 @@ class Innertube {
 
   // --- SABR (Server Adaptive Bitrate) ---
 
-  async streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, maxRequests = 1, signal, onChunk, onTotalDuration }) {
+  async streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
     const clientName = this.context?.client?.clientName || 'WEB';
     const clientVersion = this.context?.client?.clientVersion || '2.20240101.00.00';
     let url = serverAbrStreamingUrl;
@@ -1027,12 +1027,12 @@ class Innertube {
     let redirectCount = 0;
     let emptyCount = 0;
     let playbackCookieBytes = null;
-    let playerTimeMs = 0;
+    let currentPlayerTimeMs = playerTimeMs;
     let totalDurationMs = 0;
     let initAppended = false;
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag });
+      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
       const parts = [...sabrParseUMP(rawBytes)];
       const redirectPart = parts.find(p => p.partId === 43);
@@ -1073,8 +1073,8 @@ class Innertube {
           if (initAppended) continue;  // SABR resends init with every request — skip duplicates
           initAppended = true;
         }
-        if (playerTimeMs === 0 && seg.durationMs > 0) console.log('[SABR] itag', itag, 'first seg durationMs:', seg.durationMs);
-        playerTimeMs += seg.durationMs;
+        if (currentPlayerTimeMs === 0 && seg.durationMs > 0) console.log('[SABR] itag', itag, 'first seg durationMs:', seg.durationMs);
+        currentPlayerTimeMs += seg.durationMs;
         await onChunk(seg.data, seg.durationMs);
       }
       // Count empty only when no segments at all (not when segments of other itags came)
@@ -1086,8 +1086,8 @@ class Innertube {
         emptyCount = 0;
       }
       // Stop when all content is downloaded
-      if (totalDurationMs > 0 && playerTimeMs >= totalDurationMs) {
-        console.log('[SABR] itag', itag, 'done: playerTimeMs', playerTimeMs, '>= totalDurationMs', totalDurationMs);
+      if (totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) {
+        console.log('[SABR] itag', itag, 'done: currentPlayerTimeMs', currentPlayerTimeMs, '>= totalDurationMs', totalDurationMs);
         break;
       }
     }
