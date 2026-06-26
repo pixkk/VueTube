@@ -1134,7 +1134,6 @@ export default {
       localStorage.setItem("videoQuality", q.qualityLabel);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("videoCodec", this.getCodecName(codec));
-      this.currentVideoFormat = q;
 
       if (
         this.video.metadata?.ustreamerConfig &&
@@ -1145,6 +1144,7 @@ export default {
         return;
       }
 
+      this.currentVideoFormat = q;
       let src = q.url;
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
@@ -1165,7 +1165,6 @@ export default {
       localStorage.setItem("audioQuality", q.itag);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
-      this.currentAudioFormat = q;
       this.audioSources.forEach((source) => {
         if (source.url === q.url && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
           localStorage.setItem("audioTrackId", source.audioTrack.id);
@@ -1180,6 +1179,8 @@ export default {
         this.loadAudioViaSabr(q, currentTime);
         return;
       }
+
+      this.currentAudioFormat = q;
 
       let src = q.url;
       let time = this.$refs.player.currentTime;
@@ -1552,6 +1553,14 @@ export default {
         if (signal.aborted) return;
         console.log('[SABR] Video sourceopen OK');
 
+        if (this.video.metadata?.lengthSeconds) {
+          try {
+            mediaSource.duration = parseFloat(this.video.metadata.lengthSeconds);
+          } catch (e) {
+            console.warn('[SABR] Failed to set initial MediaSource duration:', e);
+          }
+        }
+
         if (this.$refs.player) {
           if (this.$refs.player.currentTime !== prevTime) {
             this.isInternalSeek = true;
@@ -1688,6 +1697,14 @@ export default {
         await waitForOpen;
         if (signal.aborted) return;
         console.log('[SABR] Audio sourceopen OK');
+
+        if (this.video.metadata?.lengthSeconds) {
+          try {
+            mediaSource.duration = parseFloat(this.video.metadata.lengthSeconds);
+          } catch (e) {
+            console.warn('[SABR] Failed to set initial MediaSource duration:', e);
+          }
+        }
 
         if (this.$refs.audio) {
           this.$refs.audio.currentTime = prevTime;
