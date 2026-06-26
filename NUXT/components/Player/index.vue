@@ -462,6 +462,10 @@ export default {
       currentAudioFormat: null,
       videoAbortController: null,
       audioAbortController: null,
+      videoMediaSource: null,
+      videoSourceBuffer: null,
+      audioMediaSource: null,
+      audioSourceBuffer: null,
       isUserSeeking: false,
       isInternalSeek: false,
       hls: null,
@@ -996,6 +1000,10 @@ export default {
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
       if (this.videoAbortController) this.videoAbortController.abort();
       if (this.audioAbortController) this.audioAbortController.abort();
+      this.videoMediaSource = null;
+      this.videoSourceBuffer = null;
+      this.audioMediaSource = null;
+      this.audioSourceBuffer = null;
 
       this.$refs.player.pause();
       this.$refs.player.src = '';
@@ -1320,8 +1328,17 @@ export default {
       return this.$refs.player;
     },
 
-    _sabrStartMse(mediaSource, mimeType, streamParams, signal) {
-      const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
+    _sabrStartMse(mediaSource, mimeType, streamParams, signal, existingSourceBuffer = null) {
+      const sourceBuffer = existingSourceBuffer || mediaSource.addSourceBuffer(mimeType);
+      if (!existingSourceBuffer) {
+        if (streamParams.isAudio) {
+          this.audioSourceBuffer = sourceBuffer;
+          this.audioMediaSource = mediaSource;
+        } else {
+          this.videoSourceBuffer = sourceBuffer;
+          this.videoMediaSource = mediaSource;
+        }
+      }
       let appendQueue = Promise.resolve();
       let isWaiting = false;
 
@@ -1422,7 +1439,54 @@ export default {
         return;
       }
 
+      const isSameFormat = this.currentVideoFormat && this.currentVideoFormat.itag === bestVideo.itag;
       this.currentVideoFormat = bestVideo;
+
+      if (
+        isSameFormat &&
+        this.videoMediaSource &&
+        this.videoMediaSource.readyState === 'open' &&
+        this.videoSourceBuffer
+      ) {
+        console.log('[SABR] Video reuse existing MediaSource for seek to:', startTimeSec);
+        try {
+          this.videoSourceBuffer.abort();
+          if (this.videoSourceBuffer.buffered.length > 0) {
+            if (!this.videoSourceBuffer.updating) {
+              this.videoSourceBuffer.remove(0, this.videoMediaSource.duration || 100000);
+            }
+          }
+        } catch (e) {
+          console.warn('[SABR] Video abort/remove error:', e);
+        }
+
+        const prevTime = startTimeSec;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
+        if (this.$refs.player) {
+          if (this.$refs.player.currentTime !== prevTime) {
+            this.isInternalSeek = true;
+          }
+          this.$refs.player.currentTime = prevTime;
+          if (wasPlaying) {
+            this.$refs.player.play().catch(() => {});
+          }
+        }
+
+        const audioItag = this.currentAudioFormat?.itag || this.audioSources[0]?.itag;
+
+        this._sabrStartMse(this.videoMediaSource, mimeType, {
+          serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
+          videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
+          itag: bestVideo.itag,
+          isAudio: false,
+          videoItag: bestVideo.itag,
+          audioItag: audioItag,
+          playerTimeMs: Math.round(prevTime * 1000),
+        }, signal, this.videoSourceBuffer);
+
+        return;
+      }
 
       try {
         const mediaSource = new MediaSource();
@@ -1503,7 +1567,51 @@ export default {
         return;
       }
 
+      const isSameFormat = this.currentAudioFormat && this.currentAudioFormat.itag === bestAudio.itag;
       this.currentAudioFormat = bestAudio;
+
+      if (
+        isSameFormat &&
+        this.audioMediaSource &&
+        this.audioMediaSource.readyState === 'open' &&
+        this.audioSourceBuffer
+      ) {
+        console.log('[SABR] Audio reuse existing MediaSource for seek to:', startTimeSec);
+        try {
+          this.audioSourceBuffer.abort();
+          if (this.audioSourceBuffer.buffered.length > 0) {
+            if (!this.audioSourceBuffer.updating) {
+              this.audioSourceBuffer.remove(0, this.audioMediaSource.duration || 100000);
+            }
+          }
+        } catch (e) {
+          console.warn('[SABR] Audio abort/remove error:', e);
+        }
+
+        const prevTime = startTimeSec;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
+        if (this.$refs.audio) {
+          this.$refs.audio.currentTime = prevTime;
+          if (wasPlaying) {
+            this.$refs.audio.play().catch(() => {});
+          }
+        }
+
+        const videoItag = this.currentVideoFormat?.itag || this.sources[0]?.itag;
+
+        this._sabrStartMse(this.audioMediaSource, mimeType, {
+          serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
+          videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
+          itag: bestAudio.itag,
+          isAudio: true,
+          videoItag: videoItag,
+          audioItag: bestAudio.itag,
+          playerTimeMs: Math.round(prevTime * 1000),
+        }, signal, this.audioSourceBuffer);
+
+        return;
+      }
 
       try {
         const mediaSource = new MediaSource();
