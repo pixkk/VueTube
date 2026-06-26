@@ -1019,50 +1019,149 @@ class Innertube {
 
   // --- SABR (Server Adaptive Bitrate) ---
 
+  async streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, maxRequests = 1, signal, onChunk, onTotalDuration }) {
+    const clientName = this.context?.client?.clientName || 'WEB';
+    const clientVersion = this.context?.client?.clientVersion || '2.20240101.00.00';
+    let url = serverAbrStreamingUrl;
+    let rn = 1;
+    let redirectCount = 0;
+    let emptyCount = 0;
+    let playbackCookieBytes = null;
+    let playerTimeMs = 0;
+    let totalDurationMs = 0;
+    let initAppended = false;
+    for (let i = 0; i < maxRequests; i++) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag });
+      const rawBytes = await sabrFetch(url, body, rn++, signal);
+      const parts = [...sabrParseUMP(rawBytes)];
+      const redirectPart = parts.find(p => p.partId === 43);
+      if (redirectPart) {
+        if (++redirectCount > 10) throw new Error('SABR_TOO_MANY_REDIRECTS');
+        const newUrl = sabrParseRedirect(redirectPart.data);
+        if (newUrl) { url = newUrl; rn = 1; }
+        continue;
+      } else {
+        redirectCount = 0;
+      }
+      const errorPart = parts.find(p => p.partId === 44);
+      if (errorPart) throw new Error('SABR_ERROR');
+      // Extract total duration from FORMAT_INITIALIZATION_METADATA on first response
+      if (totalDurationMs === 0) {
+        const fimPart = parts.find(p => p.partId === 42);
+        if (fimPart) {
+          const f = sabrParseProtoVarintFields(fimPart.data);
+          const units = f[9] || 0;
+          const scale = f[10] || 1;
+          if (units > 0 && scale > 0) {
+            totalDurationMs = Math.round(units / (scale / 1000));
+            console.log('[SABR] itag', itag, 'totalDurationMs:', totalDurationMs, 'units:', units, 'scale:', scale);
+            onTotalDuration?.(totalDurationMs);
+          }
+        }
+      }
+      const policyPart = parts.find(p => p.partId === 35);
+      if (policyPart) {
+        const policy = sabrParseNextRequestPolicy(policyPart.data);
+        if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
+        if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
+      }
+      const segments = sabrExtractMedia(parts, itag);
+      const relevant = segments.filter(s => s.itag === itag);
+      for (const seg of relevant) {
+        if (seg.isInitSeg) {
+          if (initAppended) continue;  // SABR resends init with every request — skip duplicates
+          initAppended = true;
+        }
+        if (playerTimeMs === 0 && seg.durationMs > 0) console.log('[SABR] itag', itag, 'first seg durationMs:', seg.durationMs);
+        playerTimeMs += seg.durationMs;
+        await onChunk(seg.data, seg.durationMs);
+      }
+      // Count empty only when no segments at all (not when segments of other itags came)
+      const hasOwnMedia = relevant.length > 0;
+      const hasAnyMedia = segments.length > 0;
+      if (!hasOwnMedia) {
+        if (!hasAnyMedia && ++emptyCount >= 5) break;
+      } else {
+        emptyCount = 0;
+      }
+      // Stop when all content is downloaded
+      if (totalDurationMs > 0 && playerTimeMs >= totalDurationMs) {
+        console.log('[SABR] itag', itag, 'done: playerTimeMs', playerTimeMs, '>= totalDurationMs', totalDurationMs);
+        break;
+      }
+    }
+  }
+
   async downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20 }) {
     const clientName = this.context?.client?.clientName || 'WEB';
     const clientVersion = this.context?.client?.clientVersion || '2.20240101.00.00';
 
-    const body = sabrBuildRequest({
-      ustreamerConfigB64: videoPlaybackUstreamerConfig,
-      clientName,
-      clientVersion,
-      itag,
-      playerTimeMs: 0,
-    });
-
     let url = serverAbrStreamingUrl;
     let rn = 1;
+    let emptyCount = 0;
+    let redirectCount = 0;
+    let playbackCookieBytes = null;
+    let playerTimeMs = 0;
+    let totalDurationMs = 0;
     const allSegments = [];
 
     for (let i = 0; i < maxRequests; i++) {
+      const body = sabrBuildRequest({
+        ustreamerConfigB64: videoPlaybackUstreamerConfig,
+        clientName,
+        clientVersion,
+        itag,
+        playerTimeMs,
+        playbackCookieBytes,
+      });
+
       const rawBytes = await sabrFetch(url, body, rn++);
       const parts = [...sabrParseUMP(rawBytes)];
 
-      const redirectPart = parts.find(p => p.partId === 53);
+      const redirectPart = parts.find(p => p.partId === 43);
       if (redirectPart) {
+        if (++redirectCount > 10) throw new Error('SABR_TOO_MANY_REDIRECTS');
         const newUrl = sabrParseRedirect(redirectPart.data);
         if (newUrl) { url = newUrl; rn = 1; }
         continue;
       }
+      redirectCount = 0;
 
-      const errorPart = parts.find(p => p.partId === 55);
-      if (errorPart) throw new Error('SABR_ERROR received from YouTube server');
+      const errorPart = parts.find(p => p.partId === 44);
+      if (errorPart) throw new Error('SABR_ERROR');
 
-      const policyPart = parts.find(p => p.partId === 44);
-      if (policyPart) {
-        const backoff = sabrParseNextRequestPolicy(policyPart.data);
-        if (backoff > 0) await new Promise(r => setTimeout(r, backoff));
+      // Extract total duration from FORMAT_INITIALIZATION_METADATA on first response
+      if (totalDurationMs === 0) {
+        const fimPart = parts.find(p => p.partId === 42);
+        if (fimPart) {
+          const f = sabrParseProtoVarintFields(fimPart.data);
+          const units = f[9] || 0;
+          const scale = f[10] || 1;
+          if (units > 0 && scale > 0) totalDurationMs = Math.round(units / (scale / 1000));
+        }
       }
 
-      const segments = sabrExtractMedia(parts);
-      const relevant = segments.filter(s => s.itag === itag);
-      allSegments.push(...relevant);
+      const policyPart = parts.find(p => p.partId === 35);
+      if (policyPart) {
+        const policy = sabrParseNextRequestPolicy(policyPart.data);
+        if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
+        if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
+      }
 
-      const hasMedia = parts.some(p => p.partId === 21);
-      const hasMediaEnd = parts.some(p => p.partId === 22);
-      if (hasMediaEnd && !hasMedia) break;
-      if (!hasMedia && relevant.length === 0) break;
+      const segments = sabrExtractMedia(parts, itag);
+      for (const seg of segments) playerTimeMs += seg.durationMs;
+      allSegments.push(...segments);
+
+      const hasMedia = segments.length > 0;
+      if (!hasMedia) {
+        if (++emptyCount >= 3) break;
+      } else {
+        emptyCount = 0;
+      }
+
+      // Stop when all content is downloaded
+      if (totalDurationMs > 0 && playerTimeMs >= totalDurationMs) break;
     }
 
     return sabrConcat(allSegments.map(s => s.data));
@@ -1089,14 +1188,48 @@ function sabrEncodeVarint(value) {
   return new Uint8Array(bytes);
 }
 
+// Protobuf-style varint — used for parsing protobuf message fields inside UMP parts
 function sabrReadVarint(bytes, offset) {
-  let value = 0, shift = 0, b;
+  let value = 0, mul = 1, b;
   do {
     b = bytes[offset++];
-    value |= (b & 0x7f) << shift;
-    shift += 7;
+    if (b === undefined) break;
+    value += (b & 0x7f) * mul;
+    mul *= 128;
   } while (b & 0x80);
   return { value, nextOffset: offset };
+}
+
+// UMP-specific varint — used for reading partType and partSize in the outer UMP frame
+function umpReadVarint(bytes, offset) {
+  const b0 = bytes[offset];
+  if (b0 === undefined) return { value: -1, nextOffset: offset };
+  let value, nextOffset;
+  if (b0 < 128) {
+    value = b0;
+    nextOffset = offset + 1;
+  } else if (b0 < 192) {
+    const b1 = bytes[offset + 1];
+    if (b1 === undefined) return { value: -1, nextOffset: offset };
+    value = (b0 & 0x3f) + 64 * b1;
+    nextOffset = offset + 2;
+  } else if (b0 < 224) {
+    const b1 = bytes[offset + 1], b2 = bytes[offset + 2];
+    if (b1 === undefined || b2 === undefined) return { value: -1, nextOffset: offset };
+    value = (b0 & 0x1f) + 32 * (b1 + 256 * b2);
+    nextOffset = offset + 3;
+  } else if (b0 < 240) {
+    const b1 = bytes[offset + 1], b2 = bytes[offset + 2], b3 = bytes[offset + 3];
+    if (b1 === undefined || b2 === undefined || b3 === undefined) return { value: -1, nextOffset: offset };
+    value = (b0 & 0x0f) + 16 * (b1 + 256 * (b2 + 256 * b3));
+    nextOffset = offset + 4;
+  } else {
+    const b1 = bytes[offset + 1], b2 = bytes[offset + 2], b3 = bytes[offset + 3], b4 = bytes[offset + 4];
+    if (b1 === undefined || b2 === undefined || b3 === undefined || b4 === undefined) return { value: -1, nextOffset: offset };
+    value = b1 + 256 * (b2 + 256 * (b3 + 256 * b4));
+    nextOffset = offset + 5;
+  }
+  return { value, nextOffset };
 }
 
 function sabrPbLenDelim(fieldNumber, data) {
@@ -1124,10 +1257,21 @@ const SABR_CLIENT_NAME_IDS = {
   WEB_EMBEDDED_PLAYER: 56, WEB_CREATOR: 62, ANDROID_VR: 28,
 };
 
-function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0 }) {
+function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null }) {
   const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
-  // field 2: selected_format_ids { field 1 (int32): itag }
+  const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
+
+  // field 1: client_abr_state
+  //   field 28: player_time_ms (int64)
+  //   field 40: enabled_track_types_bitfield (int32) - 1 for AUDIO_ONLY, 2 for VIDEO_ONLY
+  const clientAbrStateInner = sabrConcat([
+    sabrPbVarint(28, playerTimeMs),
+    sabrPbVarint(40, isAudioFormat ? 1 : 2)
+  ]);
+  const clientAbrState = sabrPbLenDelim(1, clientAbrStateInner);
+
+  // field 2: selected_format_ids { field 1: itag }
   const formatIds = sabrPbLenDelim(2, sabrPbVarint(1, itag));
 
   // field 4: player_time_ms (int64)
@@ -1136,28 +1280,43 @@ function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag,
   // field 5: video_playback_ustreamer_config (bytes)
   const ustreamerField = sabrPbLenDelim(5, ustreamerBytes);
 
+  // field 16 (tag 130): preferred_audio_format_ids { field 1: itag }
+  // field 17 (tag 138): preferred_video_format_ids { field 1: itag }
+  const preferredFormats = [];
+  const finalAudioItag = audioItag || (isAudioFormat ? itag : null);
+  if (finalAudioItag) {
+    preferredFormats.push(sabrPbLenDelim(16, sabrPbVarint(1, finalAudioItag)));
+  }
+  const finalVideoItag = videoItag || (!isAudioFormat ? itag : null);
+  if (finalVideoItag) {
+    preferredFormats.push(sabrPbLenDelim(17, sabrPbVarint(1, finalVideoItag)));
+  }
+  const preferredFormat = sabrConcat(preferredFormats);
+
   // field 19: streamer_context {
-  //   field 1: client_info {
-  //     field 16 (int32): client_name
-  //     field 17 (string): client_version
-  //   }
+  //   field 1: client_info { field 16: client_name, field 17: client_version }
+  //   field 3: playback_cookie (bytes, from previous NextRequestPolicy)
   // }
   const clientNameId = SABR_CLIENT_NAME_IDS[clientName] || 1;
   const clientInfo = sabrConcat([
     sabrPbVarint(16, clientNameId),
     sabrPbString(17, clientVersion),
   ]);
-  const streamerContext = sabrPbLenDelim(19, sabrPbLenDelim(1, clientInfo));
+  const streamerContextInner = playbackCookieBytes
+    ? sabrConcat([sabrPbLenDelim(1, clientInfo), sabrPbLenDelim(3, playbackCookieBytes)])
+    : sabrPbLenDelim(1, clientInfo);
+  const streamerContext = sabrPbLenDelim(19, streamerContextInner);
 
-  return sabrConcat([formatIds, playerTime, ustreamerField, streamerContext]);
+  return sabrConcat([clientAbrState, formatIds, playerTime, ustreamerField, preferredFormat, streamerContext]);
 }
 
-async function sabrFetch(sabrUrl, body, requestNumber = 1) {
+async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
   const url = new URL(sabrUrl);
   url.searchParams.set('rn', String(requestNumber));
   const response = await fetch(url.toString(), {
     method: 'POST',
     body: body,
+    signal,
     headers: {
       'content-type': 'application/x-protobuf',
       'accept': 'application/vnd.yt-ump',
@@ -1171,8 +1330,10 @@ async function sabrFetch(sabrUrl, body, requestNumber = 1) {
 function* sabrParseUMP(rawBytes) {
   let offset = 0;
   while (offset < rawBytes.length) {
-    const { value: partId, nextOffset: o1 } = sabrReadVarint(rawBytes, offset);
-    const { value: size, nextOffset: o2 } = sabrReadVarint(rawBytes, o1);
+    const { value: partId, nextOffset: o1 } = umpReadVarint(rawBytes, offset);
+    if (partId < 0) break;
+    const { value: size, nextOffset: o2 } = umpReadVarint(rawBytes, o1);
+    if (size < 0) break;
     const data = rawBytes.slice(o2, o2 + size);
     offset = o2 + size;
     yield { partId, data };
@@ -1184,14 +1345,17 @@ function sabrParseProtoVarintFields(data) {
   let offset = 0;
   while (offset < data.length) {
     const { value: tag, nextOffset: o1 } = sabrReadVarint(data, offset);
+    if (o1 <= offset) break;
     const fieldNumber = tag >> 3, wireType = tag & 7;
     offset = o1;
     if (wireType === 0) {
       const { value, nextOffset } = sabrReadVarint(data, offset);
+      if (nextOffset <= offset) break;
       offset = nextOffset;
       fields[fieldNumber] = value;
     } else if (wireType === 2) {
       const { value: len, nextOffset } = sabrReadVarint(data, offset);
+      if (nextOffset <= offset) break;
       fields[fieldNumber] = data.slice(nextOffset, nextOffset + len);
       offset = nextOffset + len;
     } else if (wireType === 1) { offset += 8; }
@@ -1203,23 +1367,62 @@ function sabrParseProtoVarintFields(data) {
 
 function sabrParseMediaHeader(data) {
   const f = sabrParseProtoVarintFields(data);
-  return { headerId: f[1] || 0, itag: f[2] || 0, sequenceNumber: f[3] || 0 };
-}
-
-function sabrExtractMedia(parts) {
-  const headers = new Map();
-  const segments = [];
-  for (const { partId, data } of parts) {
-    if (partId === 20) {
-      const h = sabrParseMediaHeader(data);
-      headers.set(h.headerId, h);
-    } else if (partId === 21) {
-      const { value: headerId, nextOffset } = sabrReadVarint(data, 0);
-      const mediaBytes = data.slice(nextOffset);
-      const header = headers.get(headerId);
-      if (header) segments.push({ itag: header.itag, data: mediaBytes });
+  // field 1 = headerId, field 3 = itag, field 9 = sequenceNumber, field 12 = durationMs
+  // field 8 (tag 64) = isInitSeg bool
+  // field 15 = timeRange (bytes)
+  let durationMs = f[12] || 0;
+  const isInitSeg = !!f[8];
+  
+  if (!durationMs && f[15]) {
+    try {
+      const tr = sabrParseProtoVarintFields(f[15]);
+      const durationTicks = tr[2] || 0;
+      const timescale = tr[3] || 1000;
+      if (durationTicks > 0 && timescale > 0) {
+        durationMs = Math.round(durationTicks / (timescale / 1000));
+      }
+    } catch (e) {
+      console.error('[SABR] failed to parse timeRange:', e);
     }
   }
+
+  // Fallback for media segments to prevent infinite looping if duration is still missing
+  if (!isInitSeg && !durationMs) {
+    durationMs = 5000;
+  }
+
+  return { headerId: f[1] || 0, itag: f[3] || 0, sequenceNumber: f[9] || 0, durationMs, isInitSeg };
+}
+
+function sabrExtractMedia(parts, itagHint) {
+  const headers = new Map();  // headerId -> MediaHeader
+  const buffers = new Map();  // headerId -> Uint8Array[]
+  const segments = [];
+
+  for (const { partId, data } of parts) {
+    if (partId === 20) {
+      // MEDIA_HEADER: start accumulating a new segment
+      const h = sabrParseMediaHeader(data);
+      headers.set(h.headerId, h);
+      buffers.set(h.headerId, []);
+    } else if (partId === 21) {
+      // MEDIA: accumulate bytes (one segment may arrive in many 32768-byte parts)
+      const headerId = data[0];
+      const buf = buffers.get(headerId);
+      if (buf) buf.push(data.slice(1));
+    } else if (partId === 22) {
+      // MEDIA_END: finalize the segment — emit one complete entry
+      const headerId = data.length > 0 ? data[0] : 0;
+      const header = headers.get(headerId);
+      const buf = buffers.get(headerId);
+      if (header && buf) {
+        segments.push({ itag: header.itag, durationMs: header.durationMs, isInitSeg: header.isInitSeg, data: sabrConcat(buf) });
+      }
+      headers.delete(headerId);
+      buffers.delete(headerId);
+    }
+  }
+
   return segments;
 }
 
@@ -1231,7 +1434,8 @@ function sabrParseRedirect(data) {
 
 function sabrParseNextRequestPolicy(data) {
   const f = sabrParseProtoVarintFields(data);
-  return f[1] || 0; // field 1 = backoff_time_ms
+  // field 4 = backoffTimeMs (varint), field 7 = playbackCookie (bytes)
+  return { backoffTimeMs: f[4] || 0, playbackCookie: f[7] instanceof Uint8Array ? f[7] : null };
 }
 
 export default Innertube;

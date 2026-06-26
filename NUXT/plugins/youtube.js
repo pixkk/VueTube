@@ -474,6 +474,10 @@ const innertubeModule = {
   async downloadSabrFormat(opts) {
     return await InnertubeAPI.downloadSabrFormat(opts);
   },
+
+  async streamSabrFormat(opts) {
+    return await InnertubeAPI.streamSabrFormat(opts);
+  },
 };
 
 //---   Start   ---//

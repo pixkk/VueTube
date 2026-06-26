@@ -852,24 +852,25 @@ export default {
       }
     },
     seekingEvent() {
-      // if (this.seeking) {
-        console.log("seeking");
-      this.bufferingDetected = true;
+      console.log("seeking", this.$refs.player?.currentTime);
+      // Only pause for user-initiated seeks (when seeking data prop is true),
+      // not for internal MSE browser seeks (gap-skipping between segments)
+      if (this.seeking) {
+        this.bufferingDetected = true;
         this.$refs.player.pause();
         this.$refs.audio.pause();
-      // }
+      }
     },
     seekedEvent() {
-      // if (!this.seeking) {
-        console.log("seeked");
-      setTimeout(() => {
-
-        this.$refs.player.play();
-        this.$refs.audio.play();
-        this.bufferingDetected = false;
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
-      }, 1000);
-      // }
+      console.log("seeked", this.$refs.player?.currentTime);
+      if (this.seeking) {
+        setTimeout(() => {
+          this.$refs.player.play();
+          this.$refs.audio.play();
+          this.bufferingDetected = false;
+          this.$refs.audio.currentTime = this.$refs.player.currentTime;
+        }, 1000);
+      }
     },
 
 
@@ -954,8 +955,8 @@ export default {
       this.videoEnded = false;
       if (this.bufferingDetected !== false) {
         clearTimeout(this.bufferingDetected);
-        // this.$refs.audio.currentTime = this.vid.currentTime;
-        this.vid.currentTime = this.$refs.audio.currentTime;
+        // Sync audio to video (video is master)
+        this.$refs.audio.currentTime = this.vid.currentTime;
         setTimeout(() => {
 
           this.bufferingDetected = false;
@@ -1267,40 +1268,85 @@ export default {
       return this.$refs.player;
     },
 
+    _sabrStartMse(mediaSource, mimeType, streamParams) {
+      const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
+      let appendQueue = Promise.resolve();
+
+      const appendChunk = (data) => {
+        appendQueue = appendQueue.then(() => new Promise((resolve, reject) => {
+          const onEnd = () => { sourceBuffer.removeEventListener('updateend', onEnd); resolve(); };
+          const onErr = () => { sourceBuffer.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
+          sourceBuffer.addEventListener('updateend', onEnd);
+          sourceBuffer.addEventListener('error', onErr);
+          try {
+            sourceBuffer.appendBuffer(data);
+          } catch (e) {
+            sourceBuffer.removeEventListener('updateend', onEnd);
+            sourceBuffer.removeEventListener('error', onErr);
+            reject(e);
+          }
+        }));
+        return appendQueue;
+      };
+
+      let chunkCount = 0;
+      this.$youtube.streamSabrFormat({
+        ...streamParams,
+        maxRequests: 500,
+        onTotalDuration: (ms) => {
+          // Set duration immediately so the player shows correct total time from the start
+          if (mediaSource.readyState === 'open') mediaSource.duration = ms / 1000;
+        },
+        onChunk: (data) => {
+          chunkCount++;
+          if (chunkCount <= 3) console.log('[SABR] chunk #' + chunkCount + ' itag=' + streamParams.itag + ' size=' + data.length);
+          return appendChunk(data);
+        },
+      }).then(async () => {
+        await appendQueue;
+        console.log('[SABR] Stream done, itag:', streamParams.itag, 'total chunks:', chunkCount);
+        if (mediaSource.readyState === 'open') mediaSource.endOfStream();
+      }).catch(e => console.warn('[SABR] Stream error:', e));
+    },
+
     async loadVideoViaSabr() {
       const bestVideo =
         this.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) ||
         this.sources[0];
-      if (!bestVideo) return;
+
+      const mimeType = bestVideo.mimeType || 'video/mp4; codecs="avc1.42E01E"';
+      console.log('[SABR] Video: itag', bestVideo.itag, 'mimeType:', mimeType, 'supported:', MediaSource.isTypeSupported(mimeType));
+      if (!window.MediaSource || !MediaSource.isTypeSupported(mimeType)) {
+        console.warn('[SABR] MSE not supported for video, skipping');
+        return;
+      }
 
       try {
-        const bytes = await this.$youtube.downloadSabrFormat({
+        const mediaSource = new MediaSource();
+
+        // Register listener BEFORE creating/attaching the URL
+        const waitForOpen = new Promise((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error('sourceopen timeout')), 10000);
+          mediaSource.addEventListener('sourceopen', () => { clearTimeout(t); resolve(); }, { once: true });
+        });
+
+        // Create one URL and set it on both the Vue reactive prop and the element directly
+        const objectUrl = URL.createObjectURL(mediaSource);
+        this.vidSrc = objectUrl;
+        await this.$nextTick();
+        // Trigger load explicitly (Vue set the attribute, but load() ensures browser processes it)
+        if (this.$refs.player) this.$refs.player.load();
+
+        await waitForOpen;
+        console.log('[SABR] Video sourceopen OK');
+        this._sabrStartMse(mediaSource, mimeType, {
           serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
           videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
           itag: bestVideo.itag,
+          isAudio: false,
         });
-
-        if (!bytes || bytes.length === 0) return;
-
-        const mimeType = bestVideo.mimeType?.split(';')[0] || 'video/webm';
-        const blob = new Blob([bytes], { type: mimeType });
-        const blobUrl = URL.createObjectURL(blob);
-
-        const prevTime = this.$refs.player?.currentTime || 0;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
-
-        this.vidSrc = blobUrl;
-        if (this.$refs.player) {
-          this.$refs.player.pause();
-          this.$refs.player.src = blobUrl;
-          this.$refs.player.load();
-          this.$refs.player.currentTime = prevTime;
-          if (wasPlaying) this.$refs.player.play().catch(() => {});
-        }
-
-        console.log('[SABR] Video loaded via SABR, itag:', bestVideo.itag, 'size:', bytes.length);
       } catch (e) {
-        console.warn('[SABR] Video load failed, keeping direct URL:', e);
+        console.warn('[SABR] Video MSE failed:', e);
       }
     },
 
@@ -1311,33 +1357,39 @@ export default {
         this.audioSources[0];
       if (!bestAudio) return;
 
+      const mimeType = bestAudio.mimeType || 'audio/webm; codecs="opus"';
+      console.log('[SABR] Audio: itag', bestAudio.itag, 'mimeType:', mimeType, 'supported:', MediaSource.isTypeSupported(mimeType));
+      if (!window.MediaSource || !MediaSource.isTypeSupported(mimeType)) {
+        console.warn('[SABR] MSE not supported for audio, skipping');
+        return;
+      }
+
       try {
-        const bytes = await this.$youtube.downloadSabrFormat({
+        const mediaSource = new MediaSource();
+
+        const waitForOpen = new Promise((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error('sourceopen timeout')), 10000);
+          mediaSource.addEventListener('sourceopen', () => { clearTimeout(t); resolve(); }, { once: true });
+        });
+
+        const objectUrl = URL.createObjectURL(mediaSource);
+        this.audSrc = objectUrl;
+        await this.$nextTick();
+        if (this.$refs.audio) {
+          this.$refs.audio.src = objectUrl;
+          this.$refs.audio.load();
+        }
+
+        await waitForOpen;
+        console.log('[SABR] Audio sourceopen OK');
+        this._sabrStartMse(mediaSource, mimeType, {
           serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
           videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
           itag: bestAudio.itag,
+          isAudio: true,
         });
-
-        if (!bytes || bytes.length === 0) return;
-
-        const mimeType = bestAudio.mimeType?.split(';')[0] || 'audio/webm';
-        const blob = new Blob([bytes], { type: mimeType });
-        const blobUrl = URL.createObjectURL(blob);
-
-        const prevTime = this.$refs.audio?.currentTime || 0;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
-
-        this.audSrc = blobUrl;
-        if (this.$refs.audio) {
-          this.$refs.audio.src = blobUrl;
-          this.$refs.audio.load();
-          this.$refs.audio.currentTime = prevTime;
-          if (wasPlaying) this.$refs.audio.play().catch(() => {});
-        }
-
-        console.log('[SABR] Audio loaded via SABR, itag:', bestAudio.itag, 'size:', bytes.length);
       } catch (e) {
-        console.warn('[SABR] Audio load failed, keeping direct URL:', e);
+        console.warn('[SABR] Audio MSE failed:', e);
       }
     },
 
