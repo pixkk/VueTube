@@ -460,6 +460,10 @@ export default {
       watched: 0,
       vidSrc: "",
       audSrc: "",
+      currentVideoFormat: null,
+      currentAudioFormat: null,
+      videoAbortController: null,
+      audioAbortController: null,
       hls: null,
       dash: null,
       hlsStream: null,
@@ -969,6 +973,8 @@ export default {
       if (this.xhr) this.xhr.abort();
       if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
+      if (this.videoAbortController) this.videoAbortController.abort();
+      if (this.audioAbortController) this.audioAbortController.abort();
 
       this.$refs.player.pause();
       this.$refs.player.src = '';
@@ -1070,10 +1076,19 @@ export default {
       }
     },
     qualityInfoHandler(q) {
-      let src = q.url;
       localStorage.setItem("videoQuality", q.qualityLabel);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("videoCodec", this.getCodecName(codec));
+
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl
+      ) {
+        this.loadVideoViaSabr(q);
+        return;
+      }
+
+      let src = q.url;
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
@@ -1090,10 +1105,24 @@ export default {
       // this.aud = this.audSrc;
     },
     audioQualityInfoHandler(q) {
-      let src = q.url;
       localStorage.setItem("audioQuality", q.itag);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
+      this.audioSources.forEach((source) => {
+        if (source.url === q.url && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
+          localStorage.setItem("audioTrackId", source.audioTrack.id);
+        }
+      });
+
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl
+      ) {
+        this.loadAudioViaSabr(q);
+        return;
+      }
+
+      let src = q.url;
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
@@ -1107,11 +1136,6 @@ export default {
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-      this.audioSources.forEach((source) => {
-        if (source.url === src && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
-          localStorage.setItem("audioTrackId", source.audioTrack.id);
-        }
-      });
 
       let interval = setInterval(() => {
         console.log(this.aud.readyState);
@@ -1268,12 +1292,14 @@ export default {
       return this.$refs.player;
     },
 
-    _sabrStartMse(mediaSource, mimeType, streamParams) {
+    _sabrStartMse(mediaSource, mimeType, streamParams, signal) {
       const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
       let appendQueue = Promise.resolve();
 
       const appendChunk = (data) => {
         appendQueue = appendQueue.then(() => new Promise((resolve, reject) => {
+          if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
+          sourceBuffer.timestampOffset = 0;
           const onEnd = () => { sourceBuffer.removeEventListener('updateend', onEnd); resolve(); };
           const onErr = () => { sourceBuffer.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
           sourceBuffer.addEventListener('updateend', onEnd);
@@ -1292,9 +1318,9 @@ export default {
       let chunkCount = 0;
       this.$youtube.streamSabrFormat({
         ...streamParams,
+        signal,
         maxRequests: 500,
         onTotalDuration: (ms) => {
-          // Set duration immediately so the player shows correct total time from the start
           if (mediaSource.readyState === 'open') mediaSource.duration = ms / 1000;
         },
         onChunk: (data) => {
@@ -1306,13 +1332,26 @@ export default {
         await appendQueue;
         console.log('[SABR] Stream done, itag:', streamParams.itag, 'total chunks:', chunkCount);
         if (mediaSource.readyState === 'open') mediaSource.endOfStream();
-      }).catch(e => console.warn('[SABR] Stream error:', e));
+      }).catch(e => {
+        if (e.name === 'AbortError') {
+          console.log('[SABR] Stream aborted, itag:', streamParams.itag);
+        } else {
+          console.warn('[SABR] Stream error:', e);
+        }
+      });
     },
 
-    async loadVideoViaSabr() {
-      const bestVideo =
+    async loadVideoViaSabr(selectedFormat = null) {
+      if (this.videoAbortController) {
+        this.videoAbortController.abort();
+      }
+      this.videoAbortController = new AbortController();
+      const signal = this.videoAbortController.signal;
+
+      const bestVideo = selectedFormat ||
         this.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) ||
         this.sources[0];
+      if (!bestVideo) return;
 
       const mimeType = bestVideo.mimeType || 'video/mp4; codecs="avc1.42E01E"';
       console.log('[SABR] Video: itag', bestVideo.itag, 'mimeType:', mimeType, 'supported:', MediaSource.isTypeSupported(mimeType));
@@ -1321,37 +1360,71 @@ export default {
         return;
       }
 
+      this.currentVideoFormat = bestVideo;
+
       try {
         const mediaSource = new MediaSource();
 
-        // Register listener BEFORE creating/attaching the URL
         const waitForOpen = new Promise((resolve, reject) => {
           const t = setTimeout(() => reject(new Error('sourceopen timeout')), 10000);
-          mediaSource.addEventListener('sourceopen', () => { clearTimeout(t); resolve(); }, { once: true });
+          const onOpen = () => { clearTimeout(t); resolve(); };
+          mediaSource.addEventListener('sourceopen', onOpen, { once: true });
+          signal.addEventListener('abort', () => {
+            clearTimeout(t);
+            mediaSource.removeEventListener('sourceopen', onOpen);
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
         });
 
-        // Create one URL and set it on both the Vue reactive prop and the element directly
         const objectUrl = URL.createObjectURL(mediaSource);
+        const prevTime = this.$refs.player?.currentTime || 0;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
         this.vidSrc = objectUrl;
         await this.$nextTick();
-        // Trigger load explicitly (Vue set the attribute, but load() ensures browser processes it)
-        if (this.$refs.player) this.$refs.player.load();
+        if (this.$refs.player) {
+          this.$refs.player.src = objectUrl;
+          this.$refs.player.load();
+        }
 
         await waitForOpen;
+        if (signal.aborted) return;
         console.log('[SABR] Video sourceopen OK');
+
+        if (this.$refs.player) {
+          this.$refs.player.currentTime = prevTime;
+          if (wasPlaying) {
+            this.$refs.player.play().catch(() => {});
+          }
+        }
+
+        const audioItag = this.currentAudioFormat?.itag || this.audioSources[0]?.itag;
+
         this._sabrStartMse(mediaSource, mimeType, {
           serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
           videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
           itag: bestVideo.itag,
           isAudio: false,
-        });
+          videoItag: bestVideo.itag,
+          audioItag: audioItag,
+        }, signal);
       } catch (e) {
-        console.warn('[SABR] Video MSE failed:', e);
+        if (e.name === 'AbortError') {
+          console.log('[SABR] Video load aborted');
+        } else {
+          console.warn('[SABR] Video MSE failed:', e);
+        }
       }
     },
 
-    async loadAudioViaSabr() {
-      const bestAudio =
+    async loadAudioViaSabr(selectedFormat = null) {
+      if (this.audioAbortController) {
+        this.audioAbortController.abort();
+      }
+      this.audioAbortController = new AbortController();
+      const signal = this.audioAbortController.signal;
+
+      const bestAudio = selectedFormat ||
         this.audioSources.find(s => s.mimeType?.includes('opus') && s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
         this.audioSources.find(s => s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
         this.audioSources[0];
@@ -1364,15 +1437,26 @@ export default {
         return;
       }
 
+      this.currentAudioFormat = bestAudio;
+
       try {
         const mediaSource = new MediaSource();
 
         const waitForOpen = new Promise((resolve, reject) => {
           const t = setTimeout(() => reject(new Error('sourceopen timeout')), 10000);
-          mediaSource.addEventListener('sourceopen', () => { clearTimeout(t); resolve(); }, { once: true });
+          const onOpen = () => { clearTimeout(t); resolve(); };
+          mediaSource.addEventListener('sourceopen', onOpen, { once: true });
+          signal.addEventListener('abort', () => {
+            clearTimeout(t);
+            mediaSource.removeEventListener('sourceopen', onOpen);
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
         });
 
         const objectUrl = URL.createObjectURL(mediaSource);
+        const prevTime = this.$refs.audio?.currentTime || this.$refs.player?.currentTime || 0;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
         this.audSrc = objectUrl;
         await this.$nextTick();
         if (this.$refs.audio) {
@@ -1381,15 +1465,32 @@ export default {
         }
 
         await waitForOpen;
+        if (signal.aborted) return;
         console.log('[SABR] Audio sourceopen OK');
+
+        if (this.$refs.audio) {
+          this.$refs.audio.currentTime = prevTime;
+          if (wasPlaying) {
+            this.$refs.audio.play().catch(() => {});
+          }
+        }
+
+        const videoItag = this.currentVideoFormat?.itag || this.sources[0]?.itag;
+
         this._sabrStartMse(mediaSource, mimeType, {
           serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
           videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
           itag: bestAudio.itag,
           isAudio: true,
-        });
+          videoItag: videoItag,
+          audioItag: bestAudio.itag,
+        }, signal);
       } catch (e) {
-        console.warn('[SABR] Audio MSE failed:', e);
+        if (e.name === 'AbortError') {
+          console.log('[SABR] Audio load aborted');
+        } else {
+          console.warn('[SABR] Audio MSE failed:', e);
+        }
       }
     },
 
