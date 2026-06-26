@@ -470,6 +470,10 @@ const innertubeModule = {
   async saveApiStats(query, url) {
     await InnertubeAPI.apiStats(query, url);
   },
+
+  async downloadSabrFormat(opts) {
+    return await InnertubeAPI.downloadSabrFormat(opts);
+  },
 };
 
 //---   Start   ---//

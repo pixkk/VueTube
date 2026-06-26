@@ -686,6 +686,20 @@ class Innertube {
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     let resolutions = responseInfo.streamingData;
+    let ustreamerConfig = responseInfo?.playerConfig?.mediaCommonConfig?.mediaUstreamerRequestConfig?.videoPlaybackUstreamerConfig || null;
+    let serverAbrStreamingUrl = responseInfo?.streamingData?.serverAbrStreamingUrl || null;
+    if (serverAbrStreamingUrl) {
+      try {
+        const sabrParams = new URLSearchParams(new URL(serverAbrStreamingUrl).search);
+        const sabrN = sabrParams.get("n");
+        if (sabrN) {
+          const sabrNDecoded = this.nfunction(sabrN);
+          serverAbrStreamingUrl = serverAbrStreamingUrl.replace(/&n=[^&]*/, "&n=" + sabrNDecoded);
+        }
+      } catch (e) {
+        console.warn("[SABR] Failed to decode n param in serverAbrStreamingUrl", e);
+      }
+    }
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
 
@@ -808,20 +822,26 @@ class Innertube {
       }
       searchParams.delete("n");
 
-      // For some reasons, searchParams.delete not removes &n in music videos
-      source["url"] = source["url"].replace(/&n=[^&]*/g, "");
-      source["url"] = source["url"] + nValue;
-      // source["url"] = source["url"] + "&alr=yes";
-      source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
-      // source["url"] = source["url"] + "&ump=1";
-      // source["url"] = source["url"] + "&srfvp=1";
-      source["url"] = source["url"] + "&cpn=" + getCpn();
-      // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
-      // source["url"] = source["url"] + "&range=0-" + source.contentLength;
-      if (searchParams.get("mime").indexOf("audio") < 0) {
-        // source["url"] = source["url"] + "&range=0-";
+      try {
+        // For some reasons, searchParams.delete not removes &n in music videos
+        source["url"] = source["url"].replace(/&n=[^&]*/g, "");
+        source["url"] = source["url"] + nValue;
         // source["url"] = source["url"] + "&alr=yes";
+        source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
+        // source["url"] = source["url"] + "&ump=1";
+        // source["url"] = source["url"] + "&srfvp=1";
+        source["url"] = source["url"] + "&cpn=" + getCpn();
+        // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+        // source["url"] = source["url"] + "&range=0-" + source.contentLength;
+        if (searchParams.get("mime").indexOf("audio") < 0) {
+          // source["url"] = source["url"] + "&range=0-";
+          // source["url"] = source["url"] + "&alr=yes";
+        }
+      }catch (e) {
+        console.error(e)
+        console.error(source)
       }
+
     });
     const vidData = {
       id: details.videoId,
@@ -841,6 +861,8 @@ class Innertube {
       hls: hls,
       dash: dash,
       metadata: {
+        ustreamerConfig: ustreamerConfig,
+        serverAbrStreamingUrl: serverAbrStreamingUrl,
         publishDate: publishDate,
         contents: vidMetadata.contents,
         description: details.shortDescription,
@@ -994,5 +1016,222 @@ class Innertube {
     let gphProtoMethods = gphDeps + "\n" + ctorCode + "\n" + protoMethodsCode;
     return {r, url, gph, gphProtoMethods};
   }
+
+  // --- SABR (Server Adaptive Bitrate) ---
+
+  async downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20 }) {
+    const clientName = this.context?.client?.clientName || 'WEB';
+    const clientVersion = this.context?.client?.clientVersion || '2.20240101.00.00';
+
+    const body = sabrBuildRequest({
+      ustreamerConfigB64: videoPlaybackUstreamerConfig,
+      clientName,
+      clientVersion,
+      itag,
+      playerTimeMs: 0,
+    });
+
+    let url = serverAbrStreamingUrl;
+    let rn = 1;
+    const allSegments = [];
+
+    for (let i = 0; i < maxRequests; i++) {
+      const rawBytes = await sabrFetch(url, body, rn++);
+      const parts = [...sabrParseUMP(rawBytes)];
+
+      const redirectPart = parts.find(p => p.partId === 53);
+      if (redirectPart) {
+        const newUrl = sabrParseRedirect(redirectPart.data);
+        if (newUrl) { url = newUrl; rn = 1; }
+        continue;
+      }
+
+      const errorPart = parts.find(p => p.partId === 55);
+      if (errorPart) throw new Error('SABR_ERROR received from YouTube server');
+
+      const policyPart = parts.find(p => p.partId === 44);
+      if (policyPart) {
+        const backoff = sabrParseNextRequestPolicy(policyPart.data);
+        if (backoff > 0) await new Promise(r => setTimeout(r, backoff));
+      }
+
+      const segments = sabrExtractMedia(parts);
+      const relevant = segments.filter(s => s.itag === itag);
+      allSegments.push(...relevant);
+
+      const hasMedia = parts.some(p => p.partId === 21);
+      const hasMediaEnd = parts.some(p => p.partId === 22);
+      if (hasMediaEnd && !hasMedia) break;
+      if (!hasMedia && relevant.length === 0) break;
+    }
+
+    return sabrConcat(allSegments.map(s => s.data));
+  }
 }
+
+// --- SABR module-level helpers ---
+
+function sabrConcat(arrays) {
+  const totalLength = arrays.reduce((acc, a) => acc + a.length, 0);
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const a of arrays) { result.set(a, offset); offset += a.length; }
+  return result;
+}
+
+function sabrEncodeVarint(value) {
+  const bytes = [];
+  while (value > 0x7f) {
+    bytes.push((value & 0x7f) | 0x80);
+    value = Math.floor(value / 128);
+  }
+  bytes.push(value & 0x7f);
+  return new Uint8Array(bytes);
+}
+
+function sabrReadVarint(bytes, offset) {
+  let value = 0, shift = 0, b;
+  do {
+    b = bytes[offset++];
+    value |= (b & 0x7f) << shift;
+    shift += 7;
+  } while (b & 0x80);
+  return { value, nextOffset: offset };
+}
+
+function sabrPbLenDelim(fieldNumber, data) {
+  return sabrConcat([sabrEncodeVarint((fieldNumber << 3) | 2), sabrEncodeVarint(data.length), data]);
+}
+
+function sabrPbVarint(fieldNumber, value) {
+  return sabrConcat([sabrEncodeVarint((fieldNumber << 3) | 0), sabrEncodeVarint(value)]);
+}
+
+function sabrPbString(fieldNumber, str) {
+  return sabrPbLenDelim(fieldNumber, new TextEncoder().encode(str));
+}
+
+function sabrBase64Decode(str) {
+  const normalized = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
+// Maps InnerTube client name strings to the int32 values used in SABR ClientInfo
+const SABR_CLIENT_NAME_IDS = {
+  WEB: 1, MWEB: 2, ANDROID: 3, IOS: 5, TVHTML5: 7,
+  ANDROID_MUSIC: 21, WEB_MUSIC_EMBEDDED_PLAYER: 39,
+  WEB_EMBEDDED_PLAYER: 56, WEB_CREATOR: 62, ANDROID_VR: 28,
+};
+
+function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0 }) {
+  const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
+
+  // field 2: selected_format_ids { field 1 (int32): itag }
+  const formatIds = sabrPbLenDelim(2, sabrPbVarint(1, itag));
+
+  // field 4: player_time_ms (int64)
+  const playerTime = sabrPbVarint(4, playerTimeMs);
+
+  // field 5: video_playback_ustreamer_config (bytes)
+  const ustreamerField = sabrPbLenDelim(5, ustreamerBytes);
+
+  // field 19: streamer_context {
+  //   field 1: client_info {
+  //     field 16 (int32): client_name
+  //     field 17 (string): client_version
+  //   }
+  // }
+  const clientNameId = SABR_CLIENT_NAME_IDS[clientName] || 1;
+  const clientInfo = sabrConcat([
+    sabrPbVarint(16, clientNameId),
+    sabrPbString(17, clientVersion),
+  ]);
+  const streamerContext = sabrPbLenDelim(19, sabrPbLenDelim(1, clientInfo));
+
+  return sabrConcat([formatIds, playerTime, ustreamerField, streamerContext]);
+}
+
+async function sabrFetch(sabrUrl, body, requestNumber = 1) {
+  const url = new URL(sabrUrl);
+  url.searchParams.set('rn', String(requestNumber));
+  const response = await fetch(url.toString(), {
+    method: 'POST',
+    body: body,
+    headers: {
+      'content-type': 'application/x-protobuf',
+      'accept': 'application/vnd.yt-ump',
+      'accept-encoding': 'identity',
+    },
+  });
+  if (!response.ok) throw new Error(`SABR HTTP ${response.status}`);
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+function* sabrParseUMP(rawBytes) {
+  let offset = 0;
+  while (offset < rawBytes.length) {
+    const { value: partId, nextOffset: o1 } = sabrReadVarint(rawBytes, offset);
+    const { value: size, nextOffset: o2 } = sabrReadVarint(rawBytes, o1);
+    const data = rawBytes.slice(o2, o2 + size);
+    offset = o2 + size;
+    yield { partId, data };
+  }
+}
+
+function sabrParseProtoVarintFields(data) {
+  const fields = {};
+  let offset = 0;
+  while (offset < data.length) {
+    const { value: tag, nextOffset: o1 } = sabrReadVarint(data, offset);
+    const fieldNumber = tag >> 3, wireType = tag & 7;
+    offset = o1;
+    if (wireType === 0) {
+      const { value, nextOffset } = sabrReadVarint(data, offset);
+      offset = nextOffset;
+      fields[fieldNumber] = value;
+    } else if (wireType === 2) {
+      const { value: len, nextOffset } = sabrReadVarint(data, offset);
+      fields[fieldNumber] = data.slice(nextOffset, nextOffset + len);
+      offset = nextOffset + len;
+    } else if (wireType === 1) { offset += 8; }
+    else if (wireType === 5) { offset += 4; }
+    else break;
+  }
+  return fields;
+}
+
+function sabrParseMediaHeader(data) {
+  const f = sabrParseProtoVarintFields(data);
+  return { headerId: f[1] || 0, itag: f[2] || 0, sequenceNumber: f[3] || 0 };
+}
+
+function sabrExtractMedia(parts) {
+  const headers = new Map();
+  const segments = [];
+  for (const { partId, data } of parts) {
+    if (partId === 20) {
+      const h = sabrParseMediaHeader(data);
+      headers.set(h.headerId, h);
+    } else if (partId === 21) {
+      const { value: headerId, nextOffset } = sabrReadVarint(data, 0);
+      const mediaBytes = data.slice(nextOffset);
+      const header = headers.get(headerId);
+      if (header) segments.push({ itag: header.itag, data: mediaBytes });
+    }
+  }
+  return segments;
+}
+
+function sabrParseRedirect(data) {
+  const f = sabrParseProtoVarintFields(data);
+  const urlBytes = f[1];
+  return urlBytes instanceof Uint8Array ? new TextDecoder().decode(urlBytes) : null;
+}
+
+function sabrParseNextRequestPolicy(data) {
+  const f = sabrParseProtoVarintFields(data);
+  return f[1] || 0; // field 1 = backoff_time_ms
+}
+
 export default Innertube;

@@ -757,6 +757,14 @@ export default {
 
       this.setStartTime(tParam);
     }
+
+    if (
+      this.video.metadata?.ustreamerConfig &&
+      this.video.metadata?.serverAbrStreamingUrl
+    ) {
+      this.loadAudioViaSabr();
+      this.loadVideoViaSabr();
+    }
   },
   created() {
     screen.orientation.addEventListener("change", () =>
@@ -1258,6 +1266,81 @@ export default {
     getPlayer() {
       return this.$refs.player;
     },
+
+    async loadVideoViaSabr() {
+      const bestVideo =
+        this.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) ||
+        this.sources[0];
+      if (!bestVideo) return;
+
+      try {
+        const bytes = await this.$youtube.downloadSabrFormat({
+          serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
+          videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
+          itag: bestVideo.itag,
+        });
+
+        if (!bytes || bytes.length === 0) return;
+
+        const mimeType = bestVideo.mimeType?.split(';')[0] || 'video/webm';
+        const blob = new Blob([bytes], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const prevTime = this.$refs.player?.currentTime || 0;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
+        this.vidSrc = blobUrl;
+        if (this.$refs.player) {
+          this.$refs.player.pause();
+          this.$refs.player.src = blobUrl;
+          this.$refs.player.load();
+          this.$refs.player.currentTime = prevTime;
+          if (wasPlaying) this.$refs.player.play().catch(() => {});
+        }
+
+        console.log('[SABR] Video loaded via SABR, itag:', bestVideo.itag, 'size:', bytes.length);
+      } catch (e) {
+        console.warn('[SABR] Video load failed, keeping direct URL:', e);
+      }
+    },
+
+    async loadAudioViaSabr() {
+      const bestAudio =
+        this.audioSources.find(s => s.mimeType?.includes('opus') && s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+        this.audioSources.find(s => s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+        this.audioSources[0];
+      if (!bestAudio) return;
+
+      try {
+        const bytes = await this.$youtube.downloadSabrFormat({
+          serverAbrStreamingUrl: this.video.metadata.serverAbrStreamingUrl,
+          videoPlaybackUstreamerConfig: this.video.metadata.ustreamerConfig,
+          itag: bestAudio.itag,
+        });
+
+        if (!bytes || bytes.length === 0) return;
+
+        const mimeType = bestAudio.mimeType?.split(';')[0] || 'audio/webm';
+        const blob = new Blob([bytes], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const prevTime = this.$refs.audio?.currentTime || 0;
+        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
+
+        this.audSrc = blobUrl;
+        if (this.$refs.audio) {
+          this.$refs.audio.src = blobUrl;
+          this.$refs.audio.load();
+          this.$refs.audio.currentTime = prevTime;
+          if (wasPlaying) this.$refs.audio.play().catch(() => {});
+        }
+
+        console.log('[SABR] Audio loaded via SABR, itag:', bestAudio.itag, 'size:', bytes.length);
+      } catch (e) {
+        console.warn('[SABR] Audio load failed, keeping direct URL:', e);
+      }
+    },
+
     pauseHandler() {
       this.$refs.player.pause();
       this.$refs.audio.pause();
