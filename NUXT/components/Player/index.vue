@@ -484,6 +484,8 @@ export default {
       sBblockCategoryText: "",
       endBlockTime: -1,
       poster: "",
+      wasPlayingBeforeSeek: false,
+      lastLoadingStarted: 0,
     };
   },
   async mounted() {
@@ -887,6 +889,8 @@ export default {
 
       if (this.isUserSeeking) {
         this.isUserSeeking = false;
+        const wasPlaying = this.wasPlayingBeforeSeek;
+
         if (
           this.video.metadata?.ustreamerConfig &&
           this.video.metadata?.serverAbrStreamingUrl
@@ -896,32 +900,77 @@ export default {
           const audioBuffered = this.isTimeBuffered(this.$refs.audio, seekTime);
           console.log('[SABR] seeked: videoBuffered =', videoBuffered, 'audioBuffered =', audioBuffered);
 
+          this.bufferingDetected = true;
+          this.lastLoadingStarted = Date.now();
+          if (this.$refs.player) this.$refs.player.pause();
+          if (this.$refs.audio) this.$refs.audio.pause();
+
           if (!videoBuffered) {
             this.loadVideoViaSabr(this.currentVideoFormat, seekTime);
+          } else {
+            if (this.$refs.player) this.$refs.player.currentTime = seekTime;
+            setTimeout(() => {
+              if (wasPlaying && this.$refs.player) this.$refs.player.play().catch(() => {});
+              this.bufferingDetected = false;
+              this.wasPlayingBeforeSeek = false;
+            }, 1000);
           }
+
           if (!audioBuffered) {
             this.loadAudioViaSabr(this.currentAudioFormat, seekTime);
+          } else {
+            if (this.$refs.audio) this.$refs.audio.currentTime = seekTime;
+            setTimeout(() => {
+              if (wasPlaying && this.$refs.audio) this.$refs.audio.play().catch(() => {});
+            }, 1000);
           }
-          this.bufferingDetected = false;
           return;
         }
 
+        this.bufferingDetected = true;
+        this.lastLoadingStarted = Date.now();
+        if (this.$refs.player) this.$refs.player.pause();
+        if (this.$refs.audio) this.$refs.audio.pause();
         setTimeout(() => {
-          this.$refs.player.play();
-          this.$refs.audio.play();
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
           this.bufferingDetected = false;
-          this.$refs.audio.currentTime = this.$refs.player.currentTime;
+          this.wasPlayingBeforeSeek = false;
+          if (this.$refs.audio && this.$refs.player) {
+            this.$refs.audio.currentTime = this.$refs.player.currentTime;
+          }
         }, 1000);
       }
     },
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
-
+      const videoTime = this.$refs.player ? this.$refs.player.currentTime : 0;
+      const audioTime = this.$refs.audio ? this.$refs.audio.currentTime : 0;
+      if (this.$refs.audio && this.$refs.player && Math.abs(audioTime - videoTime) > 500 / 1000) {
+        console.log('[PLAYER] Desync detected! Video:', videoTime, 'Audio:', audioTime);
         this.bufferingDetected = true;
+        this.lastLoadingStarted = Date.now();
+        const wasPlaying = !this.$refs.player.paused;
+        this.$refs.player.pause();
+        this.$refs.audio.pause();
+
+        if (videoTime < audioTime) {
+          // Video is lagging behind, align audio to video
+          this.$refs.audio.currentTime = videoTime;
+        } else {
+          // Audio is lagging behind, align video to audio
+          this.isInternalSeek = true;
+          this.$refs.player.currentTime = audioTime;
+        }
+
         setTimeout(() => {
-          this.$refs.audio.currentTime = this.$refs.player.currentTime;
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
           this.bufferingDetected = false;
         }, 1000);
       }
@@ -1087,6 +1136,7 @@ export default {
     },
     userSeek(time) {
       console.log("[PLAYER] userSeek to", time);
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
       this.isUserSeeking = true;
       this.$refs.player.currentTime = time;
       this.$refs.audio.currentTime = time;
@@ -1134,6 +1184,7 @@ export default {
       localStorage.setItem("videoQuality", q.qualityLabel);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("videoCodec", this.getCodecName(codec));
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
 
       if (
         this.video.metadata?.ustreamerConfig &&
@@ -1165,6 +1216,7 @@ export default {
       localStorage.setItem("audioQuality", q.itag);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
       this.audioSources.forEach((source) => {
         if (source.url === q.url && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
           localStorage.setItem("audioTrackId", source.audioTrack.id);
@@ -1451,6 +1503,12 @@ export default {
       this.videoAbortController = new AbortController();
       const signal = this.videoAbortController.signal;
 
+      this.bufferingDetected = true;
+      this.lastLoadingStarted = Date.now();
+      const wasPlaying = this.wasPlayingBeforeSeek || (this.$refs.player && !this.$refs.player.paused);
+      if (this.$refs.player) this.$refs.player.pause();
+      if (this.$refs.audio) this.$refs.audio.pause();
+
       let bestVideo = selectedFormat;
       if (!bestVideo) {
         const videoSFromStorage = localStorage.getItem("videoQuality") || null;
@@ -1497,16 +1555,12 @@ export default {
         }
 
         const prevTime = startTimeSec;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         if (this.$refs.player) {
           if (this.$refs.player.currentTime !== prevTime) {
             this.isInternalSeek = true;
           }
           this.$refs.player.currentTime = prevTime;
-          if (wasPlaying) {
-            this.$refs.player.play().catch(() => {});
-          }
         }
 
         const audioItag = this.currentAudioFormat?.itag || this.audioSources[0]?.itag;
@@ -1520,6 +1574,17 @@ export default {
           audioItag: audioItag,
           playerTimeMs: Math.round(prevTime * 1000),
         }, signal, this.videoSourceBuffer);
+
+        const elapsed = Date.now() - this.lastLoadingStarted;
+        const delay = Math.max(0, 1000 - elapsed);
+        setTimeout(() => {
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
+          this.bufferingDetected = false;
+          this.wasPlayingBeforeSeek = false;
+        }, delay);
 
         return;
       }
@@ -1540,7 +1605,6 @@ export default {
 
         const objectUrl = URL.createObjectURL(mediaSource);
         const prevTime = startTimeSec;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         this.vidSrc = objectUrl;
         await this.$nextTick();
@@ -1566,9 +1630,6 @@ export default {
             this.isInternalSeek = true;
           }
           this.$refs.player.currentTime = prevTime;
-          if (wasPlaying) {
-            this.$refs.player.play().catch(() => {});
-          }
         }
 
         const audioItag = this.currentAudioFormat?.itag || this.audioSources[0]?.itag;
@@ -1582,6 +1643,17 @@ export default {
           audioItag: audioItag,
           playerTimeMs: Math.round(prevTime * 1000),
         }, signal);
+
+        const elapsed = Date.now() - this.lastLoadingStarted;
+        const delay = Math.max(0, 1000 - elapsed);
+        setTimeout(() => {
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
+          this.bufferingDetected = false;
+          this.wasPlayingBeforeSeek = false;
+        }, delay);
       } catch (e) {
         if (e.name === 'AbortError') {
           console.log('[SABR] Video load aborted');
@@ -1597,6 +1669,12 @@ export default {
       }
       this.audioAbortController = new AbortController();
       const signal = this.audioAbortController.signal;
+
+      this.bufferingDetected = true;
+      this.lastLoadingStarted = Date.now();
+      const wasPlaying = this.wasPlayingBeforeSeek || (this.$refs.player && !this.$refs.player.paused);
+      if (this.$refs.player) this.$refs.player.pause();
+      if (this.$refs.audio) this.$refs.audio.pause();
 
       let bestAudio = selectedFormat;
       if (!bestAudio) {
@@ -1645,13 +1723,9 @@ export default {
         }
 
         const prevTime = startTimeSec;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         if (this.$refs.audio) {
           this.$refs.audio.currentTime = prevTime;
-          if (wasPlaying) {
-            this.$refs.audio.play().catch(() => {});
-          }
         }
 
         const videoItag = this.currentVideoFormat?.itag || this.sources[0]?.itag;
@@ -1665,6 +1739,17 @@ export default {
           audioItag: bestAudio.itag,
           playerTimeMs: Math.round(prevTime * 1000),
         }, signal, this.audioSourceBuffer);
+
+        const elapsed = Date.now() - this.lastLoadingStarted;
+        const delay = Math.max(0, 1000 - elapsed);
+        setTimeout(() => {
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
+          this.bufferingDetected = false;
+          this.wasPlayingBeforeSeek = false;
+        }, delay);
 
         return;
       }
@@ -1685,7 +1770,6 @@ export default {
 
         const objectUrl = URL.createObjectURL(mediaSource);
         const prevTime = startTimeSec;
-        const wasPlaying = this.$refs.player && !this.$refs.player.paused;
 
         this.audSrc = objectUrl;
         await this.$nextTick();
@@ -1708,9 +1792,6 @@ export default {
 
         if (this.$refs.audio) {
           this.$refs.audio.currentTime = prevTime;
-          if (wasPlaying) {
-            this.$refs.audio.play().catch(() => {});
-          }
         }
 
         const videoItag = this.currentVideoFormat?.itag || this.sources[0]?.itag;
@@ -1724,6 +1805,17 @@ export default {
           audioItag: bestAudio.itag,
           playerTimeMs: Math.round(prevTime * 1000),
         }, signal);
+
+        const elapsed = Date.now() - this.lastLoadingStarted;
+        const delay = Math.max(0, 1000 - elapsed);
+        setTimeout(() => {
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
+          }
+          this.bufferingDetected = false;
+          this.wasPlayingBeforeSeek = false;
+        }, delay);
       } catch (e) {
         if (e.name === 'AbortError') {
           console.log('[SABR] Audio load aborted');
