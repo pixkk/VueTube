@@ -379,8 +379,16 @@ export default {
 
       this.$youtube.getVid(this.$route.query.v).then((result) => {
         // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
-        this.sources = result.availableResolutionsAdaptive
+        // this.sources = result.availableResolutionsAdaptive
+        //   .filter(s => !s.xtags);
+        this.videoSources = result.availableResolutionsAdaptive
           .filter(s => !s.xtags);
+        this.audioSources = result.availableResolutionsAdaptive
+          .filter(s => s.mimeType.includes("audio"));
+
+        this.sources = this.videoSources.concat(this.audioSources);
+
+        console.log("sources", this.sources);
         this.captions = result.captions;
         console.log("Video info data", result);
         this.video = result;
