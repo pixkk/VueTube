@@ -142,31 +142,10 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrConcat([clientAbrState, formatIds, playerTime, ustreamerField, preferredFormat, streamerContext]);
   }
 
-  let cachedNativeFetch = null;
-
-  function getNativeFetch() {
-    if (cachedNativeFetch) return cachedNativeFetch;
-    try {
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.setAttribute('sandbox', 'allow-same-origin');
-      document.body.appendChild(iframe);
-      const nativeFetch = iframe.contentWindow.fetch;
-      if (typeof nativeFetch === 'function') {
-        cachedNativeFetch = nativeFetch.bind(iframe.contentWindow);
-        return cachedNativeFetch;
-      }
-    } catch (e) {
-      console.warn('[SABR] Failed to get native fetch via iframe, falling back to window.fetch:', e);
-    }
-    return window.fetch;
-  }
-
   async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
     const url = new URL(sabrUrl);
     url.searchParams.set('rn', String(requestNumber));
-    const nativeFetch = getNativeFetch();
-    const response = await nativeFetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: body,
       signal,
@@ -338,10 +317,23 @@ const SABR_CLIENT_NAME_IDS = {
         }
       }
       const policyPart = parts.find(p => p.partId === 35);
+      let wasThrottled = false;
       if (policyPart) {
         const policy = sabrParseNextRequestPolicy(policyPart.data);
         if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
-        if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
+        if (policy.backoffTimeMs > 0) {
+          wasThrottled = true;
+          console.log('[SABR] itag', itag, 'throttled, backoffMs:', policy.backoffTimeMs);
+          await new Promise(r => setTimeout(r, policy.backoffTimeMs));
+        }
+      }
+      // partId 58: log unknown status part for debugging
+      const statusPart = parts.find(p => p.partId === 58);
+      if (statusPart && statusPart.data.length >= 1) {
+        const statusFields = sabrParseProtoVarintFields(statusPart.data);
+        if (statusFields[1] !== undefined && statusFields[1] > 2) {
+          console.warn('[SABR] itag', itag, 'status part58 field1=', statusFields[1], 'field2=', statusFields[2]);
+        }
       }
       const segments = sabrExtractMedia(parts, itag);
       const relevant = segments.filter(s => s.itag === itag);
@@ -365,7 +357,12 @@ const SABR_CLIENT_NAME_IDS = {
         newMediaAppended = true;
       }
       if (!newMediaAppended) {
-        if (++emptyCount >= 5) break;
+        // Throttle responses (backoffTimeMs > 0) are intentional server-side flow control,
+        // NOT an error — do NOT count them toward emptyCount.
+        // Only count truly unexpected empty responses (no data and no backoff).
+        if (!wasThrottled) {
+          if (++emptyCount >= 5) break;
+        }
       } else {
         emptyCount = 0;
       }
