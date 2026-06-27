@@ -401,10 +401,10 @@ export default {
         //---   Content Stuff   ---//
         // this.interactions[0].value = result.metadata.likes.toLocaleString();
         this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
-          this.likes = result.metadata.likes || data.likes.toLocaleString();
-          this.dislikes = data.dislikes.toLocaleString();
-          this.interactions[0].value = data.likes.toLocaleString();
-          this.interactions[1].value = data.dislikes.toLocaleString();
+          this.likes = result.metadata.likes || data.likes;
+          this.dislikes = data.dislikes;
+          this.interactions[0].value = this.likes?.toLocaleString();
+          this.interactions[1].value = this.dislikes?.toLocaleString();
         });
         this.loaded = true;
         this.recommends = result.renderedData.recommendations;

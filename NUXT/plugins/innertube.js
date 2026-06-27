@@ -817,8 +817,19 @@ class Innertube {
           (content) => content.slimVideoMetadataSectionRenderer
         )?.slimVideoMetadataSectionRenderer;
 
+    const tvPivotSectionList = responseNext.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer;
     const recommendations = isTVResponse
-      ? { contents: [] }
+      ? (() => {
+          const shelves = tvPivotSectionList?.contents || [];
+          const items = shelves
+            .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+            .flatMap((s) =>
+              (s.shelfRenderer.content.horizontalListRenderer.items || [])
+                .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+                .map((i) => ({ tileRenderer: i.tileRenderer }))
+            );
+          return { contents: items };
+        })()
       : {
           contents: columnUI?.contents
             ?.filter((c) => c.itemSectionRenderer?.contents)
@@ -838,20 +849,13 @@ class Innertube {
       if (!details.title) {
         details.title = tvVidMeta.title?.runs?.[0]?.text || "";
       }
-      // likes from engagementPanels description header factoid
+      // likes from transportControls
       try {
-        const descPanel = mobileNext.engagementPanels?.find(
-          (p) => p.engagementPanelSectionListRenderer?.panelIdentifier === "video-description-ep-identifier"
-        );
-        const factoids = descPanel?.engagementPanelSectionListRenderer?.content
-          ?.structuredDescriptionContentRenderer?.items
-          ?.find((i) => i.videoDescriptionHeaderRenderer)
-          ?.videoDescriptionHeaderRenderer?.factoid || [];
-        const likeFactoid = factoids.find(
-          (f) => f.factoidRenderer?.label?.simpleText?.toLowerCase() === "likes"
-        );
-        if (likeFactoid) {
-          metadata.likes = likeFactoid.factoidRenderer.value.simpleText;
+        const likeBtn = responseNext.transportControls?.transportControlsRenderer?.buttons
+          ?.find((b) => b.type === "TRANSPORT_CONTROLS_BUTTON_TYPE_LIKE_BUTTON")
+          ?.button?.likeButtonRenderer;
+        if (likeBtn) {
+          metadata.likes = likeBtn.likeCount.toLocaleString();
         }
       } catch (e) {}
     } else {
@@ -1025,11 +1029,10 @@ class Innertube {
       renderedData: {
         description: descriptionRenderer,
         recommendations: recommendations,
-        recommendationsContinuation:
-          recommendations?.contents?.[recommendations.contents.length - 1]
-            ? recommendations.contents[recommendations.contents.length - 1]
-                .continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token
-            : null,
+        recommendationsContinuation: isTVResponse
+          ? (tvPivotSectionList?.continuations?.[0]?.nextContinuationData?.continuation || null)
+          : (recommendations?.contents?.[recommendations.contents.length - 1]
+              ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null),
       },
       engagementPanels: mobileNext.engagementPanels || [],
       commentData: (() => {

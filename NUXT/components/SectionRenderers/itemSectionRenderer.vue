@@ -37,6 +37,7 @@ import compactVideoRenderer from "~/components/CompactRenderers/compactVideoRend
 import compactChannelRenderer from "~/components/CompactRenderers/compactChannelRenderer.vue";
 import gridVideoRenderer from "~/components/gridRenderers/gridVideoRenderer.vue";
 import videoWithContextRenderer from "~/components/gridRenderers/videoWithContextRenderer.vue";
+import tileRenderer from "~/components/gridRenderers/tileRenderer.vue";
 
 export default {
   components: {
@@ -44,6 +45,7 @@ export default {
     compactVideoRenderer,
     compactChannelRenderer,
     videoWithContextRenderer,
+    tileRenderer,
   },
   props: ["render"],
 
