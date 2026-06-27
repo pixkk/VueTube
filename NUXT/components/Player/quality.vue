@@ -129,13 +129,13 @@ export default {
     },
     isVideoActive(src) {
       if (this.currentVideoFormat) {
-        return this.currentVideoFormat.itag === src.itag;
+        return this.currentVideoFormat === src;
       }
       return this.currentSource.src === src.url;
     },
     isAudioActive(src) {
       if (this.currentAudioFormat) {
-        return this.currentAudioFormat.itag === src.itag;
+        return this.currentAudioFormat === src;
       }
       return this.currentAudioSource.src === src.url;
     },

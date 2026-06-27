@@ -748,39 +748,39 @@ export default {
           }
         }
       });
-      this.currentVideoFormat = this.sources[indexOfPreferredQuality];
-      this.currentAudioFormat = this.audioSources.find(s => s.url === this.audSrc) || this.audioSources[0];
+    }
+    this.currentVideoFormat = this.sources[indexOfPreferredQuality];
+    this.currentAudioFormat = this.audioSources.find(s => s.url === this.audSrc) || this.audioSources[0];
 
-      this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+    this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
-      this.hls = this.video.hls;
-      this.dash = this.video.dash;
-      if (this.hls) {
-        this.hlsStream = new Hls();
-        this.hlsStream.loadSource(this.hls);
-        this.hlsStream.attachMedia(this.vid);
-      } else if (this.dash) {
-        this.dashStream = dashjs.MediaPlayer().create();
-        this.dashStream.initialize(this.vid, this.dash, true);
+    this.hls = this.video.hls;
+    this.dash = this.video.dash;
+    if (this.hls) {
+      this.hlsStream = new Hls();
+      this.hlsStream.loadSource(this.hls);
+      this.hlsStream.attachMedia(this.vid);
+    } else if (this.dash) {
+      this.dashStream = dashjs.MediaPlayer().create();
+      this.dashStream.initialize(this.vid, this.dash, true);
+    }
+
+    if (
+      this.video.metadata?.ustreamerConfig &&
+      this.video.metadata?.serverAbrStreamingUrl
+    ) {
+      let startTimeSec = 0;
+      const url = new URL(window.location.href);
+      const tParam = url.searchParams.get("t");
+      if (tParam) {
+        startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
       }
-
-      if (
-        this.video.metadata?.ustreamerConfig &&
-        this.video.metadata?.serverAbrStreamingUrl
-      ) {
-        let startTimeSec = 0;
-        const url = new URL(window.location.href);
-        const tParam = url.searchParams.get("t");
-        if (tParam) {
-          startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
-        }
-        this.loadAudioViaSabr(null, startTimeSec);
-        this.loadVideoViaSabr(null, startTimeSec);
-      } else {
-        const url = new URL(window.location.href);
-        const tParam = url.searchParams.get("t");
-        this.setStartTime(tParam);
-      }
+      this.loadAudioViaSabr(null, startTimeSec);
+      this.loadVideoViaSabr(null, startTimeSec);
+    } else {
+      const url = new URL(window.location.href);
+      const tParam = url.searchParams.get("t");
+      this.setStartTime(tParam);
     }
   },
   created() {
@@ -1131,8 +1131,14 @@ export default {
     isTimeBuffered(el, time) {
       if (!el) return false;
       const buf = el.buffered;
+      const duration = el.duration;
       for (let i = 0; i < buf.length; i++) {
-        if (time >= buf.start(i) && time <= buf.end(i) - 0.5) {
+        const start = buf.start(i);
+        const end = buf.end(i);
+        if (duration && end >= duration - 0.5 && time >= start && time <= duration) {
+          return true;
+        }
+        if (time >= start && time <= end - 0.5) {
           return true;
         }
       }
@@ -1142,6 +1148,13 @@ export default {
       console.log("[PLAYER] userSeek to", time);
       this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
       this.isUserSeeking = true;
+      const duration = this.$refs.player?.duration;
+      if (duration && !isNaN(duration) && time >= duration) {
+        time = duration - 0.2;
+      }
+      if (time < 0) {
+        time = 0;
+      }
       this.$refs.player.currentTime = time;
       this.$refs.audio.currentTime = time;
     },
@@ -1221,11 +1234,11 @@ export default {
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
       this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
-      this.audioSources.forEach((source) => {
-        if (source.url === q.url && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
-          localStorage.setItem("audioTrackId", source.audioTrack.id);
-        }
-      });
+      if (q.audioTrack?.id) {
+        localStorage.setItem("audioTrackId", q.audioTrack.id);
+      } else {
+        localStorage.removeItem("audioTrackId");
+      }
 
       if (
         this.video.metadata?.ustreamerConfig &&

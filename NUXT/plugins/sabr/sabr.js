@@ -245,7 +245,7 @@ const SABR_CLIENT_NAME_IDS = {
         const header = headers.get(headerId);
         const buf = buffers.get(headerId);
         if (header && buf) {
-          segments.push({ itag: header.itag, durationMs: header.durationMs, isInitSeg: header.isInitSeg, data: sabrConcat(buf) });
+          segments.push({ itag: header.itag, durationMs: header.durationMs, isInitSeg: header.isInitSeg, sequenceNumber: header.sequenceNumber, data: sabrConcat(buf) });
         }
         headers.delete(headerId);
         buffers.delete(headerId);
@@ -268,7 +268,7 @@ const SABR_CLIENT_NAME_IDS = {
 
   // --- Core SABR Methods ---
 
-  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
+  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
@@ -280,8 +280,10 @@ const SABR_CLIENT_NAME_IDS = {
     let emptyCount = 0;
     let playbackCookieBytes = null;
     let currentPlayerTimeMs = playerTimeMs;
-    let totalDurationMs = 0;
+    let totalDurationMs = videoDurationMs || 0;
+    let totalDurationFromFim = false;
     let initAppended = false;
+    let lastSequenceNumber = -1;
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -300,7 +302,7 @@ const SABR_CLIENT_NAME_IDS = {
       const errorPart = parts.find(p => p.partId === 44);
       if (errorPart) throw new Error('SABR_ERROR');
 
-      if (totalDurationMs === 0) {
+      if (!totalDurationFromFim) {
         const fimPart = parts.find(p => p.partId === 42);
         if (fimPart) {
           const f = sabrParseProtoVarintFields(fimPart.data);
@@ -308,6 +310,7 @@ const SABR_CLIENT_NAME_IDS = {
           const scale = f[10] || 1;
           if (units > 0 && scale > 0) {
             totalDurationMs = Math.round(units / (scale / 1000));
+            totalDurationFromFim = true;
             console.log('[SABR] itag', itag, 'totalDurationMs:', totalDurationMs, 'units:', units, 'scale:', scale);
             onTotalDuration?.(totalDurationMs);
           }
@@ -321,19 +324,27 @@ const SABR_CLIENT_NAME_IDS = {
       }
       const segments = sabrExtractMedia(parts, itag);
       const relevant = segments.filter(s => s.itag === itag);
+      let newMediaAppended = false;
       for (const seg of relevant) {
         if (seg.isInitSeg) {
           if (initAppended) continue;
           initAppended = true;
+        } else {
+          if (seg.sequenceNumber !== undefined && seg.sequenceNumber <= lastSequenceNumber) {
+            console.log('[SABR] itag', itag, 'skipping duplicate segment seq:', seg.sequenceNumber, 'lastSeq:', lastSequenceNumber);
+            continue;
+          }
+          if (seg.sequenceNumber !== undefined) {
+            lastSequenceNumber = seg.sequenceNumber;
+          }
         }
         if (currentPlayerTimeMs === 0 && seg.durationMs > 0) console.log('[SABR] itag', itag, 'first seg durationMs:', seg.durationMs);
         currentPlayerTimeMs += seg.durationMs;
         await onChunk(seg.data, seg.durationMs);
+        newMediaAppended = true;
       }
-      const hasOwnMedia = relevant.length > 0;
-      const hasAnyMedia = segments.length > 0;
-      if (!hasOwnMedia) {
-        if (!hasAnyMedia && ++emptyCount >= 5) break;
+      if (!newMediaAppended) {
+        if (++emptyCount >= 5) break;
       } else {
         emptyCount = 0;
       }
@@ -575,6 +586,7 @@ const SABR_CLIENT_NAME_IDS = {
       }
 
       const audioItag = component.currentAudioFormat?.itag || component.audioSources[0]?.itag;
+      const durationSec = component.video.metadata?.lengthSeconds ? parseFloat(component.video.metadata.lengthSeconds) : 0;
 
       _sabrStartMse(component, component.videoMediaSource, mimeType, {
         serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
@@ -584,6 +596,7 @@ const SABR_CLIENT_NAME_IDS = {
         videoItag: bestVideo.itag,
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
+        videoDurationMs: Math.round(durationSec * 1000),
       }, signal, component.videoSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -644,6 +657,7 @@ const SABR_CLIENT_NAME_IDS = {
       }
 
       const audioItag = component.currentAudioFormat?.itag || component.audioSources[0]?.itag;
+      const durationSec = component.video.metadata?.lengthSeconds ? parseFloat(component.video.metadata.lengthSeconds) : 0;
 
       _sabrStartMse(component, mediaSource, mimeType, {
         serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
@@ -653,6 +667,7 @@ const SABR_CLIENT_NAME_IDS = {
         videoItag: bestVideo.itag,
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
+        videoDurationMs: Math.round(durationSec * 1000),
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -735,6 +750,7 @@ const SABR_CLIENT_NAME_IDS = {
       }
 
       const videoItag = component.currentVideoFormat?.itag || component.sources[0]?.itag;
+      const durationSec = component.video.metadata?.lengthSeconds ? parseFloat(component.video.metadata.lengthSeconds) : 0;
 
       _sabrStartMse(component, component.audioMediaSource, mimeType, {
         serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
@@ -744,6 +760,7 @@ const SABR_CLIENT_NAME_IDS = {
         videoItag: videoItag,
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
+        videoDurationMs: Math.round(durationSec * 1000),
       }, signal, component.audioSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -801,6 +818,7 @@ const SABR_CLIENT_NAME_IDS = {
       }
 
       const videoItag = component.currentVideoFormat?.itag || component.sources[0]?.itag;
+      const durationSec = component.video.metadata?.lengthSeconds ? parseFloat(component.video.metadata.lengthSeconds) : 0;
 
       _sabrStartMse(component, mediaSource, mimeType, {
         serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
@@ -810,6 +828,7 @@ const SABR_CLIENT_NAME_IDS = {
         videoItag: videoItag,
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
+        videoDurationMs: Math.round(durationSec * 1000),
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
