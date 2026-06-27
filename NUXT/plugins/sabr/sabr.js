@@ -142,10 +142,31 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrConcat([clientAbrState, formatIds, playerTime, ustreamerField, preferredFormat, streamerContext]);
   }
 
+  let cachedNativeFetch = null;
+
+  function getNativeFetch() {
+    if (cachedNativeFetch) return cachedNativeFetch;
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.setAttribute('sandbox', 'allow-same-origin');
+      document.body.appendChild(iframe);
+      const nativeFetch = iframe.contentWindow.fetch;
+      if (typeof nativeFetch === 'function') {
+        cachedNativeFetch = nativeFetch.bind(iframe.contentWindow);
+        return cachedNativeFetch;
+      }
+    } catch (e) {
+      console.warn('[SABR] Failed to get native fetch via iframe, falling back to window.fetch:', e);
+    }
+    return window.fetch;
+  }
+
   async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
     const url = new URL(sabrUrl);
     url.searchParams.set('rn', String(requestNumber));
-    const response = await fetch(url.toString(), {
+    const nativeFetch = getNativeFetch();
+    const response = await nativeFetch(url.toString(), {
       method: 'POST',
       body: body,
       signal,
