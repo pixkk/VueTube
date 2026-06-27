@@ -266,9 +266,26 @@ const SABR_CLIENT_NAME_IDS = {
     return { backoffTimeMs: f[4] || 0, playbackCookie: f[7] instanceof Uint8Array ? f[7] : null };
   }
 
+  function sabrParseReloadPlaybackContext(data) {
+    const f = sabrParseProtoVarintFields(data);
+    const paramsBytes = f[1];
+    if (paramsBytes instanceof Uint8Array) {
+      const pf = sabrParseProtoVarintFields(paramsBytes);
+      const tokenBytes = pf[1];
+      if (tokenBytes instanceof Uint8Array) {
+        return {
+          reloadPlaybackParams: {
+            token: new TextDecoder().decode(tokenBytes)
+          }
+        };
+      }
+    }
+    return null;
+  }
+
   // --- Core SABR Methods ---
 
-  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
+  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration, videoId = null, component = null }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
@@ -302,6 +319,34 @@ const SABR_CLIENT_NAME_IDS = {
       const errorPart = parts.find(p => p.partId === 44);
       if (errorPart) throw new Error('SABR_ERROR');
 
+      const reloadPart = parts.find(p => p.partId === 46);
+      if (reloadPart) {
+        const reloadContext = sabrParseReloadPlaybackContext(reloadPart.data);
+        if (reloadContext && innertube && videoId) {
+          console.log('[SABR] Reload player response requested by server.');
+          try {
+            const reloadedVidData = await innertube.getVidAsync(videoId, reloadContext);
+            if (reloadedVidData && reloadedVidData.metadata) {
+              const newUrl = reloadedVidData.metadata.serverAbrStreamingUrl;
+              const newConfig = reloadedVidData.metadata.ustreamerConfig;
+              if (newUrl) {
+                console.log('[SABR] Reloaded player response successfully. Updating URLs...');
+                url = newUrl;
+                if (newConfig) videoPlaybackUstreamerConfig = newConfig;
+                rn = 1;
+                if (component && component.video && component.video.metadata) {
+                  component.video.metadata.serverAbrStreamingUrl = newUrl;
+                  if (newConfig) component.video.metadata.ustreamerConfig = newConfig;
+                }
+                continue;
+              }
+            }
+          } catch (err) {
+            console.error('[SABR] Failed to reload player response:', err);
+          }
+        }
+      }
+
       if (!totalDurationFromFim) {
         const fimPart = parts.find(p => p.partId === 42);
         if (fimPart) {
@@ -317,23 +362,10 @@ const SABR_CLIENT_NAME_IDS = {
         }
       }
       const policyPart = parts.find(p => p.partId === 35);
-      let wasThrottled = false;
       if (policyPart) {
         const policy = sabrParseNextRequestPolicy(policyPart.data);
         if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
-        if (policy.backoffTimeMs > 0) {
-          wasThrottled = true;
-          console.log('[SABR] itag', itag, 'throttled, backoffMs:', policy.backoffTimeMs);
-          await new Promise(r => setTimeout(r, policy.backoffTimeMs));
-        }
-      }
-      // partId 58: log unknown status part for debugging
-      const statusPart = parts.find(p => p.partId === 58);
-      if (statusPart && statusPart.data.length >= 1) {
-        const statusFields = sabrParseProtoVarintFields(statusPart.data);
-        if (statusFields[1] !== undefined && statusFields[1] > 2) {
-          console.warn('[SABR] itag', itag, 'status part58 field1=', statusFields[1], 'field2=', statusFields[2]);
-        }
+        if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
       }
       const segments = sabrExtractMedia(parts, itag);
       const relevant = segments.filter(s => s.itag === itag);
@@ -357,12 +389,7 @@ const SABR_CLIENT_NAME_IDS = {
         newMediaAppended = true;
       }
       if (!newMediaAppended) {
-        // Throttle responses (backoffTimeMs > 0) are intentional server-side flow control,
-        // NOT an error — do NOT count them toward emptyCount.
-        // Only count truly unexpected empty responses (no data and no backoff).
-        if (!wasThrottled) {
-          if (++emptyCount >= 5) break;
-        }
+        if (++emptyCount >= 5) break;
       } else {
         emptyCount = 0;
       }
@@ -615,6 +642,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal, component.videoSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -686,6 +715,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -779,6 +810,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal, component.audioSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -847,6 +880,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
