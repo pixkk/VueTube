@@ -330,13 +330,18 @@ class Innertube {
   }
 
 
-  async getVidAsync(id) {
+  async getVidAsync(id, reloadPlaybackContext = null) {
     let data = {
       context: {
         client: constants.INNERTUBE_VIDEO(this.context.client),
       },
       videoId: id,
     };
+    if (reloadPlaybackContext) {
+      data.playbackContext = {
+        reloadPlaybackContext: reloadPlaybackContext
+      };
+    }
     let dataForNext = {
       context: {
         client: {
@@ -400,6 +405,7 @@ class Innertube {
             //   poToken: this.pot
             // },
             playbackContext: {
+              ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
               contentPlaybackContext: {
                 currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
                 vis: 0,

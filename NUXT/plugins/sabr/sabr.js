@@ -266,9 +266,26 @@ const SABR_CLIENT_NAME_IDS = {
     return { backoffTimeMs: f[4] || 0, playbackCookie: f[7] instanceof Uint8Array ? f[7] : null };
   }
 
+  function sabrParseReloadPlaybackContext(data) {
+    const f = sabrParseProtoVarintFields(data);
+    const paramsBytes = f[1];
+    if (paramsBytes instanceof Uint8Array) {
+      const pf = sabrParseProtoVarintFields(paramsBytes);
+      const tokenBytes = pf[1];
+      if (tokenBytes instanceof Uint8Array) {
+        return {
+          reloadPlaybackParams: {
+            token: new TextDecoder().decode(tokenBytes)
+          }
+        };
+      }
+    }
+    return null;
+  }
+
   // --- Core SABR Methods ---
 
-  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration }) {
+  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration, videoId = null, component = null }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
@@ -301,6 +318,34 @@ const SABR_CLIENT_NAME_IDS = {
       }
       const errorPart = parts.find(p => p.partId === 44);
       if (errorPart) throw new Error('SABR_ERROR');
+
+      const reloadPart = parts.find(p => p.partId === 46);
+      if (reloadPart) {
+        const reloadContext = sabrParseReloadPlaybackContext(reloadPart.data);
+        if (reloadContext && innertube && videoId) {
+          console.log('[SABR] Reload player response requested by server.');
+          try {
+            const reloadedVidData = await innertube.getVidAsync(videoId, reloadContext);
+            if (reloadedVidData && reloadedVidData.metadata) {
+              const newUrl = reloadedVidData.metadata.serverAbrStreamingUrl;
+              const newConfig = reloadedVidData.metadata.ustreamerConfig;
+              if (newUrl) {
+                console.log('[SABR] Reloaded player response successfully. Updating URLs...');
+                url = newUrl;
+                if (newConfig) videoPlaybackUstreamerConfig = newConfig;
+                rn = 1;
+                if (component && component.video && component.video.metadata) {
+                  component.video.metadata.serverAbrStreamingUrl = newUrl;
+                  if (newConfig) component.video.metadata.ustreamerConfig = newConfig;
+                }
+                continue;
+              }
+            }
+          } catch (err) {
+            console.error('[SABR] Failed to reload player response:', err);
+          }
+        }
+      }
 
       if (!totalDurationFromFim) {
         const fimPart = parts.find(p => p.partId === 42);
@@ -597,6 +642,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal, component.videoSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -668,6 +715,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: audioItag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -761,6 +810,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal, component.audioSourceBuffer);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
@@ -829,6 +880,8 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag: bestAudio.itag,
         playerTimeMs: Math.round(prevTime * 1000),
         videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component: component,
       }, signal);
 
       const elapsed = Date.now() - component.lastLoadingStarted;
