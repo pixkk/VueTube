@@ -76,6 +76,11 @@ export default {
 
       settingsItems: [
         {
+          name: this.$lang("settings").account || "Account",
+          icon: "mdi-account-circle",
+          to: "/mods/account",
+        },
+        {
           name: this.$lang("settings").general,
           icon: "mdi-cog",
           to: "/mods/general",

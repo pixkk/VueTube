@@ -8,6 +8,7 @@ export const state = () => ({
   recommendationsFix: false,
   channelData: {},
   channel: {},
+  pendingTvParams: null,
 });
 
 function updateObject(testObject, value) {
@@ -25,6 +26,9 @@ function updateObject(testObject, value) {
 
 
 export const mutations = {
+  setPendingTvParams(state, params) {
+    state.pendingTvParams = params;
+  },
   initRecommendationsFixPreference(state) {
     if (localStorage.getItem("recommendationsFix") == null || localStorage.getItem("recommendationsFix") === undefined ) {
       localStorage.setItem("recommendationsFix", "false");

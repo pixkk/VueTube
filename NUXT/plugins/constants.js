@@ -93,8 +93,29 @@ module.exports = {
   fs: filesystem,
   clientConfigs: clientConfigs,
 
-  INNERTUBE_HEADER: (info) => {
-    return {
+  getAccessToken: () => {
+    if (typeof localStorage === "undefined") return null;
+    return localStorage.getItem("vt_active_access_token") || null;
+  },
+
+  AUTHED_JSON_HEADER: () => {
+    const headers = { "Content-Type": "application/json" };
+    if (typeof localStorage !== "undefined") {
+      const token = localStorage.getItem("vt_active_access_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+        headers["x-youtube-client-name"] = String(tvApiVal.CLIENT_WEB_M);
+        headers["x-youtube-client-version"] = tvApiVal.VERSION;
+      }
+    }
+    return headers;
+  },
+
+  INNERTUBE_HEADER: (info, noAuth = false) => {
+    const token = !noAuth && typeof localStorage !== "undefined"
+      ? localStorage.getItem("vt_active_access_token")
+      : null;
+    const headers = {
       accept: "*/*",
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
@@ -104,10 +125,15 @@ module.exports = {
       "x-youtube-client-name": androidApiVal.CLIENTNAME,
       "x-youtube-client-version": androidApiVal.VERSION,
     };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
   },
 
   INNERTUBE_NEW_HEADER: (info) => {
-    return {
+    const token = typeof localStorage !== "undefined"
+      ? localStorage.getItem("vt_active_access_token")
+      : null;
+    const headers = {
       accept: "*/*",
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
@@ -117,6 +143,8 @@ module.exports = {
       "x-youtube-client-name": info.CLIENT_WEB_M || info.clientVersion || 7,
       "x-youtube-client-version": info.VERSION || info.clientVersion || androidApiVal.VERSION,
     };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
   },
   INNERTUBE_CLIENT: (info) => {
     return {
@@ -139,6 +167,27 @@ module.exports = {
       visitorData: info.visitorData,
     };
   },
+  INNERTUBE_CLIENT_TV: (info) => {
+    return {
+      gl: info.gl,
+      hl: localStorage.getItem("language") || "en",
+      deviceMake: tvApiVal.deviceMake,
+      deviceModel: tvApiVal.deviceModel,
+      userAgent: tvApiVal.USER_AGENT,
+      clientName: tvApiVal.CLIENTNAME,
+      clientVersion: tvApiVal.VERSION,
+      osName: info.osName,
+      osVersion: info.osVersion,
+      platform: tvApiVal.platform,
+      browserName: tvApiVal.browserName,
+      browserVersion: tvApiVal.browserVersion,
+      originalUrl: info.originalUrl,
+      configInfo: info.configInfo,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+  },
+
   INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
     return {
       gl: info.gl,

@@ -22,6 +22,7 @@ export default {
     { src: "~/plugins/thirdPartyPluginLoader", mode: "client" },
     { src: "~/plugins/language", mode: "client" },
     { src: "~/plugins/update", mode: "client" },
+    { src: "~/plugins/auth", mode: "client" },
   ],
   generate: {
     dir: "../dist",

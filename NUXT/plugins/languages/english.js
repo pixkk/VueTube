@@ -38,6 +38,7 @@ module.exports = {
   },
 
   settings: {
+    account: "Account",
     general: "General",
     theme: "Theme",
     player: "Player",

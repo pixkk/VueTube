@@ -377,7 +377,9 @@ export default {
     getVideo() {
       this.loaded = false;
 
-      this.$youtube.getVid(this.$route.query.v).then((result) => {
+      const tvParams = this.$store.state.pendingTvParams;
+      this.$store.commit("setPendingTvParams", null);
+      this.$youtube.getVid(this.$route.query.v, tvParams).then((result) => {
         // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
         // this.sources = result.availableResolutionsAdaptive
         //   .filter(s => !s.xtags);

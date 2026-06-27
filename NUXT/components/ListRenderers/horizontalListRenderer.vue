@@ -18,11 +18,13 @@
 <script>
 import compactVideoRenderer from "~/components/CompactRenderers/compactVideoRenderer.vue";
 import gridVideoRenderer from "~/components/gridRenderers/gridVideoRenderer.vue";
+import tileRenderer from "~/components/gridRenderers/tileRenderer.vue";
 
 export default {
   components: {
     gridVideoRenderer,
     compactVideoRenderer,
+    tileRenderer,
   },
   props: ["render"],
 

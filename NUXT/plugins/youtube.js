@@ -126,12 +126,12 @@ const innertubeModule = {
     return InnertubeAPI;
   },
 
-  async getVid(id) {
+  async getVid(id, tvParams = null) {
     try {
-      return await InnertubeAPI.VidInfoAsync(id);
+      return await InnertubeAPI.VidInfoAsync(id, tvParams);
     } catch (error) {
       await this.getAPI();
-      return await InnertubeAPI.VidInfoAsync(id);
+      return await InnertubeAPI.VidInfoAsync(id, tvParams);
     }
   },
 
@@ -188,7 +188,24 @@ const innertubeModule = {
     let final;
     if (!response.success)
       throw new Error("An error occurred and innertube failed to respond");
-    // console.warn(response.data);
+
+    // TV client response: tvBrowseRenderer
+    const tvBrowse = response.data.contents?.tvBrowseRenderer;
+    if (tvBrowse) {
+      const sectionList = tvBrowse.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer;
+      const shelves = sectionList?.contents || [];
+      final = shelves
+        .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+        .map((s) => ({
+          items: s.shelfRenderer.content.horizontalListRenderer.items
+            .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+            .map((i) => ({ tileRenderer: i.tileRenderer })),
+        }));
+      const continuations = sectionList?.continuations || null;
+      return { continuations, contents: final };
+    }
+
+    // Non-TV path (unchanged)
     let contents = response.data.contents.singleColumnBrowseResultsRenderer
       .tabs[0].tabRenderer.content.sectionListRenderer?.contents[0]
       .itemSectionRenderer?.contents[0]?.elementRenderer?.newElement
@@ -391,15 +408,26 @@ const innertubeModule = {
   },
   async recommendContinuation(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint);
-    const contents =
-      response.data.continuationContents.sectionListContinuation.contents;
+    const continuationContents = response.data.continuationContents;
+
+    // TV continuation: horizontalListContinuation
+    if (continuationContents?.horizontalListContinuation) {
+      const hlc = continuationContents.horizontalListContinuation;
+      const items = (hlc.items || [])
+        .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+        .map((i) => ({ tileRenderer: i.tileRenderer }));
+      const continuations = hlc.continuations || null;
+      return { continuations, contents: [{ items }] };
+    }
+
+    // Non-TV continuation: sectionListContinuation
+    const contents = continuationContents.sectionListContinuation.contents;
     const final = contents.map((shelves) => {
       const video = shelves.shelfRenderer?.content?.horizontalListRenderer;
       if (video) return video;
     });
-    const continuations = response.data.continuationContents
-      .sectionListContinuation.continuations
-      ? response.data.continuationContents.sectionListContinuation.continuations
+    const continuations = continuationContents.sectionListContinuation.continuations
+      ? continuationContents.sectionListContinuation.continuations
       : null;
     return { continuations: continuations, contents: final };
   },
