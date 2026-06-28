@@ -48,29 +48,20 @@ export default {
     },
     paginate() {
       this.loading = true;
+      console.warn(this.renderer)
       const continuationCode = this.renderer.continuations?.find(
         (element) => element.nextContinuationData
       )?.nextContinuationData.continuation;
 
       if (continuationCode) {
-        this.$youtube
-          .getContinuation(
-            continuationCode,
-            "search"
-          )
-          .then((result) => {
-            this.loading = false;
-            // console.warn(this.renderer.contents)
-            // console.warn(this.renderer.continuations)
-            // console.warn(result.data)
-            if (result.data.continuationContents) {
-              this.renderer.contents.push(...result.data.continuationContents.sectionListContinuation.contents);
-              this.renderer.continuations = result.data.continuationContents.sectionListContinuation.continuations;
+        this.$youtube.searchContinuation(continuationCode).then((result) => {
+          this.loading = false;
+          if (!result) return;
 
-              // console.warn(this.renderer.contents)
-              // console.warn(this.renderer.continuations)
-            }
-          });
+          // Both TV and non-TV: append new contents to the end of the list
+          this.renderer.contents.push(...result.contents);
+          this.renderer.continuations = result.continuations;
+        });
       } else {
         this.loading = false;
       }
