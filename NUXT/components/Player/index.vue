@@ -84,7 +84,7 @@
 
     >Skip {{ sBblockCategoryText }}</button>
 
-    <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" />
+    <!-- <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" /> -->
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
@@ -208,7 +208,7 @@
           :loop="$refs.player.loop"
           @loop="
             ($refs.player.loop = !$refs.player.loop),
-              ($refs.audio.loop = !$refs.audio.loop),
+              // ($refs.audio.loop = !$refs.audio.loop),
               $store.commit('player/setLoop', $refs.player.loop)
           "
         />
@@ -241,7 +241,7 @@
           v-if="$refs.player"
           :video="$refs.player"
           :buffering="bufferingDetected || false"
-          @play="$refs.player.play(), $refs.audio.play()"
+          @play="$refs.player.play()"
           @pause="pauseHandler"
         />
         <v-btn
@@ -300,7 +300,7 @@
           :sources="sources"
           :audioSources="audioSources"
           :current-source="$refs.player"
-          :current-audio-source="$refs.audio"
+          :current-audio-source="$refs.player"
           :current-video-format="currentVideoFormat"
           :current-audio-format="currentAudioFormat"
           @qualityInfo="qualityInfoHandler($event)"
@@ -312,7 +312,7 @@
           :current-speed="$refs.player.playbackRate"
           @speed="
             ($refs.player.playbackRate = $event),
-              ($refs.audio.playbackRate = $event),
+              // ($refs.audio.playbackRate = $event),
               $store.state.player.speedAutosave
                 ? $store.commit('player/setSpeed', $event)
                 : {}
@@ -460,14 +460,14 @@ export default {
       buffered: 0,
       watched: 0,
       vidSrc: "",
-      audSrc: "",
+      // audSrc: "",
       currentVideoFormat: null,
       currentAudioFormat: null,
       videoAbortController: null,
       audioAbortController: null,
       videoMediaSource: null,
       videoSourceBuffer: null,
-      audioMediaSource: null,
+      // audioMediaSource: null,
       audioSourceBuffer: null,
       isUserSeeking: false,
       isInternalSeek: false,
@@ -518,7 +518,7 @@ export default {
         data.segments?.forEach((block) => {
           if (block.category === "music_offtopic") {
             this.isMusic = true;
-            this.$refs.audio.playbackRate = 1;
+            // this.$refs.audio.playbackRate = 1;
             this.$refs.player.playbackRate = 1;
           }
         });
@@ -529,7 +529,7 @@ export default {
     }
 
     this.vid = this.$refs.player;
-    this.aud = this.$refs.audio;
+    // this.aud = this.$refs.audio;
 
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
 
@@ -690,7 +690,7 @@ export default {
           // let audioCodecFromStorage = localStorage.getItem("audioCodec");
           if (audioSFromStorage) {
             if (audioSFromStorage === this.audioSources[i].itag.toString()) {
-              this.audSrc = this.audioSources[i].url;
+              // this.audSrc = this.audioSources[i].url;
               indexOfPreferredAudioQuality = i;
               break;
             }
@@ -698,7 +698,7 @@ export default {
         }
       }
       if (indexOfPreferredAudioQuality === -1) {
-        this.audSrc = this.audioSources[0].url;
+        // this.audSrc = this.audioSources[0].url;
       }
     }
 
@@ -719,7 +719,7 @@ export default {
       if (source?.audioTrack !== undefined) {
         if (localStorage.getItem("audioTrackId") !== undefined) {
           if (source.audioTrack?.id === localStorage.getItem("audioTrackId")) {
-            this.audSrc = source.url;
+            // this.audSrc = source.url;
             dubIsFound = true;
           }
         }
@@ -738,11 +738,11 @@ export default {
         if (source?.audioTrack !== undefined) {
           if (localStorage.getItem("audioTrackId") !== undefined) {
             if (source.audioTrack?.id.split(".")[0] === localStorage.getItem("audioTrackId").split(".")[0]) {
-              this.audSrc = source.url;
+              // this.audSrc = source.url;
               dubIsFound = true;
             } else {
               if (source.audioTrack.audioIsDefault === Boolean("true")) {
-                this.audSrc = source.url;
+                // this.audSrc = source.url;
               }
             }
           }
@@ -750,9 +750,9 @@ export default {
       });
     }
     this.currentVideoFormat = this.sources[indexOfPreferredQuality];
-    this.currentAudioFormat = this.audioSources.find(s => s.url === this.audSrc) || this.audioSources[0];
+    this.currentAudioFormat = this.audioSources[0];
 
-    this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+    // this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
     this.hls = this.video.hls;
     this.dash = this.video.dash;
@@ -827,22 +827,17 @@ export default {
       // HAVE_FUTURE_DATA (3): Data for the current and at least the next frame is available.
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
-      if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
+      if (this.vid.readyState >= 3) {
         this.bufferingDetected = false;
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
-        this.aud.play();
         this.vid.play();
 
         if (!this.isMusic) {
-          this.$refs.audio.playbackRate = this.$store.state.player.speed;
           this.$refs.player.playbackRate = this.$store.state.player.speed;
         } else {
-          this.$refs.audio.playbackRate = 1;
           this.$refs.player.playbackRate = 1;
         }
 
         this.$refs.player.loop = this.$store.state.player.loop || false;
-        this.$refs.audio.loop = this.$store.state.player.loop || false;
         this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
         // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
@@ -852,19 +847,9 @@ export default {
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
         this.$refs.player.addEventListener("ended", this.endedEvent);
-
-        this.$refs.player.addEventListener('pause', () => {
-          this.$refs.audio.pause();
-        });
-        this.$refs.player.addEventListener('play', () => {
-          this.$refs.audio.play();
-        });
-
-
       }
       else {
         this.vid.pause();
-        this.$refs.audio.pause();
       }
     },
     seekingEvent() {
@@ -877,7 +862,7 @@ export default {
       if (this.seeking || this.isUserSeeking) {
         this.bufferingDetected = true;
         this.$refs.player.pause();
-        this.$refs.audio.pause();
+        // this.$refs.audio.pause();
       }
     },
     seekedEvent() {
@@ -919,17 +904,12 @@ export default {
         this.bufferingDetected = true;
         this.lastLoadingStarted = Date.now();
         if (this.$refs.player) this.$refs.player.pause();
-        if (this.$refs.audio) this.$refs.audio.pause();
         setTimeout(() => {
           if (wasPlaying) {
             if (this.$refs.player) this.$refs.player.play().catch(() => {});
-            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
           }
           this.bufferingDetected = false;
           this.wasPlayingBeforeSeek = false;
-          if (this.$refs.audio && this.$refs.player) {
-            this.$refs.audio.currentTime = this.$refs.player.currentTime;
-          }
         }, 1000);
       }
     },
@@ -939,33 +919,7 @@ export default {
       if (this.bufferingDetected || this.seeking || this.isUserSeeking) {
         return;
       }
-      const videoTime = this.$refs.player ? this.$refs.player.currentTime : 0;
-      const audioTime = this.$refs.audio ? this.$refs.audio.currentTime : 0;
-      if (this.$refs.audio && this.$refs.player && Math.abs(audioTime - videoTime) > 500 / 1000) {
-        console.log('[PLAYER] Desync detected! Video:', videoTime, 'Audio:', audioTime);
-        this.bufferingDetected = true;
-        this.lastLoadingStarted = Date.now();
-        const wasPlaying = !this.$refs.player.paused;
-        this.$refs.player.pause();
-        this.$refs.audio.pause();
-
-        if (videoTime < audioTime) {
-          // Video is lagging behind, align audio to video
-          this.$refs.audio.currentTime = videoTime;
-        } else {
-          // Audio is lagging behind, align video to audio
-          this.isInternalSeek = true;
-          this.$refs.player.currentTime = audioTime;
-        }
-
-        setTimeout(() => {
-          if (wasPlaying) {
-            if (this.$refs.player) this.$refs.player.play().catch(() => {});
-            if (this.$refs.audio) this.$refs.audio.play().catch(() => {});
-          }
-          this.bufferingDetected = false;
-        }, 1000);
-      }
+      // desync detection not needed — audio/video are in a single MediaSource
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
       // console.log("sb check", this.sponsorBlocks);
@@ -1008,12 +962,7 @@ export default {
       //   clearTimeout(this.bufferingDetected);
       //   this.bufferingDetected = false;
       // }
-      if (
-        this.$refs.audio.paused &&
-        !this.$refs.player.paused &&
-        this.$refs.player.readyState >= 3
-      )
-        this.$refs.audio.play();
+      // audio sync not needed — single MediaSource
       try {
 
         this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
@@ -1026,24 +975,17 @@ export default {
       let threshold = 1000; //ms after which user perceives buffering
       this.bufferingDetected = true;
       if (!this.$refs.player.paused) {
-        setTimeout(() => {
-          this.$refs.audio.pause();
-          //show buffering
-        }, threshold);
+        // setTimeout(() => { this.$refs.audio.pause(); }, threshold);
       }
     },
     playingEvent() {
       this.videoEnded = false;
       if (this.bufferingDetected !== false) {
         clearTimeout(this.bufferingDetected);
-        // Sync audio to video (video is master)
-        this.$refs.audio.currentTime = this.vid.currentTime;
         setTimeout(() => {
-
           this.bufferingDetected = false;
         }, 1000);
       }
-      this.$refs.audio.play();
     },
     cleanup() {
       if (this.hlsStream) this.hlsStream.destroy();
@@ -1054,7 +996,7 @@ export default {
       if (this.audioAbortController) this.audioAbortController.abort();
       this.videoMediaSource = null;
       this.videoSourceBuffer = null;
-      this.audioMediaSource = null;
+      // this.audioMediaSource = null;
       this.audioSourceBuffer = null;
 
       this.$refs.player.pause();
@@ -1144,7 +1086,6 @@ export default {
         time = 0;
       }
       this.$refs.player.currentTime = time;
-      this.$refs.audio.currentTime = time;
     },
     // TODO: make accumulative onclick after first dblclick (don't set timeout untill stopped clicking)
     skipHandler(time) {
@@ -1208,14 +1149,13 @@ export default {
       this.$refs.player.src = '';
       this.$refs.player.load();
       this.$refs.player.src = src;
-      this.$refs.audio.currentTime = time;
+      // this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
-      this.$refs.audio.playbackRate = speed;
+      // this.$refs.audio.playbackRate = speed;
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-      // this.aud = this.audSrc;
     },
     audioQualityInfoHandler(q) {
       localStorage.setItem("audioQuality", q.itag);
@@ -1243,29 +1183,12 @@ export default {
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
-      this.$refs.audio.src = '';
       this.$refs.player.load();
-      this.$refs.audio.src = src;
-      this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
-      this.$refs.audio.playbackRate = speed;
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-
-      let interval = setInterval(() => {
-        console.log(this.aud.readyState);
-        if (this.aud.readyState < 3) {
-          this.$refs.player.pause();
-          this.bufferingDetected = true;
-        }
-        else {
-          this.bufferingDetected = false;
-          this.$refs.player.play();
-          clearInterval(interval);
-        }
-      }, 1000);
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {
@@ -1427,7 +1350,6 @@ export default {
 
     pauseHandler() {
       this.$refs.player.pause();
-      this.$refs.audio.pause();
       clearTimeout(this.bufferingDetected);
       this.bufferingDetected = false;
     },
