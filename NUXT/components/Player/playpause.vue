@@ -6,7 +6,7 @@
     color="white"
     :loading="Boolean(buffering)"
     @click="
-      (paused = !video.paused), video.paused ? $emit('play') : $emit('pause')
+      handleClick()
     "
   >
     <v-icon size="3.5rem">
@@ -22,6 +22,21 @@ export default {
     buffering: {
       required: false,
     },
+  },
+  methods: {
+    handleClick() {
+      try {
+        this.paused = !this.video.paused;
+
+        if (this.video.paused) {
+          this.$emit('play');
+        } else {
+          this.$emit('pause');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
   },
   emits: ["play", "pause"],
   data: () => ({

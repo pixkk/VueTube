@@ -241,7 +241,7 @@
           v-if="$refs.player"
           :video="$refs.player"
           :buffering="bufferingDetected || false"
-          @play="$refs.player.play()"
+          @play="playHandler"
           @pause="pauseHandler"
         />
         <v-btn
@@ -1360,6 +1360,9 @@ export default {
       this.$refs.player.pause();
       clearTimeout(this.bufferingDetected);
       this.bufferingDetected = false;
+    },
+    playHandler() {
+        this.$refs.player.play().catch(() => {});
     },
   },
 };
