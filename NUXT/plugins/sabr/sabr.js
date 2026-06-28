@@ -89,13 +89,39 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrPbLenDelim(fieldNumber, sabrConcat(parts));
   }
 
+  // Encode a video_streaming.BufferedRange message.
+  // Tells the SABR server which media we already have so it streams from the
+  // requested player_time_ms instead of re-sending everything before it.
+  //   field 1: format_id { itag, xtags }
+  //   field 2: start_time_ms (int64)
+  //   field 3: duration_ms (int64)
+  //   field 4: start_segment_index (int32)
+  //   field 5: end_segment_index (int32)
+  //   field 6: time_range { start_ticks(1), duration_ticks(2), timescale(3) }
+  function sabrPbBufferedRange({ itag, xtags = '', startTimeMs = 0, durationMs, startSegmentIndex = 1, endSegmentIndex }) {
+    const timeRange = sabrConcat([
+      sabrPbVarint(1, startTimeMs),
+      sabrPbVarint(2, durationMs),
+      sabrPbVarint(3, 1000),
+    ]);
+    const parts = [
+      sabrPbFormatId(1, itag, xtags),
+      sabrPbVarint(2, startTimeMs),
+      sabrPbVarint(3, durationMs),
+      sabrPbVarint(4, startSegmentIndex),
+      sabrPbVarint(5, endSegmentIndex),
+      sabrPbLenDelim(6, timeRange),
+    ];
+    return sabrConcat(parts);
+  }
+
   function sabrBase64Decode(str) {
     const normalized = str.replace(/-/g, '+').replace(/_/g, '/');
     const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
     return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
   }
 
-  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false }) {
+  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [] }) {
     const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
     const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
@@ -122,6 +148,12 @@ const SABR_CLIENT_NAME_IDS = {
       const xtags = isAudioFormat ? audioXtags : videoXtags;
       formatIdsBytes = sabrPbFormatId(2, itag, xtags);
     }
+
+    // field 3: buffered_ranges — media the client already has; makes the server
+    // start streaming at player_time_ms instead of from the start of the gap.
+    const bufferedRangesBytes = bufferedRanges.length
+      ? sabrConcat(bufferedRanges.map(br => sabrPbLenDelim(3, sabrPbBufferedRange(br))))
+      : new Uint8Array(0);
 
     // field 4: player_time_ms (int64)
     const playerTime = sabrPbVarint(4, playerTimeMs);
@@ -156,7 +188,7 @@ const SABR_CLIENT_NAME_IDS = {
       : sabrPbLenDelim(1, clientInfo);
     const streamerContext = sabrPbLenDelim(19, streamerContextInner);
 
-    return sabrConcat([clientAbrState, formatIdsBytes, playerTime, ustreamerField, preferredFormat, streamerContext]);
+    return sabrConcat([clientAbrState, formatIdsBytes, bufferedRangesBytes, playerTime, ustreamerField, preferredFormat, streamerContext]);
   }
 
   async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
@@ -220,15 +252,18 @@ const SABR_CLIENT_NAME_IDS = {
     // field 8 (tag 64) = isInitSeg bool
     // field 15 = timeRange (bytes)
     let durationMs = f[12] || 0;
+    let startMs = f[11] || 0;  // field 11 = start_ms (where this segment begins on the timeline)
     const isInitSeg = !!f[8];
-    
-    if (!durationMs && f[15]) {
+
+    if ((!durationMs || !startMs) && f[15]) {
       try {
         const tr = sabrParseProtoVarintFields(f[15]);
+        const startTicks = tr[1] || 0;
         const durationTicks = tr[2] || 0;
         const timescale = tr[3] || 1000;
-        if (durationTicks > 0 && timescale > 0) {
-          durationMs = Math.round(durationTicks / (timescale / 1000));
+        if (timescale > 0) {
+          if (!durationMs && durationTicks > 0) durationMs = Math.round(durationTicks / (timescale / 1000));
+          if (!startMs && startTicks > 0) startMs = Math.round(startTicks / (timescale / 1000));
         }
       } catch (e) {
         console.error('[SABR] failed to parse timeRange:', e);
@@ -240,7 +275,7 @@ const SABR_CLIENT_NAME_IDS = {
       durationMs = 5000;
     }
 
-    return { headerId: f[1] || 0, itag: f[3] || 0, sequenceNumber: f[9] || 0, durationMs, isInitSeg };
+    return { headerId: f[1] || 0, itag: f[3] || 0, sequenceNumber: f[9] || 0, startMs, durationMs, isInitSeg };
   }
 
   function sabrExtractMedia(parts, itagHint) {
@@ -262,7 +297,7 @@ const SABR_CLIENT_NAME_IDS = {
         const header = headers.get(headerId);
         const buf = buffers.get(headerId);
         if (header && buf) {
-          segments.push({ itag: header.itag, durationMs: header.durationMs, isInitSeg: header.isInitSeg, sequenceNumber: header.sequenceNumber, data: sabrConcat(buf) });
+          segments.push({ itag: header.itag, startMs: header.startMs, durationMs: header.durationMs, isInitSeg: header.isInitSeg, sequenceNumber: header.sequenceNumber, data: sabrConcat(buf) });
         }
         headers.delete(headerId);
         buffers.delete(headerId);

@@ -888,24 +888,19 @@ export default {
           this.video.metadata?.ustreamerConfig &&
           this.video.metadata?.serverAbrStreamingUrl
         ) {
+          // Unbuffered SABR seeks are handled eagerly in userSeek (the browser
+          // won't fire "seeked" until the target is buffered). Here the target
+          // is already buffered, so just resume playback.
           const seekTime = this.$refs.player.currentTime;
-          const buffered = this.isTimeBuffered(this.$refs.player, seekTime);
-          console.log('[SABR] seeked: buffered =', buffered);
-
           this.bufferingDetected = true;
           this.lastLoadingStarted = Date.now();
           if (this.$refs.player) this.$refs.player.pause();
-
-          if (!buffered) {
-            this.loadCombinedViaSabr(this.currentVideoFormat, this.currentAudioFormat, seekTime);
-          } else {
-            if (this.$refs.player) this.$refs.player.currentTime = seekTime;
-            setTimeout(() => {
-              if (wasPlaying && this.$refs.player) this.$refs.player.play().catch(() => {});
-              this.bufferingDetected = false;
-              this.wasPlayingBeforeSeek = false;
-            }, 1000);
-          }
+          if (this.$refs.player) this.$refs.player.currentTime = seekTime;
+          setTimeout(() => {
+            if (wasPlaying && this.$refs.player) this.$refs.player.play().catch(() => {});
+            this.bufferingDetected = false;
+            this.wasPlayingBeforeSeek = false;
+          }, 1000);
           return;
         }
 
@@ -1094,6 +1089,23 @@ export default {
         time = 0;
       }
       this.$refs.player.currentTime = time;
+
+      // The browser only fires the "seeked" event once the target position is
+      // buffered. For a forward seek into an unbuffered region that never
+      // happens until the running SABR stream sequentially downloads everything
+      // up to the target. So for unbuffered SABR seeks we restart the stream at
+      // the target right here instead of waiting for "seeked".
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl &&
+        !this.isTimeBuffered(this.$refs.player, time)
+      ) {
+        this.isUserSeeking = false; // handled here; don't double-handle in seekedEvent
+        this.bufferingDetected = true;
+        this.lastLoadingStarted = Date.now();
+        if (this.$refs.player) this.$refs.player.pause();
+        this.loadCombinedViaSabr(this.currentVideoFormat, this.currentAudioFormat, time);
+      }
     },
     // TODO: make accumulative onclick after first dblclick (don't set timeout untill stopped clicking)
     skipHandler(time) {
