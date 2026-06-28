@@ -270,7 +270,7 @@
       >
         <watchtime
           v-if="$refs.player"
-          :current-time="$refs.player.currentTime"
+          :current-time="progress"
           :duration="$refs.player.duration"
           :controls="controls"
         />
@@ -327,7 +327,7 @@
 
     <progressbar
       v-if="$refs.player"
-      :current-time="$refs.player.currentTime"
+      :current-time="progress"
       :duration="$refs.player.duration"
       :fullscreen="isFullscreen"
       :controls="controls"
@@ -753,6 +753,14 @@ export default {
     this.currentAudioFormat = this.audioSources[0];
 
     // this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+
+    this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
+    this.$refs.player.addEventListener("progress", this.progressEvent);
+    this.$refs.player.addEventListener("seeking", this.seekingEvent);
+    this.$refs.player.addEventListener("seeked", this.seekedEvent);
+    this.$refs.player.addEventListener("waiting", this.waitingEvent);
+    this.$refs.player.addEventListener("playing", this.playingEvent);
+    this.$refs.player.addEventListener("ended", this.endedEvent);
 
     this.hls = this.video.hls;
     this.dash = this.video.dash;
