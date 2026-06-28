@@ -775,8 +775,7 @@ export default {
       if (tParam) {
         startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
       }
-      this.loadAudioViaSabr(null, startTimeSec);
-      this.loadVideoViaSabr(null, startTimeSec);
+      this.loadCombinedViaSabr(null, null, startTimeSec);
     } else {
       const url = new URL(window.location.href);
       const tParam = url.searchParams.get("t");
@@ -897,32 +896,21 @@ export default {
           this.video.metadata?.serverAbrStreamingUrl
         ) {
           const seekTime = this.$refs.player.currentTime;
-          const videoBuffered = this.isTimeBuffered(this.$refs.player, seekTime);
-          const audioBuffered = this.isTimeBuffered(this.$refs.audio, seekTime);
-          console.log('[SABR] seeked: videoBuffered =', videoBuffered, 'audioBuffered =', audioBuffered);
+          const buffered = this.isTimeBuffered(this.$refs.player, seekTime);
+          console.log('[SABR] seeked: buffered =', buffered);
 
           this.bufferingDetected = true;
           this.lastLoadingStarted = Date.now();
           if (this.$refs.player) this.$refs.player.pause();
-          if (this.$refs.audio) this.$refs.audio.pause();
 
-          if (!videoBuffered) {
-            this.loadVideoViaSabr(this.currentVideoFormat, seekTime);
+          if (!buffered) {
+            this.loadCombinedViaSabr(this.currentVideoFormat, this.currentAudioFormat, seekTime);
           } else {
             if (this.$refs.player) this.$refs.player.currentTime = seekTime;
             setTimeout(() => {
               if (wasPlaying && this.$refs.player) this.$refs.player.play().catch(() => {});
               this.bufferingDetected = false;
               this.wasPlayingBeforeSeek = false;
-            }, 1000);
-          }
-
-          if (!audioBuffered) {
-            this.loadAudioViaSabr(this.currentAudioFormat, seekTime);
-          } else {
-            if (this.$refs.audio) this.$refs.audio.currentTime = seekTime;
-            setTimeout(() => {
-              if (wasPlaying && this.$refs.audio) this.$refs.audio.play().catch(() => {});
             }, 1000);
           }
           return;
@@ -1208,7 +1196,7 @@ export default {
         this.video.metadata?.serverAbrStreamingUrl
       ) {
         const currentTime = this.$refs.player.currentTime;
-        this.loadVideoViaSabr(q, currentTime);
+        this.loadCombinedViaSabr(q, this.currentAudioFormat, currentTime);
         return;
       }
 
@@ -1245,7 +1233,7 @@ export default {
         this.video.metadata?.serverAbrStreamingUrl
       ) {
         const currentTime = this.$refs.player.currentTime;
-        this.loadAudioViaSabr(q, currentTime);
+        this.loadCombinedViaSabr(this.currentVideoFormat, q, currentTime);
         return;
       }
 
@@ -1431,6 +1419,10 @@ export default {
 
     async loadAudioViaSabr(selectedFormat = null, startTimeSec = 0) {
       return sabr.loadAudioViaSabr(this, selectedFormat, startTimeSec);
+    },
+
+    async loadCombinedViaSabr(selectedVideoFormat = null, selectedAudioFormat = null, startTimeSec = 0) {
+      return sabr.loadCombinedViaSabr(this, selectedVideoFormat, selectedAudioFormat, startTimeSec);
     },
 
     pauseHandler() {

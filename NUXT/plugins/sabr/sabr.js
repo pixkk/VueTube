@@ -83,28 +83,45 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrPbLenDelim(fieldNumber, new TextEncoder().encode(str));
   }
 
+  function sabrPbFormatId(fieldNumber, itag, xtags) {
+    const parts = [sabrPbVarint(1, itag)];
+    if (xtags) parts.push(sabrPbString(3, xtags));
+    return sabrPbLenDelim(fieldNumber, sabrConcat(parts));
+  }
+
   function sabrBase64Decode(str) {
     const normalized = str.replace(/-/g, '+').replace(/_/g, '/');
     const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
     return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
   }
 
-  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null }) {
+  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false }) {
     const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
     const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
 
     // field 1: client_abr_state
     //   field 28: player_time_ms (int64)
-    //   field 40: enabled_track_types_bitfield (int32) - 1 for AUDIO_ONLY, 2 for VIDEO_ONLY
+    //   field 40: enabled_track_types_bitfield — 0 for combined, 1 for AUDIO_ONLY, 2 for VIDEO_ONLY
+    const trackTypesBit = combined ? 0 : (isAudioFormat ? 1 : 2);
     const clientAbrStateInner = sabrConcat([
       sabrPbVarint(28, playerTimeMs),
-      sabrPbVarint(40, isAudioFormat ? 1 : 2)
+      sabrPbVarint(40, trackTypesBit),
     ]);
     const clientAbrState = sabrPbLenDelim(1, clientAbrStateInner);
 
-    // field 2: selected_format_ids { field 1: itag }
-    const formatIds = sabrPbLenDelim(2, sabrPbVarint(1, itag));
+    // field 2: selected_format_ids { field 1: itag, field 3: xtags }
+    // In combined mode include both audio and video formatIds
+    let formatIdsBytes;
+    if (combined && audioItag && videoItag) {
+      formatIdsBytes = sabrConcat([
+        sabrPbFormatId(2, audioItag, audioXtags),
+        sabrPbFormatId(2, videoItag, videoXtags),
+      ]);
+    } else {
+      const xtags = isAudioFormat ? audioXtags : videoXtags;
+      formatIdsBytes = sabrPbFormatId(2, itag, xtags);
+    }
 
     // field 4: player_time_ms (int64)
     const playerTime = sabrPbVarint(4, playerTimeMs);
@@ -112,16 +129,16 @@ const SABR_CLIENT_NAME_IDS = {
     // field 5: video_playback_ustreamer_config (bytes)
     const ustreamerField = sabrPbLenDelim(5, ustreamerBytes);
 
-    // field 16 (tag 130): preferred_audio_format_ids { field 1: itag }
-    // field 17 (tag 138): preferred_video_format_ids { field 1: itag }
+    // field 16: preferred_audio_format_ids { field 1: itag, field 3: xtags }
+    // field 17: preferred_video_format_ids { field 1: itag, field 3: xtags }
     const preferredFormats = [];
     const finalAudioItag = audioItag || (isAudioFormat ? itag : null);
     if (finalAudioItag) {
-      preferredFormats.push(sabrPbLenDelim(16, sabrPbVarint(1, finalAudioItag)));
+      preferredFormats.push(sabrPbFormatId(16, finalAudioItag, audioXtags));
     }
     const finalVideoItag = videoItag || (!isAudioFormat ? itag : null);
     if (finalVideoItag) {
-      preferredFormats.push(sabrPbLenDelim(17, sabrPbVarint(1, finalVideoItag)));
+      preferredFormats.push(sabrPbFormatId(17, finalVideoItag, videoXtags));
     }
     const preferredFormat = sabrConcat(preferredFormats);
 
@@ -139,7 +156,7 @@ const SABR_CLIENT_NAME_IDS = {
       : sabrPbLenDelim(1, clientInfo);
     const streamerContext = sabrPbLenDelim(19, streamerContextInner);
 
-    return sabrConcat([clientAbrState, formatIds, playerTime, ustreamerField, preferredFormat, streamerContext]);
+    return sabrConcat([clientAbrState, formatIdsBytes, playerTime, ustreamerField, preferredFormat, streamerContext]);
   }
 
   async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
@@ -903,13 +920,349 @@ const SABR_CLIENT_NAME_IDS = {
     }
   }
 
+  async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, videoId = null, component = null }) {
+    const yt = window.$nuxt ? window.$nuxt.$youtube : null;
+    const innertube = yt ? await yt.getAPI() : null;
+    const clientName = innertube?.context?.client?.clientName || 'WEB';
+    const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+
+    let url = serverAbrStreamingUrl;
+    let rn = 1;
+    let redirectCount = 0;
+    let emptyCount = 0;
+    let playbackCookieBytes = null;
+    let currentPlayerTimeMs = playerTimeMs;
+    let totalDurationMs = videoDurationMs || 0;
+    let totalDurationFromFim = false;
+    let audioInitAppended = false;
+    let videoInitAppended = false;
+    let lastAudioSeq = -1;
+    let lastVideoSeq = -1;
+
+    for (let i = 0; i < maxRequests; i++) {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const body = sabrBuildRequest({
+        ustreamerConfigB64: videoPlaybackUstreamerConfig,
+        clientName, clientVersion,
+        itag: videoItag,
+        playerTimeMs: currentPlayerTimeMs,
+        playbackCookieBytes,
+        isAudio: false,
+        audioItag, videoItag,
+        audioXtags, videoXtags,
+        combined: true,
+      });
+      const rawBytes = await sabrFetch(url, body, rn++, signal);
+      const parts = [...sabrParseUMP(rawBytes)];
+
+      const redirectPart = parts.find(p => p.partId === 43);
+      if (redirectPart) {
+        if (++redirectCount > 10) throw new Error('SABR_TOO_MANY_REDIRECTS');
+        const newUrl = sabrParseRedirect(redirectPart.data);
+        if (newUrl) { url = newUrl; rn = 1; }
+        continue;
+      } else {
+        redirectCount = 0;
+      }
+
+      if (parts.find(p => p.partId === 44)) throw new Error('SABR_ERROR');
+
+      const reloadPart = parts.find(p => p.partId === 46);
+      if (reloadPart) {
+        const reloadContext = sabrParseReloadPlaybackContext(reloadPart.data);
+        if (reloadContext && innertube && videoId) {
+          try {
+            const reloadedVidData = await innertube.getVidAsync(videoId, reloadContext);
+            if (reloadedVidData?.metadata) {
+              const newUrl = reloadedVidData.metadata.serverAbrStreamingUrl;
+              const newConfig = reloadedVidData.metadata.ustreamerConfig;
+              if (newUrl) {
+                url = newUrl;
+                if (newConfig) videoPlaybackUstreamerConfig = newConfig;
+                rn = 1;
+                if (component?.video?.metadata) {
+                  component.video.metadata.serverAbrStreamingUrl = newUrl;
+                  if (newConfig) component.video.metadata.ustreamerConfig = newConfig;
+                }
+                continue;
+              }
+            }
+          } catch (err) {
+            console.error('[SABR combined] Failed to reload player response:', err);
+          }
+        }
+      }
+
+      if (!totalDurationFromFim) {
+        const fimPart = parts.find(p => p.partId === 42);
+        if (fimPart) {
+          const f = sabrParseProtoVarintFields(fimPart.data);
+          const units = f[9] || 0;
+          const scale = f[10] || 1;
+          if (units > 0 && scale > 0) {
+            totalDurationMs = Math.round(units / (scale / 1000));
+            totalDurationFromFim = true;
+            onTotalDuration?.(totalDurationMs);
+          }
+        }
+      }
+
+      const policyPart = parts.find(p => p.partId === 35);
+      if (policyPart) {
+        const policy = sabrParseNextRequestPolicy(policyPart.data);
+        if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
+        if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
+      }
+
+      const segments = sabrExtractMedia(parts);
+      let newMediaAppended = false;
+
+      for (const seg of segments) {
+        if (seg.itag === audioItag) {
+          if (seg.isInitSeg) {
+            if (audioInitAppended) continue;
+            audioInitAppended = true;
+          } else {
+            if (seg.sequenceNumber !== undefined && seg.sequenceNumber <= lastAudioSeq) continue;
+            if (seg.sequenceNumber !== undefined) lastAudioSeq = seg.sequenceNumber;
+          }
+          await onAudioChunk(seg.data, seg.durationMs);
+          newMediaAppended = true;
+        } else if (seg.itag === videoItag) {
+          if (seg.isInitSeg) {
+            if (videoInitAppended) continue;
+            videoInitAppended = true;
+          } else {
+            if (seg.sequenceNumber !== undefined && seg.sequenceNumber <= lastVideoSeq) continue;
+            if (seg.sequenceNumber !== undefined) lastVideoSeq = seg.sequenceNumber;
+          }
+          currentPlayerTimeMs += seg.durationMs;
+          await onVideoChunk(seg.data, seg.durationMs);
+          newMediaAppended = true;
+        }
+      }
+
+      if (!newMediaAppended) {
+        if (++emptyCount >= 5) break;
+      } else {
+        emptyCount = 0;
+      }
+
+      if (totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) break;
+    }
+  }
+
+  function _sabrStartMseCombined(component, mediaSource, videoMimeType, audioMimeType, streamParams, signal) {
+    const videoSB = mediaSource.addSourceBuffer(videoMimeType);
+    const audioSB = mediaSource.addSourceBuffer(audioMimeType);
+    component.videoSourceBuffer = videoSB;
+    component.audioSourceBuffer = audioSB;
+    component.videoMediaSource = mediaSource;
+
+    const makeAppendQueue = (sb) => {
+      let queue = Promise.resolve();
+      let isWaiting = false;
+      return (data) => {
+        queue = queue.then(async () => {
+          if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+          const el = component.$refs.player;
+          if (el) {
+            while (true) {
+              if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+              let bufferAhead = 0;
+              const time = el.currentTime;
+              const buf = el.buffered;
+              for (let i = 0; i < buf.length; i++) {
+                if (time >= buf.start(i) && time <= buf.end(i)) { bufferAhead = buf.end(i) - time; break; }
+              }
+              if (isWaiting) { if (bufferAhead < 5) { isWaiting = false; break; } }
+              else { if (bufferAhead >= 25) { isWaiting = true; } else { break; } }
+              await new Promise(r => setTimeout(r, 250));
+            }
+          }
+          return new Promise((resolve, reject) => {
+            if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
+            sb.timestampOffset = 0;
+            const onEnd = () => { sb.removeEventListener('updateend', onEnd); resolve(); };
+            const onErr = () => { sb.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
+            sb.addEventListener('updateend', onEnd);
+            sb.addEventListener('error', onErr);
+            try { sb.appendBuffer(data); }
+            catch (e) { sb.removeEventListener('updateend', onEnd); sb.removeEventListener('error', onErr); reject(e); }
+          });
+        });
+        return queue;
+      };
+    };
+
+    const appendVideo = makeAppendQueue(videoSB);
+    const appendAudio = makeAppendQueue(audioSB);
+    let videoChunks = 0, audioChunks = 0;
+
+    streamSabrCombined({
+      ...streamParams,
+      signal,
+      onTotalDuration: (ms) => {
+        if (mediaSource.readyState === 'open') mediaSource.duration = ms / 1000;
+      },
+      onVideoChunk: (data) => { videoChunks++; return appendVideo(data); },
+      onAudioChunk: (data) => { audioChunks++; return appendAudio(data); },
+    }).then(async () => {
+      console.log('[SABR combined] Stream done. video chunks:', videoChunks, 'audio chunks:', audioChunks);
+      if (mediaSource.readyState === 'open') mediaSource.endOfStream();
+    }).catch(e => {
+      if (e.name === 'AbortError') {
+        console.log('[SABR combined] Stream aborted');
+      } else {
+        console.warn('[SABR combined] Stream error:', e);
+      }
+    });
+  }
+
+  async function loadCombinedViaSabr(component, selectedVideoFormat = null, selectedAudioFormat = null, startTimeSec = 0) {
+    if (component.videoAbortController) component.videoAbortController.abort();
+    if (component.audioAbortController) component.audioAbortController.abort();
+    component.videoAbortController = new AbortController();
+    component.audioAbortController = component.videoAbortController;
+    const signal = component.videoAbortController.signal;
+
+    component.bufferingDetected = true;
+    component.lastLoadingStarted = Date.now();
+    const wasPlaying = component.wasPlayingBeforeSeek || (component.$refs.player && !component.$refs.player.paused);
+    if (component.$refs.player) component.$refs.player.pause();
+
+    // Pick best video
+    let bestVideo = selectedVideoFormat;
+    if (!bestVideo) {
+      const videoSFromStorage = localStorage.getItem("videoQuality") || null;
+      const videoCodecFromStorage = localStorage.getItem("videoCodec") || null;
+      if (videoSFromStorage || videoCodecFromStorage) {
+        bestVideo = component.sources.find(s =>
+          s.mimeType?.includes('video') &&
+          (videoCodecFromStorage ? s.mimeType.includes(videoCodecFromStorage) : true) &&
+          (videoSFromStorage ? s.qualityLabel?.includes(videoSFromStorage) : true)
+        );
+      }
+      if (!bestVideo) bestVideo = component.sources.find(s => s.mimeType?.includes('video') && s.qualityLabel) || component.sources[0];
+    }
+
+    // Pick best audio
+    let bestAudio = selectedAudioFormat;
+    if (!bestAudio) {
+      const audioTrackIdFromStorage = localStorage.getItem("audioTrackId") || null;
+      const audioSFromStorage = localStorage.getItem("audioQuality") || null;
+      if (audioTrackIdFromStorage) bestAudio = component.audioSources.find(s => s.audioTrack?.id === audioTrackIdFromStorage);
+      if (!bestAudio && audioSFromStorage) bestAudio = component.audioSources.find(s => s.itag.toString() === audioSFromStorage);
+      if (!bestAudio) {
+        bestAudio = component.audioSources.find(s => s.mimeType?.includes('opus') && s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+          component.audioSources.find(s => s.audioQuality !== 'AUDIO_QUALITY_LOW') ||
+          component.audioSources[0];
+      }
+    }
+
+    if (!bestVideo || !bestAudio) {
+      console.warn('[SABR combined] Missing video or audio format, falling back to separate loading');
+      await Promise.all([
+        loadVideoViaSabr(component, selectedVideoFormat, startTimeSec),
+        loadAudioViaSabr(component, selectedAudioFormat, startTimeSec),
+      ]);
+      return;
+    }
+
+    const videoMimeType = bestVideo.mimeType || 'video/mp4; codecs="avc1.42E01E"';
+    const audioMimeType = bestAudio.mimeType || 'audio/webm; codecs="opus"';
+
+    if (!window.MediaSource || !MediaSource.isTypeSupported(videoMimeType) || !MediaSource.isTypeSupported(audioMimeType)) {
+      console.warn('[SABR combined] MSE not supported, falling back to separate loading');
+      await Promise.all([
+        loadVideoViaSabr(component, selectedVideoFormat, startTimeSec),
+        loadAudioViaSabr(component, selectedAudioFormat, startTimeSec),
+      ]);
+      return;
+    }
+
+    component.currentVideoFormat = bestVideo;
+    component.currentAudioFormat = bestAudio;
+
+    const videoXtags = bestVideo.xtags || '';
+    const audioXtags = bestAudio.xtags || '';
+    console.log('[SABR combined] video itag:', bestVideo.itag, 'xtags:', videoXtags, '| audio itag:', bestAudio.itag, 'xtags:', audioXtags);
+
+    try {
+      const mediaSource = new MediaSource();
+
+      const waitForOpen = new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('sourceopen timeout')), 10000);
+        const onOpen = () => { clearTimeout(t); resolve(); };
+        mediaSource.addEventListener('sourceopen', onOpen, { once: true });
+        signal.addEventListener('abort', () => {
+          clearTimeout(t);
+          mediaSource.removeEventListener('sourceopen', onOpen);
+          reject(new DOMException('Aborted', 'AbortError'));
+        });
+      });
+
+      const objectUrl = URL.createObjectURL(mediaSource);
+      component.vidSrc = objectUrl;
+      await component.$nextTick();
+      if (component.$refs.player) {
+        component.$refs.player.src = objectUrl;
+        component.$refs.player.load();
+      }
+
+      await waitForOpen;
+      if (signal.aborted) return;
+      console.log('[SABR combined] sourceopen OK');
+
+      const durationSec = component.video.metadata?.lengthSeconds ? parseFloat(component.video.metadata.lengthSeconds) : 0;
+      if (durationSec) {
+        try { mediaSource.duration = durationSec; } catch (e) {}
+      }
+
+      if (component.$refs.player && component.$refs.player.currentTime !== startTimeSec) {
+        component.isInternalSeek = true;
+        component.$refs.player.currentTime = startTimeSec;
+      }
+
+      _sabrStartMseCombined(component, mediaSource, videoMimeType, audioMimeType, {
+        serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
+        videoPlaybackUstreamerConfig: component.video.metadata.ustreamerConfig,
+        audioItag: bestAudio.itag,
+        videoItag: bestVideo.itag,
+        audioXtags,
+        videoXtags,
+        playerTimeMs: Math.round(startTimeSec * 1000),
+        videoDurationMs: Math.round(durationSec * 1000),
+        videoId: component.video.id,
+        component,
+      }, signal);
+
+      const elapsed = Date.now() - component.lastLoadingStarted;
+      const delay = Math.max(0, 1000 - elapsed);
+      setTimeout(() => {
+        if (wasPlaying && component.$refs.player) component.$refs.player.play().catch(() => {});
+        component.bufferingDetected = false;
+        component.wasPlayingBeforeSeek = false;
+      }, delay);
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        console.log('[SABR combined] Load aborted');
+      } else {
+        console.warn('[SABR combined] MSE failed:', e);
+      }
+    }
+  }
+
 // --- Exported SABR Module ---
 const sabr = {
   streamSabrFormat,
+  streamSabrCombined,
   downloadSabrFormat,
   _sabrStartMse,
+  _sabrStartMseCombined,
   loadVideoViaSabr,
   loadAudioViaSabr,
+  loadCombinedViaSabr,
 };
 
 export default sabr;
