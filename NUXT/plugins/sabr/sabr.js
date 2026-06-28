@@ -1080,6 +1080,20 @@ const SABR_CLIENT_NAME_IDS = {
               await new Promise(r => setTimeout(r, 250));
             }
           }
+          // Evict old buffered data behind playback to prevent QuotaExceededError
+          const el2 = component.$refs.player;
+          if (el2 && !sb.updating) {
+            const time2 = el2.currentTime;
+            const buf2 = sb.buffered;
+            if (buf2.length > 0 && buf2.start(0) < time2 - 30) {
+              await new Promise((res, rej) => {
+                const onEnd = () => { sb.removeEventListener('updateend', onEnd); res(); };
+                sb.addEventListener('updateend', onEnd);
+                try { sb.remove(buf2.start(0), Math.max(0, time2 - 30)); }
+                catch { sb.removeEventListener('updateend', onEnd); res(); }
+              });
+            }
+          }
           return new Promise((resolve, reject) => {
             if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
             sb.timestampOffset = 0;
