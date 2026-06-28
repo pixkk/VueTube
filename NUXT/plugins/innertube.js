@@ -638,7 +638,7 @@ class Innertube {
 
   // WARNING: This is tracking the user's activity, but is required for recommendations to properly work
   async apiStats(params, url) {
-    console.warn(params);
+    // console.warn(params);
     params = {
       ...params,
       ...{
@@ -842,7 +842,7 @@ class Innertube {
             ),
         };
 
-    console.warn(recommendations);
+    // console.warn(recommendations);
 
     let metadata = {};
     if (isTVResponse) {
@@ -1104,7 +1104,7 @@ class Innertube {
       "\nreturn decodeUrl;";
     // const finalPart =
     //   "var g = {};\n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData)+ "; var decodeUrl=function(nValue) { return " + decipherFunctionName + "(" + decipherFunctionFirstArg + "," + decipherFunctionSecondArg + ", nValue); };" + generate(startFunc) + "; \n" + additionalCode + "\nreturn decodeUrl;";
-    console.warn(finalPart);
+    //console.warn(finalPart);
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
   }

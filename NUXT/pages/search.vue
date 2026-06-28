@@ -48,7 +48,7 @@ export default {
     },
     paginate() {
       this.loading = true;
-      console.warn(this.renderer)
+      // console.warn(this.renderer)
       const continuationCode = this.renderer.continuations?.find(
         (element) => element.nextContinuationData
       )?.nextContinuationData.continuation;

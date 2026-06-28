@@ -683,7 +683,7 @@ export default {
 // Sort by bitrate audio
     if (this.audioSources[0]?.audioTrack === undefined) {
       this.audioSources = this.audioSources.sort((a, b) => b?.bitrate - a?.bitrate);
-      console.warn(this.audioSources);
+      // console.warn(this.audioSources);
       for (let i = 0; i < this.audioSources.length; i++) {
         if (this.audioSources[i]?.audioQuality && this.audioSources[i]?.audioQuality !== "AUDIO_QUALITY_LOW") {
 
@@ -1212,7 +1212,7 @@ export default {
         else {
           let r = await this.$youtube.getCaptions(this.video.id);
           this.video.captions = r.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-          console.warn(r)
+          // console.warn(r)
           for (let i =0; i< this.video.captions.length; i++) {
             if (this.video.captions[i].languageCode === q.languageCode) {
               html = await Http.get({

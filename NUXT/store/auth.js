@@ -81,6 +81,15 @@ export const mutations = {
     syncActiveToken(state.accounts, state.activeAccountId);
   },
 
+  updateAccountInfo(state, { id, name, avatar }) {
+    const account = state.accounts.find((a) => a.id === id);
+    if (account) {
+      if (name) account.name = name;
+      if (avatar) account.avatar = avatar;
+      saveAccounts(state.accounts);
+    }
+  },
+
   updateAccessToken(state, { id, accessToken, expiresAt }) {
     const account = state.accounts.find((a) => a.id === id);
     if (account) {
@@ -102,7 +111,7 @@ export const actions = {
     const account = {
       id,
       email: email || "",
-      name: name || email || "Account",
+      name: name || "Account",
       avatar: avatar || "",
       refreshToken,
       accessToken,

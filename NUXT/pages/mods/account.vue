@@ -99,6 +99,12 @@ export default {
     };
   },
 
+  mounted() {
+    if (this.$store.getters["auth/isSignedIn"]) {
+      this.$auth.refreshAccountInfo().catch(() => {});
+    }
+  },
+
   computed: {
     accounts() {
       return this.$store.state.auth.accounts;
@@ -148,8 +154,8 @@ export default {
       this.$auth.switchAccount(id);
     },
 
-    signOut(id) {
-      this.$auth.signOut(id);
+    async signOut(id) {
+      await this.$auth.signOut(id);
       if (this.accounts.length === 0) {
         this.success = "Signed out.";
       }

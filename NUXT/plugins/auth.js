@@ -13,7 +13,8 @@ const GRANT_TYPE_REFRESH = "refresh_token";
 
 const DEVICE_CODE_URL = "https://www.youtube.com/o/oauth2/device/code";
 const TOKEN_URL = "https://www.youtube.com/o/oauth2/token";
-const USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+const REVOKE_URL = "https://www.youtube.com/o/oauth2/revoke";
+const GUIDE_URL = "https://www.youtube.com/youtubei/v1/guide";
 
 function getDeviceId() {
   let id = localStorage.getItem("vt_device_id");
@@ -99,9 +100,44 @@ export async function refreshAccessToken(refreshToken) {
   return data;
 }
 
-export async function getUserInfo(accessToken) {
+function buildTvContext() {
+  const hl = (typeof localStorage !== "undefined" && localStorage.getItem("language")) || "en";
+  return {
+    client: {
+      hl,
+      gl: "US",
+      deviceMake: "Sony",
+      deviceModel: "BRAVIA 8K UR2",
+      userAgent: "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
+      clientName: "TVHTML5",
+      clientVersion: "7.20260125.19.00",
+      platform: "TV",
+      browserName: "Opera",
+      browserVersion: "46.0.2207.0",
+    },
+    user: { enableSafetyMode: false },
+    request: { internalExperimentFlags: [], consistencyTokenJars: [] },
+  };
+}
+
+export async function getAccountInfoFromGuide(accessToken) {
   try {
-    return await getJson(USERINFO_URL, accessToken);
+    const resp = await Http.post({
+      url: GUIDE_URL,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+        "x-youtube-client-name": "7",
+        "x-youtube-client-version": "7.20260125.19.00",
+      },
+      data: JSON.stringify({ context: buildTvContext() }),
+    });
+    const json = typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+    const accountEntry = json?.items?.[0]?.guideSectionRenderer?.items?.[0]?.guideAccountEntryRenderer;
+    if (!accountEntry) return null;
+    const name = accountEntry.title?.simpleText || accountEntry.title?.accessibility?.accessibilityData?.label || null;
+    const avatar = accountEntry.thumbnail?.thumbnails?.slice(-1)[0]?.url || null;
+    return { name, avatar };
   } catch {
     return null;
   }
@@ -131,26 +167,49 @@ export default (ctx, inject) => {
         codeData.interval || 5
       );
 
-      const userInfo = await getUserInfo(tokenData.access_token);
+      const accountInfo = await getAccountInfoFromGuide(tokenData.access_token);
 
       await store.dispatch("auth/addAccount", {
         refreshToken: tokenData.refresh_token,
         accessToken: tokenData.access_token,
         expiresIn: tokenData.expires_in,
-        email: userInfo?.email,
-        name: userInfo?.name,
-        avatar: userInfo?.picture,
+        name: accountInfo?.name,
+        avatar: accountInfo?.avatar,
       });
 
       return store.getters["auth/activeAccount"];
     },
 
-    signOut(id) {
+    async signOut(id) {
+      const account = store.state.auth.accounts.find((a) => a.id === id);
+      if (account?.refreshToken) {
+        try {
+          await Http.post({
+            url: REVOKE_URL,
+            headers: { "Content-Type": "application/json" },
+            data: JSON.stringify({ token: account.refreshToken }),
+          });
+        } catch {
+          // ignore revoke errors — remove account regardless
+        }
+      }
       store.dispatch("auth/removeAccount", id);
     },
 
     switchAccount(id) {
       store.dispatch("auth/switchAccount", id);
+    },
+
+    async refreshAccountInfo(id) {
+      const targetId = id || store.state.auth.activeAccountId;
+      const account = store.state.auth.accounts.find((a) => a.id === targetId);
+      if (!account) return;
+      const token = await this.ensureFreshToken();
+      if (!token) return;
+      const info = await getAccountInfoFromGuide(token);
+      if (info) {
+        store.commit("auth/updateAccountInfo", { id: targetId, ...info });
+      }
     },
 
     async ensureFreshToken() {

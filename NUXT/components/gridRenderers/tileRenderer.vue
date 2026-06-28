@@ -47,7 +47,7 @@ export default {
 
     bottomText() {
       const lines = this.video.metadata?.tileMetadataRenderer?.lines || [];
-      console.warn(lines)
+      // console.warn(lines)
       const parts = lines
         .map((line) =>
           (line.lineRenderer?.items || [])
