@@ -1,12 +1,12 @@
 //⚠️🚧 WARNING: THIS FILE IS IN MAINTENANCE MODE 🚧⚠️
-// NEW FEATURES FROM THIS FILE WILL BE TRASFERRED TO INNERTUBE.JS - A SEPARATE LIBRARY
+// NEW FEATURES FROM THIS FILE WILL BE TRANSFERRED TO INNERTUBE.JS - A SEPARATE LIBRARY
 // New library: https://github.com/pixkk/Vuetube-Extractor (currently is not active)
 
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
 import {Http} from "@capacitor-community/http";
-import {delay, getBetweenStrings, getCpn} from "./utils";
+import {delay, getBetweenStrings, getCpn, getThumbnailUtil} from "./utils";
 import rendererUtils from "./renderers";
 import constants from "./constants";
 import * as acorn from "acorn";
@@ -46,76 +46,71 @@ class Innertube {
       signatureIntValue[0].replace(/\D/g, "")
     );
   }
-
+  saveBaseJSVersion(baseJsUrl) {
+    const regex = /\/player\/([a-f0-9]{8})\/player/;
+    const match = baseJsUrl.match(regex);
+    if (match) {
+      localStorage.setItem("baseJsVersion", match[1]);
+    }
+  }
+  parseBaseJSUrl(html) {
+    let baseJSUrl = constants.URLS.YT_MOBILE + getBetweenStrings(html, '"jsUrl":"', '","');
+    baseJSUrl = baseJSUrl.replace(
+      /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    baseJSUrl = baseJSUrl.replace(
+      /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    baseJSUrl = baseJSUrl.replace(
+      /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    return baseJSUrl;
+  }
+  getYTConfig(html) {
+    return JSON.parse(
+      "{" + getBetweenStrings(html, "ytcfg.set({", ");")
+    );
+  }
   async initAsync() {
     const html = await Http.get({
       url: constants.URLS.YT_EMBED,
       params: { hl: localStorage.getItem("language") || "en", },
     }).catch((error) => error);
     // Get url of base.js file
-    let baseJsUrl =
-      constants.URLS.YT_MOBILE +
-      getBetweenStrings(html.data, '"jsUrl":"', '","');
-
-    // if (baseJsUrl.indexOf("player-plasma") > 0) {
-    // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
-    // }
-
-      baseJsUrl = baseJsUrl.replace(
-        /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-        'player-plasma-ias-phone-$1.vflset/base.js'
-      )
-      baseJsUrl = baseJsUrl.replace(
-        /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-        'player-plasma-ias-phone-$1.vflset/base.js'
-      )
-      baseJsUrl = baseJsUrl.replace(
-        /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-        'player-plasma-ias-phone-$1.vflset/base.js'
-      )
-    // baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
-    // baseJsUrl = baseJsUrl.replace("player_embed_es6", "player_ias");
+    let baseJsUrl = this.parseBaseJSUrl(html.data);
+    this.saveBaseJSVersion(baseJsUrl);
     // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
     // Get base.js content
-    // 377ca75b
-    const baseJs = await Http.get({
+    const baseJsContent = await Http.get({
       url: baseJsUrl,
     }).catch((error) => error);
 
-    await this.initTimeStamp(baseJs);
-    await this.makeDecipherFunctionWithAst(baseJs);
+    await this.initTimeStamp(baseJsContent);
+    await this.makeDecipherFunctionWithAst(baseJsContent);
 
-    console.warn("one");
+    console.warn("Decipher function created");
+    await this.getNFunctionAst(baseJsContent);
+    console.warn("N-function created");
 
-    await this.getNFunctionAst(baseJs);
-    console.warn("two");
-
-    console.warn("three");
-    const regex = /\/player\/([a-f0-9]{8})\/player/;
-    const match = baseJsUrl.match(regex);
-    if (match) {
-      localStorage.setItem("baseJsVersion", match[1]);
-    }
     try {
       if (html instanceof Error && this.checkErrorCallback)
         this.ErrorCallback(html.message, true);
 
       try {
-        const data = JSON.parse(
-          "{" + getBetweenStrings(html.data, "ytcfg.set({", ");")
-        );
-        // console.warn(data);
-        this.visitorData = data.VISITOR_DATA || data.EOM_VISITOR_DATA;
-        if (data.INNERTUBE_CONTEXT) {
-          this.key = data.INNERTUBE_API_KEY;
-          this.context = data.INNERTUBE_CONTEXT;
-          this.logged_in = data.LOGGED_IN;
+        const ytClient = this.getYTConfig(html.data);
+        this.visitorData = ytClient.VISITOR_DATA || ytClient.EOM_VISITOR_DATA;
+        if (ytClient.INNERTUBE_CONTEXT) {
+          this.key = ytClient.INNERTUBE_API_KEY;
+          this.context = ytClient.INNERTUBE_CONTEXT;
+          this.logged_in = ytClient.LOGGED_IN;
 
           if (this.recommendationsFix) {
             console.log("Applying patch for Emulators (recommendation page fix)");
-            this.context.client.userAgent =  constants.YT_API_VALUES.USER_AGENT;
+            this.context.client.userAgent = constants.YT_API_VALUES.USER_AGENT;
           }
-
           this.context.client = constants.INNERTUBE_CLIENT(this.context.client);
           this.header = constants.INNERTUBE_HEADER(this.context.client);
         }
@@ -125,7 +120,7 @@ class Innertube {
           this.ErrorCallback(html.data, true);
           this.ErrorCallback(err, true);
         }
-        if (this.retry_count < 10) {
+        if (this.retry_count < 3) {
           this.retry_count += 1;
           if (this.checkErrorCallback)
             this.ErrorCallback(
@@ -152,7 +147,6 @@ class Innertube {
 
   static async createAsync(ErrorCallback) {
     const created = new Innertube(ErrorCallback);
-
     await created.initAsync();
     return created;
   }
@@ -171,12 +165,12 @@ class Innertube {
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
-        //args.browseId = "FEtrending";
         break;
-      case "trending":
-        // args.browseId = "FEwhat_to_watch";
-        args.browseId = "FEtrending";
-        break;
+      //   Trending was removed from the YT:
+      //   https://support.google.com/youtube/thread/356702168/changes-to-discovering-trending-content-on-youtube
+      // case "trending":
+      //   args.browseId = "FEtrending";
+      //   break;
       case "playlist":
       case "aboutChannelInfo":
         data = {
@@ -216,7 +210,7 @@ class Innertube {
     }
     data = { ...data, ...args };
 
-    console.log(data);
+    // console.log(data);
 
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
@@ -225,11 +219,11 @@ class Innertube {
     }).catch((error) => error);
     console.log(response);
 
-    if (response instanceof Error)
+    if (response instanceof Error || response.data.error)
       return {
         success: false,
         status_code: response.status,
-        message: response.message,
+        message: response.data.message,
       };
 
     return {
@@ -305,11 +299,11 @@ class Innertube {
 
     const clientConfigs  = constants.clientConfigs;
     for (const config of clientConfigs) {
-      if (config.CLIENTNAME !== "ANDROID_VR") continue
+      if (config.CLIENTNAME !== "ANDROID_VR") continue;
+      if (data.context.client.clientName === "TVHTML5") continue;
       data.context.client.clientName = config.CLIENTNAME;
       data.context.client.clientVersion = config.VERSION_WEB;
       console.warn("Trying with client config - ", data.context.client);
-      if (data.context.client.clientName === "TVHTML5") continue;
       // this.context.client = data.context.client;
       if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
         data.context.thirdParty = {
@@ -329,11 +323,9 @@ class Innertube {
         response?.data?.playabilityStatus?.status !== "ERROR") {
         break;
       }
-
     }
     return response.data;
   }
-
 
   async getVidAsync(id, reloadPlaybackContext = null, tvParams = null) {
     const isAuthed = !!localStorage.getItem("vt_active_access_token");
@@ -404,7 +396,6 @@ class Innertube {
       ]);
       response = responsePlayer;
       responseNext.data._mobileNext = responseNextMobile.error ? null : responseNextMobile.data;
-
     } else {
       let data = {
         context: {
@@ -534,69 +525,9 @@ class Innertube {
     };
   }
 
-  async getEndPoint(url, skipCheck = false) {
+  async getEndPoint(url) {
     let data;
     let response;
-    if (!skipCheck) {
-      data = { context: this.context, url: url };
-
-      response = await Http.get({
-        // url: `${url}/navigation/resolve_url?key=${this.key}`,
-        url: `${url}`,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      }).catch(() => {
-
-        // console.warn(browseId);
-      });
-      const html = response.data; // Assuming data property holds the HTML content
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
-
-      let browseId;
-      if (metaTags.length > 0) {
-        browseId = metaTags[0].content;
-      }
-      else {
-        let match;
-        let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
-        while ((match = regex.exec(html)) !== null) {
-          browseId = match[1];
-        }
-
-      }
-      data.context = {
-        ...data.context,
-        request: constants.INNERTUBE_REQUEST(),
-      };
-      data = {
-        ...data,
-        browseId: browseId,
-        context: {
-          client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-        },
-      };
-      data.context.client = {
-        ...data.context.client,
-        clientFormFactor: "LARGE_FORM_FACTOR",
-      };
-      response = await Http.post({
-        // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
-        url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
-        data: data,
-        headers: constants.AUTHED_JSON_HEADER(),
-      }).catch((error) => error);
-
-      if (response instanceof Error)
-        return {
-          success: false,
-          status_code: response.status,
-          message: response.message,
-        };
-    }
-    else {
       data = { context: this.context, browseId: url };
       data.context = {
         ...data.context,
@@ -627,7 +558,6 @@ class Innertube {
           status_code: response.status,
           message: response.message,
         };
-    }
 
     return {
       success: true,
@@ -660,27 +590,7 @@ class Innertube {
   // Static methods
 
   static async getThumbnail(id, resolution) {
-    if (resolution === "max" || resolution === "resmax") {
-      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      try {
-        let xhr = new XMLHttpRequest();
-        xhr.responseType = 'blob';
-        return new Promise((resolve, reject) => {
-          xhr.open('GET', maxResUrl, true);
-          xhr.onload = () => {
-            if (xhr.status === 200) {
-              resolve(URL.createObjectURL(xhr.response));
-            } else {
-              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
-            }
-          };
-          xhr.send();
-        });
-      } catch (error) {
-        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-      }
-    }
-    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    return getThumbnailUtil(id, resolution);
   }
 
   // Simple Wrappers
@@ -689,7 +599,7 @@ class Innertube {
     return rec;
   }
   async getChannelAsync(url, tab="main") {
-    const channelEndpoint = await this.getEndPoint(url, true);
+    const channelEndpoint = await this.getEndPoint(url);
     if (
       channelEndpoint.success &&
       channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
@@ -720,18 +630,18 @@ class Innertube {
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
           );
       }
-
     } else {
       throw new ReferenceError("Cannot find channel");
     }
   }
 
   async VidInfoAsync(id, tvParams = null) {
+    // TODO: OPTIMIZE IT !!!
     let response = await this.getVidAsync(id, null, tvParams);
 
     if (
       response.success == false ||
-      response.data.output?.playabilityStatus?.status == ("ERROR" || undefined)
+      response.data.output?.playabilityStatus?.status == ("ERROR" || "LOGIN_REQUIRED" || "UNPLAYABLE" || undefined)
     )
       throw new Error(
         `Could not get information for video: ${
@@ -741,10 +651,11 @@ class Innertube {
           response.message || response.data.output?.playabilityStatus?.reason
         }`
       );
+
     const responseInfo = response.data.output;
     const responseNext = response.data.outputNext;
-    let details = responseInfo.videoDetails;
 
+    let details = responseInfo.videoDetails;
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     let resolutions = responseInfo.streamingData;
@@ -912,10 +823,6 @@ class Innertube {
           let decipheredValue;
           try {
             decipheredValue = this.decodeUrl(cipher);
-
-            // if (decipheredValue === undefined || decipheredValue === true || decipheredValue === false) {
-            //   decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
-            // }
           }catch (e) {
             // decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
           }
@@ -927,10 +834,7 @@ class Innertube {
         }
       }
 
-
-
-      var searchParams = new URLSearchParams(source.url);
-
+      const searchParams = new URLSearchParams(source.url);
       //Iterate the search parameters.
       let n = searchParams.get("n");
       //let clen = searchParams.get("clen");
@@ -938,19 +842,12 @@ class Innertube {
       if (n !== null) {
         try {
             nValue = "&n=" + this.nfunction(n)
-          if (nValue === undefined) {
-            // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
-          }
         }
-        catch (e) {
-          // nValue = "&n=" + this.nfunction(1, n)
-          // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
-        }
+        catch (e) {}
       }
       searchParams.delete("n");
 
       try {
-        // For some reasons, searchParams.delete not removes &n in music videos
         source["url"] = source["url"].replace(/&n=[^&]*/g, "");
         source["url"] = source["url"] + nValue;
         // source["url"] = source["url"] + "&alr=yes";
@@ -960,13 +857,8 @@ class Innertube {
         source["url"] = source["url"] + "&cpn=" + getCpn();
         // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
         // source["url"] = source["url"] + "&range=0-" + source.contentLength;
-        if (searchParams.get("mime").indexOf("audio") < 0) {
-          // source["url"] = source["url"] + "&range=0-";
-          // source["url"] = source["url"] + "&alr=yes";
-        }
       }catch (e) {
         console.error(e)
-        console.error(source)
       }
 
     });

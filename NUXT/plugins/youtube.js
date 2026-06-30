@@ -12,6 +12,8 @@ import {Buffer} from "buffer";
 import iconv from "iconv-lite";
 import {Toast} from "@capacitor/toast";
 import {createHash} from "crypto";
+import {getThumbnailUtil} from "./utils";
+import {refreshAccountInfo} from "@/plugins/auth";
 
 function getEncoding(contentType) {
   // console.warn(contentType);
@@ -24,6 +26,8 @@ function getEncoding(contentType) {
   // console.log(content);
   return content[1].toLowerCase();
 }
+
+let store = null;
 
 const searchModule = {
   logs: new Array(),
@@ -180,28 +184,7 @@ const innertubeModule = {
   },
 
   async getThumbnail(id, resolution, backupThumbnail) {
-    // 19.08.2024 - backupThumbnail temporary unused
-    if (resolution === "max" || resolution === "resmax") {
-      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      try {
-        let xhr = new XMLHttpRequest();
-        xhr.responseType = 'blob';
-        return new Promise((resolve, reject) => {
-          xhr.open('GET', maxResUrl, true);
-          xhr.onload = () => {
-            if (xhr.status === 200) {
-              resolve(URL.createObjectURL(xhr.response));
-            } else {
-              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
-            }
-          };
-          xhr.send();
-        });
-      } catch (error) {
-        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-      }
-    }
-    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    return getThumbnailUtil(id, resolution, backupThumbnail);
   },
 
 
@@ -228,11 +211,15 @@ const innertubeModule = {
   // It just works™
   // Front page recommendation
   async recommend() {
-    const response = await InnertubeAPI.getRecommendationsAsync();
-    let final;
-    if (!response.success)
-      throw new Error("An error occurred and innertube failed to respond");
+    let response = await InnertubeAPI.getRecommendationsAsync();
+    if (!response.success) {
+      if (response.status_code === 401 && store) {
+        await refreshAccountInfo(store);
+        response = await InnertubeAPI.getRecommendationsAsync();
+      }
+    }
 
+    let final;
     // TV client response: tvBrowseRenderer
     const tvBrowse = response.data.contents?.tvBrowseRenderer;
     if (tvBrowse) {
@@ -600,6 +587,7 @@ const innertubeModule = {
 
 //---   Start   ---//
 export default ({ app }, inject) => {
+  store = app.store;
   inject("youtube", { ...searchModule, ...innertubeModule });
   inject("rendererUtils", rendererUtils);
 };

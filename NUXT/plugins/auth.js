@@ -147,6 +147,29 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export async function refreshAccountInfo(store) {
+  const targetId = store.state.auth.activeAccountId;
+  const account = store.state.auth.accounts.find((a) => a.id === targetId);
+  if (!account) return;
+
+  const isExpired = !account.expiresAt || Date.now() >= account.expiresAt - 60000;
+  let token = account.accessToken;
+  if (isExpired) {
+    const tokenData = await refreshAccessToken(account.refreshToken);
+    store.dispatch("auth/updateAccessToken", {
+      id: targetId,
+      accessToken: tokenData.access_token,
+      expiresIn: tokenData.expires_in,
+    });
+    token = tokenData.access_token;
+  }
+
+  const info = await getAccountInfoFromGuide(token);
+  if (info) {
+    store.commit("auth/updateAccountInfo", { id: targetId, ...info });
+  }
+}
+
 export default (ctx, inject) => {
   const store = ctx.store;
 
