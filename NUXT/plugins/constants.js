@@ -129,9 +129,9 @@ module.exports = {
     return headers;
   },
 
-  INNERTUBE_NEW_HEADER: (info) => {
+  INNERTUBE_NEW_HEADER: (info, auth = true) => {
     const token = typeof localStorage !== "undefined"
-      ? localStorage.getItem("vt_active_access_token")
+      ? localStorage.getItem("vt_active_access_token") && auth
       : null;
     const headers = {
       accept: "*/*",

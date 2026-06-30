@@ -466,7 +466,7 @@ class Innertube {
               },
             },
           },
-          headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
+          headers: constants.INNERTUBE_NEW_HEADER(data.context.client, false),
         }).catch((error) => error);
 
         if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
@@ -474,6 +474,46 @@ class Innertube {
           response?.data?.playabilityStatus?.status !== "ERROR") {
           break;
         }
+      }
+    }
+
+    // For live streams, re-request as ANDROID_VR without auth to get HLS manifest. Temp solution.
+    // TODO: use SABR from TV client
+    if (response?.data?.videoDetails?.isLive) {
+      const androidVrConfig = constants.clientConfigs.find(c => c.CLIENTNAME === "ANDROID_VR");
+      const androidVrClient = {
+        ...constants.INNERTUBE_VIDEO(this.context.client),
+        clientName: androidVrConfig.CLIENTNAME,
+        clientVersion: androidVrConfig.VERSION_WEB,
+        clientScreen: androidVrConfig.clientScreen,
+        CLIENT_WEB_M: androidVrConfig.CLIENT_WEB_M,
+        VERSION: androidVrConfig.VERSION_WEB,
+      };
+      const webEmbedContext = {
+        client: androidVrClient,
+        thirdParty: { embedUrl: `https://www.youtube.com/embed/${id}` },
+      };
+      const liveResponse = await Http.post({
+        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
+        data: {
+          context: webEmbedContext,
+          videoId: id,
+          racyCheckOk: true,
+          contentCheckOk: true,
+          playbackContext: {
+            ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
+            contentPlaybackContext: {
+              signatureTimestamp: this.signatureTimestamp,
+              html5Preference: "HTML5_PREF_WANTS",
+              lactMilliseconds: "-1",
+              autonavState: "STATE_NONE",
+            },
+          },
+        },
+        headers: constants.INNERTUBE_NEW_HEADER(webEmbedContext.client, false),
+      }).catch((error) => error);
+      if (liveResponse?.data?.playabilityStatus?.status === "OK") {
+        response = liveResponse;
       }
     }
 
