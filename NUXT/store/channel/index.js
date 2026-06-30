@@ -53,11 +53,6 @@ export const mutations = {
   }
 
 };
-
-export function getChannelProfileData() {
-  return this.state;
-}
-
 export const actions = {
   async fetchChannel({ commit }, channelUrl) {
     let channelRequest;

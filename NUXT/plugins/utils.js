@@ -47,7 +47,30 @@ function setHttp(link) {
   }
   return link;
 }
-
+function getThumbnailUtil(id, resolution = "maxresdefault", backupThumbnail) {
+  // 19.08.2024 - backupThumbnail temporary unused
+  if (resolution === "max" || resolution === "resmax") {
+    let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    try {
+      let xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      return new Promise((resolve, reject) => {
+        xhr.open('GET', maxResUrl, true);
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            resolve(URL.createObjectURL(xhr.response));
+          } else {
+            resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+          }
+        };
+        xhr.send();
+      });
+    } catch (error) {
+      return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    }
+  }
+  return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+}
 // Replace inputted html with tweemoji
 function parseEmoji(body) {
   try {
@@ -192,6 +215,7 @@ function humanFileSize(size) {
 
 module.exports = {
   getBetweenStrings,
+  getThumbnailUtil,
   hexToRgb,
   rgbToHex,
   getCpn,
