@@ -384,7 +384,7 @@ export default {
         // this.sources = result.availableResolutionsAdaptive
         //   .filter(s => !s.xtags);
         this.videoSources = result.availableResolutionsAdaptive
-          .filter(s => !s.xtags);
+          .filter(s => !s.xtags && s.mimeType.includes("video"));
         this.audioSources = result.availableResolutionsAdaptive
           .filter(s => s.mimeType.includes("audio"));
 
