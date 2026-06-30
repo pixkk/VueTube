@@ -779,7 +779,7 @@ class Innertube {
                 .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
                 .map((i) => ({ tileRenderer: i.tileRenderer }))
             );
-          return { contents: items };
+          return { contents: items.slice(1) };
         })()
       : {
           contents: columnUI?.contents
