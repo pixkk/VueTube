@@ -97,6 +97,13 @@ export function findDecipherFunction(parsed, functionName) {
           funcNode = node;
         }
       }
+    },
+    VariableDeclarator(node) {
+      if (node.id.type === "Identifier" && node.id.name === functionName && node.init) {
+        if (node.init.type === "FunctionExpression" || node.init.type === "ArrowFunctionExpression") {
+          funcNode = node;
+        }
+      }
     }
   });
   return funcNode;

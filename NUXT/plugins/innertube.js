@@ -1024,6 +1024,7 @@ class Innertube {
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
+   // console.warn("startFunc", startFunc);
     let additionalCode = collectDependencies(generate(startFunc), decipherFunctionName, parsedBaseJs)
     let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
 
