@@ -113,12 +113,14 @@ module.exports = {
 
   AUTHED_JSON_HEADER: () => {
     const headers = { "Content-Type": "application/json" };
-      const token = this.getAccessToken();
+    if (typeof localStorage !== "undefined") {
+      const token = localStorage.getItem("vt_active_access_token");
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
         headers["x-youtube-client-name"] = String(tvApiVal.CLIENT_WEB_M);
         headers["x-youtube-client-version"] = tvApiVal.VERSION;
       }
+    }
     return headers;
   },
 
