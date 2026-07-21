@@ -296,7 +296,7 @@ class Innertube {
   async playerRequest(id, reloadPlaybackContext = null) {
     const androidClient = constants.INNERTUBE_CLIENT_WEB_REMIX(this.context.client);
     let headers = {
-      ...constants.AUTHED_JSON_HEADER(),
+      // ...constants.AUTHED_JSON_HEADER(),
       ...constants.INNERTUBE_HEADER_WEB_REMIX(androidClient),
     };
 
