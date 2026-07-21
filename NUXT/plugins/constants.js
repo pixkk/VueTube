@@ -1,5 +1,3 @@
-// To  centralize certain values and URLs as for easier debugging and refactoring
-
 const url = {
   YT_URL: "https://www.youtube.com",
   YT_MOBILE: "https://m.youtube.com",
@@ -13,7 +11,7 @@ const url = {
   VT_BETA_UPDATES: "https://api.github.com/repos/pixkk/VueTube/actions/runs"
 };
 
-const webVersion = "2.20260123.01.00";
+const webVersion = "2.20260715.04.00";
 
 const androidApiVal = {
   // VERSION: "19.09",
@@ -53,6 +51,20 @@ const MWEB = {
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
+
+const webRemixApiVal = {
+  CLIENTNAME: "WEB_REMIX",
+  CLIENT_ID: 67,
+  VERSION_WEB: "1.20260707.12.00",
+  USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+  REFERER: "https://music.youtube.com",
+  browserName: "Chrome",
+  browserVersion: "125.0.0.0",
+  osName: "Windows",
+  osVersion: "10.0",
+  platform: "DESKTOP",
+};
+
 const tvApiVal = {
   CLIENTNAME: "TVHTML5",
   clientScreen: "WATCH",
@@ -90,6 +102,7 @@ const filesystem = {
 module.exports = {
   URLS: url,
   YT_API_VALUES: androidApiVal,
+  WEB_REMIX_API_VALUES: webRemixApiVal,
   fs: filesystem,
   clientConfigs: clientConfigs,
 
@@ -100,14 +113,12 @@ module.exports = {
 
   AUTHED_JSON_HEADER: () => {
     const headers = { "Content-Type": "application/json" };
-    if (typeof localStorage !== "undefined") {
-      const token = localStorage.getItem("vt_active_access_token");
+      const token = this.getAccessToken();
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
         headers["x-youtube-client-name"] = String(tvApiVal.CLIENT_WEB_M);
         headers["x-youtube-client-version"] = tvApiVal.VERSION;
       }
-    }
     return headers;
   },
 
@@ -155,8 +166,8 @@ module.exports = {
       // deviceModel: info.deviceModel,
       deviceModel: "Nexus 5",
       userAgent: info.userAgent,
-      clientName: androidApiVal.CLIENTNAME,
-      clientVersion: androidApiVal.VERSION,
+      clientName: webEmbeddedApiVal.CLIENTNAME,
+      clientVersion: webEmbeddedApiVal.VERSION,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
@@ -254,12 +265,38 @@ module.exports = {
       },
     };
   },
-  INNERTUBE_TECHNICAL: (info) => {
+
+  INNERTUBE_CLIENT_WEB_REMIX: (info) => {
     return {
       gl: info.gl,
       hl: localStorage.getItem("language") || "en",
-      clientName: webEmbeddedApiVal.CLIENTNAME,
-      clientVersion: webEmbeddedApiVal.VERSION_WEB,
+      userAgent: webRemixApiVal.USER_AGENT,
+      clientName: webRemixApiVal.CLIENTNAME,
+      clientVersion: webRemixApiVal.VERSION_WEB,
+      osName: webRemixApiVal.osName,
+      osVersion: webRemixApiVal.osVersion,
+      platform: webRemixApiVal.platform,
+      browserName: webRemixApiVal.browserName,
+      browserVersion: webRemixApiVal.browserVersion,
+      clientFormFactor: "UNKNOWN_FORM_FACTOR",
+      originalUrl: webRemixApiVal.REFERER,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+  },
+
+  INNERTUBE_HEADER_WEB_REMIX: (info) => {
+    return {
+      accept: "*/*",
+      "user-agent": webRemixApiVal.USER_AGENT,
+      "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
+      "content-type": "application/json",
+      origin: webRemixApiVal.REFERER,
+      referer: webRemixApiVal.REFERER,
+      "x-goog-authuser": 0,
+      "x-goog-visitor-id": info.visitorData || "",
+      "x-youtube-client-name": String(webRemixApiVal.CLIENT_ID),
+      "x-youtube-client-version": webRemixApiVal.VERSION_WEB,
     };
   },
 };

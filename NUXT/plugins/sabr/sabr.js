@@ -1,5 +1,7 @@
 // SABR (Server Adaptive Bitrate) library
 
+import { getContentPoToken } from "../potoken";
+
 // --- SABR helper constants ---
 const SABR_CLIENT_NAME_IDS = {
     WEB: 1, MWEB: 2, ANDROID: 3, IOS: 5, TVHTML5: 7,
@@ -89,6 +91,17 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrPbLenDelim(fieldNumber, sabrConcat(parts));
   }
 
+  // Same as sabrPbFormatId but with field 2 (lmt — the format's lastModified value from
+  // the /player response), matching the real client's preferred_*_format_ids entries,
+  // confirmed via mitmproxy capture of an actual browser SABR request: {1: itag, 2: lmt,
+  // 3: xtags} repeated once per available format (not just the one being downloaded).
+  function sabrPbFormatIdWithLmt(fieldNumber, itag, lmt, xtags) {
+    const parts = [sabrPbVarint(1, itag)];
+    if (lmt) parts.push(sabrPbVarint(2, lmt));
+    if (xtags) parts.push(sabrPbString(3, xtags));
+    return sabrPbLenDelim(fieldNumber, sabrConcat(parts));
+  }
+
   // Encode a video_streaming.BufferedRange message.
   // Tells the SABR server which media we already have so it streams from the
   // requested player_time_ms instead of re-sending everything before it.
@@ -121,7 +134,7 @@ const SABR_CLIENT_NAME_IDS = {
     return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
   }
 
-  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [] }) {
+  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [], hl = 'en', osName = 'Windows', osVersion = '10.0', allAudioFormats = null, allVideoFormats = null }) {
     const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
     const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
@@ -161,27 +174,47 @@ const SABR_CLIENT_NAME_IDS = {
     // field 5: video_playback_ustreamer_config (bytes)
     const ustreamerField = sabrPbLenDelim(5, ustreamerBytes);
 
-    // field 16: preferred_audio_format_ids { field 1: itag, field 3: xtags }
-    // field 17: preferred_video_format_ids { field 1: itag, field 3: xtags }
+    // field 16: preferred_audio_format_ids { 1: itag, 2: lmt, 3: xtags } (repeated)
+    // field 17: preferred_video_format_ids { 1: itag, 2: lmt, 3: xtags } (repeated)
+    // Real clients list every available format (not just the one being requested), each
+    // with its lmt (the format's lastModified from the /player response) — confirmed via
+    // mitmproxy capture of an actual browser SABR request.
     const preferredFormats = [];
-    const finalAudioItag = audioItag || (isAudioFormat ? itag : null);
-    if (finalAudioItag) {
-      preferredFormats.push(sabrPbFormatId(16, finalAudioItag, audioXtags));
+    if (allAudioFormats && allAudioFormats.length) {
+      for (const f of allAudioFormats) {
+        preferredFormats.push(sabrPbFormatIdWithLmt(16, f.itag, f.lastModified, f.xtags || ''));
+      }
+    } else {
+      const finalAudioItag = audioItag || (isAudioFormat ? itag : null);
+      if (finalAudioItag) {
+        preferredFormats.push(sabrPbFormatId(16, finalAudioItag, audioXtags));
+      }
     }
-    const finalVideoItag = videoItag || (!isAudioFormat ? itag : null);
-    if (finalVideoItag) {
-      preferredFormats.push(sabrPbFormatId(17, finalVideoItag, videoXtags));
+    if (allVideoFormats && allVideoFormats.length) {
+      for (const f of allVideoFormats) {
+        preferredFormats.push(sabrPbFormatIdWithLmt(17, f.itag, f.lastModified, f.xtags || ''));
+      }
+    } else {
+      const finalVideoItag = videoItag || (!isAudioFormat ? itag : null);
+      if (finalVideoItag) {
+        preferredFormats.push(sabrPbFormatId(17, finalVideoItag, videoXtags));
+      }
     }
     const preferredFormat = sabrConcat(preferredFormats);
 
     // field 19: streamer_context {
-    //   field 1: client_info { field 16: client_name, field 17: client_version }
+    //   field 1: client_info { 1: hl, 12: deviceMake, 13: deviceModel, 16: client_name,
+    //                           17: client_version, 18: osName, 19: osVersion }
     //   field 3: playback_cookie (bytes, from previous NextRequestPolicy)
     // }
+    // Field numbers confirmed against the real player's base.js (v4/YY4 serializers).
     const clientNameId = SABR_CLIENT_NAME_IDS[clientName] || 1;
     const clientInfo = sabrConcat([
+      sabrPbString(1, hl),
       sabrPbVarint(16, clientNameId),
       sabrPbString(17, clientVersion),
+      sabrPbString(18, osName),
+      sabrPbString(19, osVersion),
     ]);
     const streamerContextInner = playbackCookieBytes
       ? sabrConcat([sabrPbLenDelim(1, clientInfo), sabrPbLenDelim(3, playbackCookieBytes)])
@@ -318,6 +351,61 @@ const SABR_CLIENT_NAME_IDS = {
     return { backoffTimeMs: f[4] || 0, playbackCookie: f[7] instanceof Uint8Array ? f[7] : null };
   }
 
+  // StreamProtectionStatus (UMP part 58): field 1 = status, field 2 = maxRetries.
+  // status 1 = ok, 2 = a real poToken is expected soon (cold-start data still allowed),
+  // 3 = playback is blocked until a valid poToken is supplied.
+  function sabrParseStreamProtectionStatus(data) {
+    const f = sabrParseProtoVarintFields(data);
+    return { status: f[1] || 0, maxRetries: f[2] || 0 };
+  }
+
+  // Reacts to a StreamProtectionStatus part (id 58) inside a parsed UMP response.
+  // Our /player requests currently use the ANDROID client (no poToken attached), but the
+  // SABR stream session itself can still demand one. On status >= 2 we mint a content-bound
+  // poToken (bgutils-js, see plugins/potoken.js) once and attach it to the streaming URL as
+  // ?pot=, matching how YouTube's own web client authorizes SABR requests.
+  //
+  // status 2 is a soft warning — the current response still carries usable media, so we just
+  // attach the poToken for subsequent requests and keep processing this one as normal.
+  // status 3 is a hard block — the current response has no usable media, so callers must
+  // retry the same request slot immediately once a poToken has been attached (`retry: true`),
+  // instead of treating it (or a possible accompanying SABR_ERROR part) as fatal.
+  async function sabrCheckStreamProtection(parts, url, videoId, state) {
+    const spsPart = parts.find(p => p.partId === 58);
+    if (!spsPart) return { url, retry: false };
+    const sps = sabrParseStreamProtectionStatus(spsPart.data);
+    if (sps.status < 2) return { url, retry: false };
+
+    console.warn('[SABR] StreamProtectionStatus', sps.status, 'maxRetries:', sps.maxRetries);
+    if (state.poTokenAttempted || !videoId) return { url, retry: false };
+    state.poTokenAttempted = true;
+    try {
+      const poToken = await getContentPoToken(videoId);
+      if (poToken) {
+        const u = new URL(url);
+        u.searchParams.set('pot', poToken);
+        console.warn('[SABR] Attached poToken to further requests after StreamProtectionStatus', sps.status);
+        return { url: u.toString(), retry: sps.status >= 3 };
+      }
+    } catch (e) {
+      console.warn('[SABR] Failed to generate poToken for StreamProtectionStatus', e);
+    }
+    return { url, retry: false };
+  }
+
+  // PLAYBACK_START_POLICY (47) and SELECTABLE_FORMATS (51) are informational — logged
+  // once per session so they're visible instead of silently dropped, but not acted upon.
+  const sabrLoggedPartTypes = new Set();
+  function sabrLogDiagnosticParts(parts) {
+    for (const { partId } of parts) {
+      if ((partId === 47 || partId === 51) && !sabrLoggedPartTypes.has(partId)) {
+        sabrLoggedPartTypes.add(partId);
+        const name = partId === 47 ? 'PLAYBACK_START_POLICY' : 'SELECTABLE_FORMATS';
+        console.log(`[SABR] Received ${name} (part ${partId}) — informational only, not acted upon.`);
+      }
+    }
+  }
+
   function sabrParseReloadPlaybackContext(data) {
     const f = sabrParseProtoVarintFields(data);
     const paramsBytes = f[1];
@@ -337,11 +425,14 @@ const SABR_CLIENT_NAME_IDS = {
 
   // --- Core SABR Methods ---
 
-  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration, videoId = null, component = null }) {
+  async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
     const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientHl = innertube?.context?.client?.hl || 'en';
+    const clientOsName = innertube?.context?.client?.osName || 'Windows';
+    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
@@ -353,12 +444,17 @@ const SABR_CLIENT_NAME_IDS = {
     let totalDurationFromFim = false;
     let initAppended = false;
     let lastSequenceNumber = -1;
+    const spsState = { poTokenAttempted: false };
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag });
+      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
       const parts = [...sabrParseUMP(rawBytes)];
+      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
+      url = spsResult.url;
+      sabrLogDiagnosticParts(parts);
+      if (spsResult.retry) { i--; continue; }
       const redirectPart = parts.find(p => p.partId === 43);
       if (redirectPart) {
         if (++redirectCount > 10) throw new Error('SABR_TOO_MANY_REDIRECTS');
@@ -452,11 +548,14 @@ const SABR_CLIENT_NAME_IDS = {
     }
   }
 
-  async function downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20 }) {
+  async function downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20, videoId = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
     const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientHl = innertube?.context?.client?.hl || 'en';
+    const clientOsName = innertube?.context?.client?.osName || 'Windows';
+    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
@@ -466,6 +565,7 @@ const SABR_CLIENT_NAME_IDS = {
     let playerTimeMs = 0;
     let totalDurationMs = 0;
     const allSegments = [];
+    const spsState = { poTokenAttempted: false };
 
     for (let i = 0; i < maxRequests; i++) {
       const body = sabrBuildRequest({
@@ -475,10 +575,19 @@ const SABR_CLIENT_NAME_IDS = {
         itag,
         playerTimeMs,
         playbackCookieBytes,
+        hl: clientHl,
+        osName: clientOsName,
+        osVersion: clientOsVersion,
+        allAudioFormats,
+        allVideoFormats,
       });
 
       const rawBytes = await sabrFetch(url, body, rn++);
       const parts = [...sabrParseUMP(rawBytes)];
+      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
+      url = spsResult.url;
+      sabrLogDiagnosticParts(parts);
+      if (spsResult.retry) { i--; continue; }
 
       const redirectPart = parts.find(p => p.partId === 43);
       if (redirectPart) {
@@ -610,14 +719,47 @@ const SABR_CLIENT_NAME_IDS = {
     }).then(async () => {
       await appendQueue;
       console.log('[SABR] Stream done, itag:', streamParams.itag, 'total chunks:', chunkCount);
+      if (chunkCount === 0 && !signal?.aborted) {
+        _sabrFallbackToDirectUrl(component, streamParams);
+        return;
+      }
       if (mediaSource.readyState === 'open') mediaSource.endOfStream();
     }).catch(e => {
       if (e.name === 'AbortError') {
         console.log('[SABR] Stream aborted, itag:', streamParams.itag);
       } else {
         console.warn('[SABR] Stream error:', e);
+        if (chunkCount === 0 && !signal?.aborted) {
+          _sabrFallbackToDirectUrl(component, streamParams);
+        }
       }
     });
+  }
+
+  // SABR can end up delivering zero bytes (StreamProtectionStatus escalation, session
+  // throttling, etc. — see SABR_PROTOCOL_NOTES.md) with no way for us to recover within
+  // the SABR/MediaSource pipeline. When that happens, fall back to whatever direct,
+  // already-deciphered progressive/adaptive URL the format carries (same mechanism the
+  // non-SABR quality-switch handlers in components/Player/index.vue already use) instead
+  // of leaving playback stuck.
+  function _sabrFallbackToDirectUrl(component, streamParams) {
+    const isAudio = !!streamParams.isAudio;
+    const el = component.$refs[isAudio ? 'audio' : 'player'];
+    const format = isAudio ? component.currentAudioFormat : component.currentVideoFormat;
+    const url = format?.url;
+    if (!el || !url) {
+      console.warn('[SABR] No direct URL available to fall back to for itag', streamParams.itag);
+      return;
+    }
+    console.warn('[SABR] Falling back to direct URL for itag', streamParams.itag);
+    const time = (streamParams.playerTimeMs || 0) / 1000;
+    const speed = el.playbackRate;
+    el.pause();
+    el.src = '';
+    el.load();
+    el.src = url;
+    el.currentTime = time;
+    el.playbackRate = speed;
   }
 
   async function loadVideoViaSabr(component, selectedFormat = null, startTimeSec = 0) {
@@ -955,11 +1097,14 @@ const SABR_CLIENT_NAME_IDS = {
     }
   }
 
-  async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, videoId = null, component = null }) {
+  async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
     const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientHl = innertube?.context?.client?.hl || 'en';
+    const clientOsName = innertube?.context?.client?.osName || 'Windows';
+    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
@@ -973,6 +1118,7 @@ const SABR_CLIENT_NAME_IDS = {
     let videoInitAppended = false;
     let lastAudioSeq = -1;
     let lastVideoSeq = -1;
+    const spsState = { poTokenAttempted: false };
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -986,9 +1132,18 @@ const SABR_CLIENT_NAME_IDS = {
         audioItag, videoItag,
         audioXtags, videoXtags,
         combined: true,
+        hl: clientHl,
+        osName: clientOsName,
+        osVersion: clientOsVersion,
+        allAudioFormats,
+        allVideoFormats,
       });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
       const parts = [...sabrParseUMP(rawBytes)];
+      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
+      url = spsResult.url;
+      sabrLogDiagnosticParts(parts);
+      if (spsResult.retry) { i--; continue; }
 
       const redirectPart = parts.find(p => p.partId === 43);
       if (redirectPart) {
@@ -1158,14 +1313,33 @@ const SABR_CLIENT_NAME_IDS = {
       onAudioChunk: (data) => { audioChunks++; return appendAudio(data); },
     }).then(async () => {
       console.log('[SABR combined] Stream done. video chunks:', videoChunks, 'audio chunks:', audioChunks);
+      if (videoChunks === 0 && audioChunks === 0 && !signal?.aborted) {
+        _sabrFallbackFromCombined(component, streamParams);
+        return;
+      }
       if (mediaSource.readyState === 'open') mediaSource.endOfStream();
     }).catch(e => {
       if (e.name === 'AbortError') {
         console.log('[SABR combined] Stream aborted');
+        _sabrFallbackFromCombined(component, streamParams);
       } else {
         console.warn('[SABR combined] Stream error:', e);
+        if (videoChunks === 0 && audioChunks === 0 && !signal?.aborted) {
+          _sabrFallbackFromCombined(component, streamParams);
+        }
       }
     });
+  }
+
+  // Combined SABR (single MediaSource, two SourceBuffers on one <video>) has no simple
+  // "direct URL" swap for both tracks at once. On total failure, fall back to the
+  // separate dual-element SABR loaders instead — each of those has its own per-track
+  // direct-URL fallback (_sabrFallbackToDirectUrl) if SABR fails for them too.
+  function _sabrFallbackFromCombined(component, streamParams) {
+    console.warn('[SABR combined] No data received — falling back to separate video/audio SABR streams');
+    const startTimeSec = (streamParams.playerTimeMs || 0) / 1000;
+    loadVideoViaSabr(component, component.currentVideoFormat, startTimeSec);
+    loadAudioViaSabr(component, component.currentAudioFormat, startTimeSec);
   }
 
   async function loadCombinedViaSabr(component, selectedVideoFormat = null, selectedAudioFormat = null, startTimeSec = 0) {

@@ -76,7 +76,7 @@ class Innertube {
   }
   async initAsync() {
     const html = await Http.get({
-      url: constants.URLS.YT_EMBED,
+      url: constants.URLS.YT_MOBILE,
       params: { hl: localStorage.getItem("language") || "en", },
     }).catch((error) => error);
     // Get url of base.js file
@@ -288,43 +288,36 @@ class Innertube {
   }
 
   async getCaptions(id) {
-    let data = {
-      context: this.context,
-      // context: {
-      //   client: constants.INNERTUBE_TECHNICAL(this.context.client),
-      // },
-      videoId: id,
-    };
-    let response = "";
-
-    const clientConfigs  = constants.clientConfigs;
-    for (const config of clientConfigs) {
-      if (config.CLIENTNAME !== "ANDROID_VR") continue;
-      if (data.context.client.clientName === "TVHTML5") continue;
-      data.context.client.clientName = config.CLIENTNAME;
-      data.context.client.clientVersion = config.VERSION_WEB;
-      console.warn("Trying with client config - ", data.context.client);
-      // this.context.client = data.context.client;
-      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
-        data.context.thirdParty = {
-          "embedUrl": constants.URLS.YT_EMBED + id,
-        }
-      }
-      response = await Http.post({
-        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-        data: {
-          ...data,
-        },
-        headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
-      }).catch((error) => error);
-
-      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
-        response?.data?.playabilityStatus?.status !== "LOGIN_REQUIRED" &&
-        response?.data?.playabilityStatus?.status !== "ERROR") {
-        break;
-      }
-    }
+    const response = await this.playerRequest(id);
     return response.data;
+  }
+
+// Currently only one client is playable
+  async playerRequest(id, reloadPlaybackContext = null) {
+    const androidClient = constants.INNERTUBE_CLIENT_WEB_REMIX(this.context.client);
+    let headers = {
+      ...constants.AUTHED_JSON_HEADER(),
+      ...constants.INNERTUBE_HEADER_WEB_REMIX(androidClient),
+    };
+
+    return Http.post({
+      url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
+      data: {
+        context: { client: androidClient },
+        videoId: id,
+        contentCheckOk: true,
+        racyCheckOk: true,
+        playbackContext: {
+          ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
+          contentPlaybackContext: {
+            signatureTimestamp: this.signatureTimestamp,
+            html5Preference: "HTML5_PREF_WANTS",
+            lactMilliseconds: "-1",
+          },
+        },
+      },
+      headers: headers,
+    }).catch((error) => error);
   }
 
   async getVidAsync(id, reloadPlaybackContext = null, tvParams = null) {
@@ -357,25 +350,7 @@ class Innertube {
       }).catch((error) => error);
 
       const [responsePlayer, responseNextMobile] = await Promise.all([
-        Http.post({
-          url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-          data: {
-            context: tvContext,
-            videoId: id,
-            racyCheckOk: true,
-            contentCheckOk: true,
-            playbackContext: {
-              ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
-              contentPlaybackContext: {
-                signatureTimestamp: this.signatureTimestamp,
-                html5Preference: "HTML5_PREF_WANTS",
-                lactMilliseconds: "-1",
-                autonavState: "STATE_NONE",
-              },
-            },
-          },
-          headers: constants.AUTHED_JSON_HEADER(),
-        }).catch((error) => error),
+        this.playerRequest(id, reloadPlaybackContext),
         Http.post({
           url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
           data: {
@@ -397,16 +372,6 @@ class Innertube {
       response = responsePlayer;
       responseNext.data._mobileNext = responseNextMobile.error ? null : responseNextMobile.data;
     } else {
-      let data = {
-        context: {
-          client: constants.INNERTUBE_VIDEO(this.context.client),
-        },
-        videoId: id,
-      };
-      if (reloadPlaybackContext) {
-        data.playbackContext = { reloadPlaybackContext };
-      }
-
       responseNext = await Http.post({
         url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
         data: {
@@ -425,96 +390,7 @@ class Innertube {
         headers: constants.INNERTUBE_HEADER(this.context.client),
       }).catch((error) => error);
 
-      const clientConfigs = constants.clientConfigs;
-      for (const config of clientConfigs) {
-        if (this.recommendationsFix) {
-          data.context.client.userAgent = config.CLIENTNAME;
-        }
-        data.context.client.clientName = config.CLIENTNAME;
-        data.context.client.clientVersion = config.VERSION_WEB;
-        data.context.client.clientScreen = config.clientScreen;
-        config.deviceMake ? data.context.client.deviceMake = config.deviceMake : ""
-        config.deviceModel ? data.context.client.deviceModel = config.deviceModel : ""
-        config.browserName ? data.context.client.browserName = config.browserName : ""
-        config.browserVersion ? data.context.client.browserVersion = config.browserVersion : ""
-        config.platform ? data.context.client.platform = config.platform : ""
-        config.USER_AGENT ? data.context.client.userAgent = config.USER_AGENT : ""
-        console.warn("Trying with client config - ", data.context.client);
-        if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
-          data.context.thirdParty = { "embedUrl": constants.URLS.YT_EMBED + id };
-        }
-        response = await Http.post({
-          url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-          data: {
-            ...data,
-            playerParams: this.playerParams,
-            contentCheckOk: false,
-            racyCheckOk: false,
-            playbackContext: {
-              ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
-              contentPlaybackContext: {
-                currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
-                vis: 0,
-                splay: false,
-                autoCaptionsDefaultOn: false,
-                autonavState: "STATE_NONE",
-                html5Preference: "HTML5_PREF_WANTS",
-                signatureTimestamp: this.signatureTimestamp,
-                referer: "https://m.youtube.com/",
-                lactMilliseconds: "-1",
-                watchAmbientModeContext: { watchAmbientModeEnabled: true },
-              },
-            },
-          },
-          headers: constants.INNERTUBE_NEW_HEADER(data.context.client, false),
-        }).catch((error) => error);
-
-        if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
-          response?.data?.playabilityStatus?.status !== "LOGIN_REQUIRED" &&
-          response?.data?.playabilityStatus?.status !== "ERROR") {
-          break;
-        }
-      }
-    }
-
-    // For live streams, re-request as ANDROID_VR without auth to get HLS manifest. Temp solution.
-    // TODO: use SABR from TV client
-    if (response?.data?.videoDetails?.isLive) {
-      const androidVrConfig = constants.clientConfigs.find(c => c.CLIENTNAME === "ANDROID_VR");
-      const androidVrClient = {
-        ...constants.INNERTUBE_VIDEO(this.context.client),
-        clientName: androidVrConfig.CLIENTNAME,
-        clientVersion: androidVrConfig.VERSION_WEB,
-        clientScreen: androidVrConfig.clientScreen,
-        CLIENT_WEB_M: androidVrConfig.CLIENT_WEB_M,
-        VERSION: androidVrConfig.VERSION_WEB,
-      };
-      const webEmbedContext = {
-        client: androidVrClient,
-        thirdParty: { embedUrl: `https://www.youtube.com/embed/${id}` },
-      };
-      const liveResponse = await Http.post({
-        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-        data: {
-          context: webEmbedContext,
-          videoId: id,
-          racyCheckOk: true,
-          contentCheckOk: true,
-          playbackContext: {
-            ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
-            contentPlaybackContext: {
-              signatureTimestamp: this.signatureTimestamp,
-              html5Preference: "HTML5_PREF_WANTS",
-              lactMilliseconds: "-1",
-              autonavState: "STATE_NONE",
-            },
-          },
-        },
-        headers: constants.INNERTUBE_NEW_HEADER(webEmbedContext.client, false),
-      }).catch((error) => error);
-      if (liveResponse?.data?.playabilityStatus?.status === "OK") {
-        response = liveResponse;
-      }
+      response = await this.playerRequest(id, reloadPlaybackContext);
     }
 
     if (response.error) {

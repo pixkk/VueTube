@@ -1,7 +1,6 @@
 // Google OAuth 2.0 Device Code Flow — YouTube TV (V2) approach
 // Endpoints: https://www.youtube.com/o/oauth2/device/code
 //            https://www.youtube.com/o/oauth2/token
-// Same method used by SmartTube (AuthApi V2)
 
 import { Http } from "@capacitor-community/http";
 

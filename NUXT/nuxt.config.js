@@ -58,6 +58,12 @@ export default {
   buildModules: ["@nuxtjs/vuetify"],
   modules: [],
 
+  build: {
+    // bgutils-js ships untranspiled ESM (optional chaining, nullish coalescing)
+    // that webpack 4's default parser can't read on its own.
+    transpile: ["bgutils-js"],
+  },
+
   vuetify: {
     customVariables: ["~/assets/variables.scss"],
     treeShake: true,
