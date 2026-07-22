@@ -62,7 +62,7 @@
         <div>
           {{ lang.size }}:
           {{
-            require("~/plugins/utils").humanFileSize(
+            humanFileSize(
               latestVersion?.assets[0].size
             )
           }}
@@ -120,6 +120,7 @@
 import { Device } from "@capacitor/device";
 import showdown from "showdown";
 import {useRuntimeConfig} from "nuxt/app";
+import { humanFileSize, delay } from "~/lib/utils";
 
 export default {
   layout: "empty",
@@ -209,7 +210,7 @@ export default {
 
         //---   Wait like 2 seconds because if people don't see loading, they think it didn't refresh properly   ---//
         if (!this.$route.query.nowait)
-          await require("~/plugins/utils").delay(2000);
+          await delay(2000);
 
         //---   Get Proper File   ---//
         await this.getUpdate();
