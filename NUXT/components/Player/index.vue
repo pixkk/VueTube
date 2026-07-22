@@ -167,7 +167,7 @@
 
     <!-- controls container -->
     <div
-      v-if="$refs.player && $refs.player.currentSrc"
+      v-if="$refs.player && (vidSrc || $refs.player.currentSrc)"
       style="transition: opacity 0.15s ease-in-out"
       :style="
         controls && !seeking
@@ -296,7 +296,7 @@
         <v-spacer />
         <!-- // TODO: merge the bottom 2 into 1 reusable component -->
         <quality
-          v-if="$refs.player && $refs.player.currentSrc && (!hls || !dash)"
+          v-if="$refs.player && (vidSrc || $refs.player.currentSrc) && (!hls || !dash)"
           :sources="sources"
           :audioSources="audioSources"
           :current-source="$refs.player"
@@ -472,6 +472,7 @@ export default {
       isUserSeeking: false,
       isInternalSeek: false,
       hls: null,
+      isLive: null,
       dash: null,
       hlsStream: null,
       dashStream: null,
@@ -761,16 +762,19 @@ export default {
     this.$refs.player.addEventListener("waiting", this.waitingEvent);
     this.$refs.player.addEventListener("playing", this.playingEvent);
     this.$refs.player.addEventListener("ended", this.endedEvent);
+    this.isLive = this.video.isLive;
 
-    this.hls = this.video.hls;
-    this.dash = this.video.dash;
-    if (this.hls) {
-      this.hlsStream = new Hls();
-      this.hlsStream.loadSource(this.hls);
-      this.hlsStream.attachMedia(this.vid);
-    } else if (this.dash) {
-      this.dashStream = dashjs.MediaPlayer().create();
-      this.dashStream.initialize(this.vid, this.dash, true);
+    if (this.isLive) {
+      this.hls = this.video.hls;
+      this.dash = this.video.dash;
+      if (this.hls) {
+        this.hlsStream = new Hls();
+        this.hlsStream.loadSource(this.hls);
+        this.hlsStream.attachMedia(this.vid);
+      } else if (this.dash) {
+        this.dashStream = dashjs.MediaPlayer().create();
+        this.dashStream.initialize(this.vid, this.dash, true);
+      }
     }
 
     if (

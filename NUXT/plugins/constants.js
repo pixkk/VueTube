@@ -52,12 +52,12 @@ const MWEB = {
   CLIENT_WEB_D: 1,
 };
 
-const webRemixApiVal = {
-  CLIENTNAME: "WEB_REMIX",
-  CLIENT_ID: 67,
-  VERSION_WEB: "1.20260707.12.00",
+const visionOsClient = {
+  CLIENTNAME: "VISIONOS",
+  CLIENT_ID: 101,
+  VERSION_WEB: "0.1",
   USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-  REFERER: "https://music.youtube.com",
+  REFERER: url.YT_URL,
   browserName: "Chrome",
   browserVersion: "125.0.0.0",
   osName: "Windows",
@@ -102,7 +102,7 @@ const filesystem = {
 module.exports = {
   URLS: url,
   YT_API_VALUES: androidApiVal,
-  WEB_REMIX_API_VALUES: webRemixApiVal,
+  VISION_OS_API_VALUES: visionOsClient,
   fs: filesystem,
   clientConfigs: clientConfigs,
 
@@ -268,37 +268,37 @@ module.exports = {
     };
   },
 
-  INNERTUBE_CLIENT_WEB_REMIX: (info) => {
+  INNERTUBE_CLIENT_VISION_OS: (info) => {
     return {
       gl: info.gl,
       hl: localStorage.getItem("language") || "en",
-      userAgent: webRemixApiVal.USER_AGENT,
-      clientName: webRemixApiVal.CLIENTNAME,
-      clientVersion: webRemixApiVal.VERSION_WEB,
-      osName: webRemixApiVal.osName,
-      osVersion: webRemixApiVal.osVersion,
-      platform: webRemixApiVal.platform,
-      browserName: webRemixApiVal.browserName,
-      browserVersion: webRemixApiVal.browserVersion,
+      userAgent: visionOsClient.USER_AGENT,
+      clientName: visionOsClient.CLIENTNAME,
+      clientVersion: visionOsClient.VERSION_WEB,
+      osName: visionOsClient.osName,
+      osVersion: visionOsClient.osVersion,
+      platform: visionOsClient.platform,
+      browserName: visionOsClient.browserName,
+      browserVersion: visionOsClient.browserVersion,
       clientFormFactor: "UNKNOWN_FORM_FACTOR",
-      originalUrl: webRemixApiVal.REFERER,
+      originalUrl: visionOsClient.REFERER,
       remoteHost: info.remoteHost,
       visitorData: info.visitorData,
     };
   },
 
-  INNERTUBE_HEADER_WEB_REMIX: (info) => {
+  INNERTUBE_HEADER_VISION_OS: (info) => {
     return {
       accept: "*/*",
-      "user-agent": webRemixApiVal.USER_AGENT,
+      "user-agent": visionOsClient.USER_AGENT,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
-      origin: webRemixApiVal.REFERER,
-      referer: webRemixApiVal.REFERER,
+      origin: visionOsClient.REFERER,
+      referer: visionOsClient.REFERER,
       "x-goog-authuser": 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": String(webRemixApiVal.CLIENT_ID),
-      "x-youtube-client-version": webRemixApiVal.VERSION_WEB,
+      "x-youtube-client-name": String(visionOsClient.CLIENT_ID),
+      "x-youtube-client-version": visionOsClient.VERSION_WEB,
     };
   },
 };

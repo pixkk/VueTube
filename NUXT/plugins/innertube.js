@@ -294,10 +294,10 @@ class Innertube {
 
 // Currently only one client is playable
   async playerRequest(id, reloadPlaybackContext = null) {
-    const androidClient = constants.INNERTUBE_CLIENT_WEB_REMIX(this.context.client);
+    const androidClient = constants.INNERTUBE_CLIENT_VISION_OS(this.context.client);
     let headers = {
       // ...constants.AUTHED_JSON_HEADER(),
-      ...constants.INNERTUBE_HEADER_WEB_REMIX(androidClient),
+      ...constants.INNERTUBE_HEADER_VISION_OS(androidClient),
     };
 
     return Http.post({

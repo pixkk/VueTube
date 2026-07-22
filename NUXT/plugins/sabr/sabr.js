@@ -230,7 +230,6 @@ const SABR_CLIENT_NAME_IDS = {
     const response = await fetch(url.toString(), {
       method: 'POST',
       body: body,
-      signal,
       headers: {
         'content-type': 'application/x-protobuf',
         'accept': 'application/vnd.yt-ump',
@@ -450,6 +449,8 @@ const SABR_CLIENT_NAME_IDS = {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
+
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
       const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
       url = spsResult.url;
@@ -1139,6 +1140,8 @@ const SABR_CLIENT_NAME_IDS = {
         allVideoFormats,
       });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
+
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
       const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
       url = spsResult.url;
