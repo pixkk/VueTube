@@ -9,6 +9,7 @@ import constants from "~/lib/constants";
 import rendererUtils from "~/lib/renderers";
 import {Buffer} from "buffer";
 import {Toast} from "@capacitor/toast";
+import {refreshAccountInfo} from "~/plugins/auth";
 
 function getEncoding(contentType) {
   // console.warn(contentType);
@@ -110,6 +111,52 @@ const searchModule = {
 
 //---   Recommendations   ---//
 
+// Converts a TV-client lockupViewModel tile (used in TV search/recommendations shelves)
+// into the legacy tileRenderer shape the UI renderer components already understand.
+function lockupViewModelToTileRenderer(lv) {
+  const overlays = (lv.contentImage?.thumbnailViewModel?.overlays || [])
+    .map((ov) => {
+      const badge = ov.thumbnailBottomOverlayViewModel?.badges?.[0]?.thumbnailBadgeViewModel;
+      if (!badge) return null;
+      return {
+        thumbnailOverlayTimeStatusRenderer: {
+          text: { simpleText: badge.text },
+          style: badge.badgeStyle === "THUMBNAIL_OVERLAY_BADGE_STYLE_LIVE" ? "LIVE" : "DEFAULT",
+        },
+      };
+    })
+    .filter(Boolean);
+  const rows = lv.metadata?.lockupMetadataViewModel?.metadata?.contentMetadataViewModel?.metadataRows || [];
+  return {
+    contentId: lv.contentId,
+    onSelectCommand: lv.rendererContext?.commandContext?.onTap?.innertubeCommand || {},
+    header: {
+      tileHeaderRenderer: {
+        thumbnail: { thumbnails: lv.contentImage?.thumbnailViewModel?.image?.sources || [] },
+        thumbnailOverlays: overlays,
+      },
+    },
+    metadata: {
+      tileMetadataRenderer: {
+        title: { simpleText: lv.metadata?.lockupMetadataViewModel?.title?.content || "" },
+        lines: rows.map((row) => ({
+          lineRenderer: {
+            items: (row.metadataParts || []).map((part) => ({
+              lineItemRenderer: { text: { simpleText: part.text?.content || "" } },
+            })),
+          },
+        })),
+      },
+    },
+  };
+}
+
+function normalizeTVSearchItems(items) {
+  return (items || [])
+    .filter((item) => item.lockupViewModel || item.tileRenderer)
+    .map((item) => item.tileRenderer ? item : { tileRenderer: lockupViewModelToTileRenderer(item.lockupViewModel) });
+}
+
 let InnertubeAPI;
 
 // Loads Innertube object. This will be the object used in all future Innertube API calls. getAPI Code provided by Lightfire228 (https://github.com/Lightfire228)
@@ -128,12 +175,12 @@ const innertubeModule = {
     return InnertubeAPI;
   },
 
-  async getVid(id) {
+  async getVid(id, tvParams = null) {
     try {
-      return await InnertubeAPI.VidInfoAsync(id);
+      return await InnertubeAPI.VidInfoAsync(id, tvParams);
     } catch (error) {
       await this.getAPI();
-      return await InnertubeAPI.VidInfoAsync(id);
+      return await InnertubeAPI.VidInfoAsync(id, tvParams);
     }
   },
 
@@ -186,11 +233,35 @@ const innertubeModule = {
   // It just works™
   // Front page recommendation
   async recommend() {
-    const response = await InnertubeAPI.getRecommendationsAsync();
+    let response = await InnertubeAPI.getRecommendationsAsync();
+    if (!response.success) {
+      if (response.status_code === 401) {
+        await refreshAccountInfo().catch(() => {});
+        response = await InnertubeAPI.getRecommendationsAsync();
+      }
+      if (!response.success) {
+        throw new Error("An error occurred and innertube failed to respond");
+      }
+    }
+
     let final;
-    if (!response.success)
-      throw new Error("An error occurred and innertube failed to respond");
-    // console.warn(response.data);
+    // TV client response: tvBrowseRenderer
+    const tvBrowse = response.data.contents?.tvBrowseRenderer;
+    if (tvBrowse) {
+      const sectionList = tvBrowse.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer;
+      const shelves = sectionList?.contents || [];
+      final = shelves
+        .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+        .map((s) => ({
+          items: s.shelfRenderer.content.horizontalListRenderer.items
+            .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+            .map((i) => ({ tileRenderer: i.tileRenderer })),
+        }));
+      const continuations = sectionList?.continuations || null;
+      return { continuations, contents: final };
+    }
+
+    // Non-TV path (unchanged)
     let contents = response.data.contents.singleColumnBrowseResultsRenderer
       .tabs[0].tabRenderer.content.sectionListRenderer?.contents[0]
       .itemSectionRenderer?.contents[0]?.elementRenderer?.newElement
@@ -393,15 +464,26 @@ const innertubeModule = {
   },
   async recommendContinuation(continuation, endpoint) {
     const response = await this.getContinuation(continuation, endpoint);
-    const contents =
-      response.data.continuationContents.sectionListContinuation.contents;
+    const continuationContents = response.data.continuationContents;
+
+    // TV continuation: horizontalListContinuation
+    if (continuationContents?.horizontalListContinuation) {
+      const hlc = continuationContents.horizontalListContinuation;
+      const items = (hlc.items || [])
+        .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+        .map((i) => ({ tileRenderer: i.tileRenderer }));
+      const continuations = hlc.continuations || null;
+      return { continuations, contents: [{ items }] };
+    }
+
+    // Non-TV continuation: sectionListContinuation
+    const contents = continuationContents.sectionListContinuation.contents;
     const final = contents.map((shelves) => {
       const video = shelves.shelfRenderer?.content?.horizontalListRenderer;
       if (video) return video;
     });
-    const continuations = response.data.continuationContents
-      .sectionListContinuation.continuations
-      ? response.data.continuationContents.sectionListContinuation.continuations
+    const continuations = continuationContents.sectionListContinuation.continuations
+      ? continuationContents.sectionListContinuation.continuations
       : null;
     return { continuations: continuations, contents: final };
   },
@@ -466,8 +548,58 @@ const innertubeModule = {
   async search(query) {
     try {
       const response = await InnertubeAPI.getSearchAsync(query);
-      return response.contents.sectionListRenderer;
+      const slr = response.contents.sectionListRenderer;
+
+      // TV client response: shelves contain lockupViewModel items — convert to tileRenderer
+      const isTVSearch = slr?.contents?.length > 0 && slr.contents.every((c) => c.shelfRenderer);
+      if (isTVSearch) {
+        slr.contents = slr.contents.map((c) => {
+          const shelf = c.shelfRenderer;
+          if (shelf?.content?.horizontalListRenderer?.items) {
+            shelf.content.horizontalListRenderer.items = normalizeTVSearchItems(shelf.content.horizontalListRenderer.items);
+          }
+          return c;
+        });
+
+        // Lift the first shelf's continuation to sectionListRenderer level
+        const firstHlrContinuation = slr.contents[0]?.shelfRenderer?.content?.horizontalListRenderer?.continuations;
+        if (firstHlrContinuation) {
+          slr.continuations = Array.isArray(firstHlrContinuation) ? firstHlrContinuation : [firstHlrContinuation];
+          slr._tvSearch = true;
+        }
+      }
+
+      return slr;
     } catch (err) {}
+  },
+
+  async searchContinuation(continuation) {
+    const response = await this.getContinuation(continuation, "search");
+    const cc = response.data?.continuationContents;
+    if (!cc?.sectionListContinuation) return null;
+
+    const slc = cc.sectionListContinuation;
+    const firstShelf = slc.contents?.[0]?.shelfRenderer;
+
+    // TV continuation: sectionListContinuation wraps a shelfRenderer with horizontalListRenderer
+    if (firstShelf?.content?.horizontalListRenderer) {
+      const hlr = firstShelf.content.horizontalListRenderer;
+      hlr.items = normalizeTVSearchItems(hlr.items);
+      const hlrContinuations = hlr.continuations;
+      return {
+        _tvSearch: true,
+        contents: slc.contents,
+        continuations: hlrContinuations
+          ? (Array.isArray(hlrContinuations) ? hlrContinuations : [hlrContinuations])
+          : [],
+      };
+    }
+
+    // Non-TV continuation
+    return {
+      contents: slc.contents,
+      continuations: slc.continuations,
+    };
   },
 
   async saveApiStats(query, url) {

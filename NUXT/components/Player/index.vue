@@ -83,8 +83,6 @@
 
     >Skip {{ sBblockCategoryText }}</button>
 
-    <audio ref="audio" mediagroup="vuetubecute" :src="hls || dash ? '' : audSrc" />
-
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
       elevation="0"
@@ -210,7 +208,6 @@
           :loop="$refs.player.loop"
           @loop="
             ($refs.player.loop = !$refs.player.loop),
-              ($refs.audio.loop = !$refs.audio.loop),
               $store.commit('player/setLoop', $refs.player.loop)
           "
         />
@@ -244,7 +241,7 @@
           v-if="$refs.player"
           :video="$refs.player"
           :buffering="bufferingDetected || false"
-          @play="$refs.player.play(), $refs.audio.play()"
+          @play="playHandler"
           @pause="pauseHandler"
         />
         <v-btn
@@ -286,7 +283,9 @@
           :sources="sources"
           :audioSources="audioSources"
           :current-source="$refs.player"
-          :current-audio-source="$refs.audio"
+          :current-audio-source="$refs.player"
+          :current-video-format="currentVideoFormat"
+          :current-audio-format="currentAudioFormat"
           @qualityInfo="qualityInfoHandler($event)"
           @qualityAudioInfo="audioQualityInfoHandler($event)"
         />
@@ -296,7 +295,6 @@
           :current-speed="$refs.player.playbackRate"
           @speed="
             ($refs.player.playbackRate = $event),
-              ($refs.audio.playbackRate = $event),
               $store.state.player.speedAutosave
                 ? $store.commit('player/setSpeed', $event)
                 : {}
@@ -352,9 +350,7 @@
       :buffered="buffered"
       :blocks="sponsorBlocks.videoID ? sponsorBlocks : null"
       @seeking="seeking = !seeking"
-      @scrub="
-        ($refs.player.currentTime = $event), ($refs.audio.currentTime = $event)
-      "
+      @scrub="userSeek($event)"
     />
 
     <v-progress-circular
@@ -396,6 +392,7 @@ import constants from "~/lib/constants";
 import { Http } from "@capacitor-community/http";
 import { convertTranscriptToVTT } from "~/lib/utils";
 import $youtube from "~/lib/innertube";
+import sabr from "~/lib/sabr";
 import Endscreen from "./endscreen.vue";
 
 export default {
@@ -460,9 +457,10 @@ export default {
       buffered: 0,
       watched: 0,
       vidSrc: "",
-      audSrc: "",
+      // audSrc: "",
       hls: null,
       dash: null,
+      isLive: null,
       hlsStream: null,
       dashStream: null,
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
@@ -475,6 +473,19 @@ export default {
       sBblockCategoryText: "",
       endBlockTime: -1,
       poster: "",
+      // SABR playback state
+      currentVideoFormat: null,
+      currentAudioFormat: null,
+      videoMediaSource: null,
+      videoSourceBuffer: null,
+      // audioMediaSource: null,
+      audioSourceBuffer: null,
+      videoAbortController: null,
+      audioAbortController: null,
+      isInternalSeek: false,
+      isUserSeeking: false,
+      wasPlayingBeforeSeek: false,
+      lastLoadingStarted: 0,
     };
   },
   async mounted() {
@@ -506,7 +517,6 @@ export default {
         data.segments?.forEach((block) => {
           if (block.category === "music_offtopic") {
             this.isMusic = true;
-            this.$refs.audio.playbackRate = 1;
             this.$refs.player.playbackRate = 1;
           }
         });
@@ -517,7 +527,7 @@ export default {
     }
 
     this.vid = this.$refs.player;
-    this.aud = this.$refs.audio;
+    // this.aud = this.$refs.audio;
 
     // TODO: detect this.isMusic from the video or channel metadata instead of just SB segments
 
@@ -678,7 +688,7 @@ export default {
           // let audioCodecFromStorage = localStorage.getItem("audioCodec");
           if (audioSFromStorage) {
             if (audioSFromStorage === this.audioSources[i].itag.toString()) {
-              this.audSrc = this.audioSources[i].url;
+              // this.audSrc = this.audioSources[i].url;
               indexOfPreferredAudioQuality = i;
               break;
             }
@@ -686,7 +696,7 @@ export default {
         }
       }
       if (indexOfPreferredAudioQuality === -1) {
-        this.audSrc = this.audioSources[0].url;
+        // this.audSrc = this.audioSources[0].url;
       }
     }
 
@@ -707,7 +717,7 @@ export default {
       if (source?.audioTrack !== undefined) {
         if (localStorage.getItem("audioTrackId") !== undefined) {
           if (source.audioTrack?.id === localStorage.getItem("audioTrackId")) {
-            this.audSrc = source.url;
+            // this.audSrc = source.url;
             dubIsFound = true;
           }
         }
@@ -726,36 +736,59 @@ export default {
         if (source?.audioTrack !== undefined) {
           if (localStorage.getItem("audioTrackId") !== undefined) {
             if (source.audioTrack?.id.split(".")[0] === localStorage.getItem("audioTrackId").split(".")[0]) {
-              this.audSrc = source.url;
+              // this.audSrc = source.url;
               dubIsFound = true;
             }
             else {
               if (source.audioTrack.audioIsDefault === Boolean("true")) {
-                this.audSrc = source.url;
+                // this.audSrc = source.url;
               }
             }
           }
         }
       });
     }
+    this.currentVideoFormat = this.sources[indexOfPreferredQuality];
+    this.currentAudioFormat = this.audioSources[0];
 
-    this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
+    // this.aud.addEventListener("loadeddata", this.loadedAudioEvent);
 
-    this.hls = this.video.hls;
-    this.dash = this.video.dash;
-    if (this.hls) {
-      this.hlsStream = new Hls();
-      this.hlsStream.loadSource(this.hls);
-      this.hlsStream.attachMedia(this.vid);
-    } else if (this.dash) {
-      this.dashStream = dashjs.MediaPlayer().create();
-      this.dashStream.initialize(this.vid, this.dash, true);
+    this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
+    this.$refs.player.addEventListener("progress", this.progressEvent);
+    this.$refs.player.addEventListener("seeking", this.seekingEvent);
+    this.$refs.player.addEventListener("seeked", this.seekedEvent);
+    this.$refs.player.addEventListener("waiting", this.waitingEvent);
+    this.$refs.player.addEventListener("playing", this.playingEvent);
+    this.$refs.player.addEventListener("ended", this.endedEvent);
+    this.isLive = this.video.isLive;
+
+    if (this.isLive) {
+      this.hls = this.video.hls;
+      this.dash = this.video.dash;
+      if (this.hls) {
+        this.hlsStream = new Hls();
+        this.hlsStream.loadSource(this.hls);
+        this.hlsStream.attachMedia(this.vid);
+      } else if (this.dash) {
+        this.dashStream = dashjs.MediaPlayer().create();
+        this.dashStream.initialize(this.vid, this.dash, true);
+      }
     }
-    else {
+
+    if (
+      this.video.metadata?.ustreamerConfig &&
+      this.video.metadata?.serverAbrStreamingUrl
+    ) {
+      let startTimeSec = 0;
       const url = new URL(window.location.href);
-
       const tParam = url.searchParams.get("t");
-
+      if (tParam) {
+        startTimeSec = parseInt(tParam.replace(/[^0-9]/g, '')) || 0;
+      }
+      this.loadCombinedViaSabr(null, null, startTimeSec);
+    } else {
+      const url = new URL(window.location.href);
+      const tParam = url.searchParams.get("t");
       this.setStartTime(tParam);
     }
   },
@@ -804,22 +837,17 @@ export default {
       // HAVE_FUTURE_DATA (3): Data for the current and at least the next frame is available.
       // HAVE_ENOUGH_DATA (4): Enough data is available to start playback.
 
-      if (this.vid.readyState >= 3 && this.aud.readyState >= 3) {
+      if (this.vid.readyState >= 3) {
         this.bufferingDetected = false;
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
-        this.aud.play();
         this.vid.play();
 
         if (!this.isMusic) {
-          this.$refs.audio.playbackRate = this.$store.state.player.speed;
           this.$refs.player.playbackRate = this.$store.state.player.speed;
         } else {
-          this.$refs.audio.playbackRate = 1;
           this.$refs.player.playbackRate = 1;
         }
 
         this.$refs.player.loop = this.$store.state.player.loop || false;
-        this.$refs.audio.loop = this.$store.state.player.loop || false;
         this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
         // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
@@ -829,51 +857,122 @@ export default {
         this.$refs.player.addEventListener("waiting", this.waitingEvent);
         this.$refs.player.addEventListener("playing", this.playingEvent);
         this.$refs.player.addEventListener("ended", this.endedEvent);
-
-        this.$refs.player.addEventListener('pause', () => {
-          this.$refs.audio.pause();
-        });
-        this.$refs.player.addEventListener('play', () => {
-          this.$refs.audio.play();
-        });
-
-
       }
       else {
         this.vid.pause();
-        this.$refs.audio.pause();
+      }
+    },
+    // Returns whether `time` falls within a buffered range of `el` (used to decide
+    // whether a SABR seek can rely on the native "seeked" event or must eagerly
+    // restart the stream at the target time instead).
+    isTimeBuffered(el, time) {
+      if (!el) return false;
+      const buf = el.buffered;
+      const duration = el.duration;
+      for (let i = 0; i < buf.length; i++) {
+        const start = buf.start(i);
+        const end = buf.end(i);
+        if (duration && end >= duration - 0.5 && time >= start && time <= duration) {
+          return true;
+        }
+        if (time >= start && time <= end - 0.5) {
+          return true;
+        }
+      }
+      return false;
+    },
+    userSeek(time) {
+      console.log("[PLAYER] userSeek to", time);
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
+      this.isUserSeeking = true;
+      const duration = this.$refs.player?.duration;
+      if (duration && !isNaN(duration) && time >= duration) {
+        time = duration - 0.2;
+      }
+      if (time < 0) {
+        time = 0;
+      }
+      this.$refs.player.currentTime = time;
+
+      // The browser only fires the "seeked" event once the target position is
+      // buffered. For a forward seek into an unbuffered region that never
+      // happens until the running SABR stream sequentially downloads everything
+      // up to the target. So for unbuffered SABR seeks we restart the stream at
+      // the target right here instead of waiting for "seeked".
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl &&
+        !this.isTimeBuffered(this.$refs.player, time)
+      ) {
+        this.isUserSeeking = false; // handled here; don't double-handle in seekedEvent
+        this.bufferingDetected = true;
+        this.lastLoadingStarted = Date.now();
+        if (this.$refs.player) this.$refs.player.pause();
+        this.loadCombinedViaSabr(this.currentVideoFormat, this.currentAudioFormat, time);
       }
     },
     seekingEvent() {
-      // if (this.seeking) {
-        console.log("seeking");
-      this.bufferingDetected = true;
+      console.log("seeking", this.$refs.player?.currentTime);
+      if (this.isInternalSeek) {
+        return;
+      }
+      // Only pause for user-initiated seeks (when seeking data prop is true),
+      // not for internal MSE browser seeks (gap-skipping between segments)
+      if (this.seeking || this.isUserSeeking) {
+        this.bufferingDetected = true;
         this.$refs.player.pause();
-        this.$refs.audio.pause();
-      // }
+      }
     },
     seekedEvent() {
-      // if (!this.seeking) {
-        console.log("seeked");
-      setTimeout(() => {
-        this.$refs.audio.currentTime = this.$refs.player.currentTime;
-        this.$refs.player.play();
-        this.$refs.audio.play();
-        this.bufferingDetected = false;
-      }, 1500);
-      // }
+      console.log("seeked", this.$refs.player?.currentTime);
+      if (this.isInternalSeek) {
+        this.isInternalSeek = false;
+        return;
+      }
+
+      if (this.isUserSeeking) {
+        this.isUserSeeking = false;
+        const wasPlaying = this.wasPlayingBeforeSeek;
+
+        if (
+          this.video.metadata?.ustreamerConfig &&
+          this.video.metadata?.serverAbrStreamingUrl
+        ) {
+          // Unbuffered SABR seeks are handled eagerly in userSeek (the browser
+          // won't fire "seeked" until the target is buffered). Here the target
+          // is already buffered, so just resume playback.
+          const seekTime = this.$refs.player.currentTime;
+          this.bufferingDetected = true;
+          this.lastLoadingStarted = Date.now();
+          if (this.$refs.player) this.$refs.player.pause();
+          if (this.$refs.player) this.$refs.player.currentTime = seekTime;
+          setTimeout(() => {
+            if (wasPlaying && this.$refs.player) this.$refs.player.play().catch(() => {});
+            this.bufferingDetected = false;
+            this.wasPlayingBeforeSeek = false;
+          }, 1000);
+          return;
+        }
+
+        this.bufferingDetected = true;
+        this.lastLoadingStarted = Date.now();
+        if (this.$refs.player) this.$refs.player.pause();
+        setTimeout(() => {
+          if (wasPlaying) {
+            if (this.$refs.player) this.$refs.player.play().catch(() => {});
+          }
+          this.bufferingDetected = false;
+          this.wasPlayingBeforeSeek = false;
+        }, 1000);
+      }
     },
 
 
     timeUpdateEvent() {
-      if (Math.abs(this.$refs.audio.currentTime - this.$refs.player.currentTime) > 500 / 1000) {
-
-        this.bufferingDetected = true;
-        setTimeout(() => {
-          this.$refs.audio.currentTime = this.$refs.player.currentTime;
-          this.bufferingDetected = false;
-        }, 1000);
+      if (this.bufferingDetected || this.seeking || this.isUserSeeking) {
+        return;
       }
+      // desync detection not needed — audio/video are in a single MediaSource
       if (!this.seeking) this.progress = this.vid.currentTime; // for seekbar
 
       // console.log("sb check", this.sponsorBlocks);
@@ -891,15 +990,12 @@ export default {
               this.endBlockTime = block.segment[1];
               this.isSegment = true;
               this.sBblockCategoryText = block.category;
-              this.$refs.skipButton.onclick = skipSegment.bind(null, this.$refs.player, this.vid.duration, this.$youtube, block.segment[1], block.category);
-
-              function skipSegment(param1, param2, param3, param4, param5) {
+              this.$refs.skipButton.onclick = () => {
                 console.log("skipped");
-                param1.currentTime = param4;
-                param3.showToast("Skipped " + param5 + " sponsor");
-              }
+                this.userSeek(block.segment[1]);
+                this.$youtube.showToast("Skipped " + block.category + " sponsor");
+              };
 
-              // this.$refs.audio.currentTime = this.$refs.player.currentTime;
               return;
             }
 
@@ -913,17 +1009,7 @@ export default {
       this.videoEnded = true;
     },
     progressEvent() {
-      // if (this.bufferingDetected) {
-      //   this.$refs.audio.currentTime = this.vid.currentTime;
-      //   clearTimeout(this.bufferingDetected);
-      //   this.bufferingDetected = false;
-      // }
-      if (
-        this.$refs.audio.paused &&
-        !this.$refs.player.paused &&
-        this.$refs.player.readyState >= 3
-      )
-        this.$refs.audio.play();
+      // audio sync not needed — single MediaSource
       try {
 
         this.buffered = (this.vid.buffered.end(0) / this.vid.duration) * 100;
@@ -936,30 +1022,29 @@ export default {
       let threshold = 1000; //ms after which user perceives buffering
       this.bufferingDetected = true;
       if (!this.$refs.player.paused) {
-        setTimeout(() => {
-          this.$refs.audio.pause();
-          //show buffering
-        }, threshold);
+        // setTimeout(() => { this.$refs.audio.pause(); }, threshold);
       }
     },
     playingEvent() {
       this.videoEnded = false;
       if (this.bufferingDetected !== false) {
         clearTimeout(this.bufferingDetected);
-        // this.$refs.audio.currentTime = this.vid.currentTime;
-        this.vid.currentTime = this.$refs.audio.currentTime;
         setTimeout(() => {
-
           this.bufferingDetected = false;
         }, 1000);
       }
-      this.$refs.audio.play();
     },
     cleanup() {
       if (this.hlsStream) this.hlsStream.destroy();
       if (this.xhr) this.xhr.abort();
       if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
+      if (this.videoAbortController) this.videoAbortController.abort();
+      if (this.audioAbortController) this.audioAbortController.abort();
+      this.videoMediaSource = null;
+      this.videoSourceBuffer = null;
+      // this.audioMediaSource = null;
+      this.audioSourceBuffer = null;
 
       this.$refs.player.pause();
       this.$refs.player.src = '';
@@ -1027,8 +1112,7 @@ export default {
         this.skipping = false;
       }, 500);
 
-      this.$refs.player.currentTime += time;
-      this.$refs.audio.currentTime += time;
+      this.userSeek(this.$refs.player.currentTime + time);
     },
     controlsHandler() {
       if (!this.seeking)
@@ -1061,61 +1145,67 @@ export default {
       }
     },
     qualityInfoHandler(q) {
-      let src = q.url;
       localStorage.setItem("videoQuality", q.qualityLabel);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("videoCodec", this.getCodecName(codec));
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
+
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl
+      ) {
+        const currentTime = this.$refs.player.currentTime;
+        this.loadCombinedViaSabr(q, this.currentAudioFormat, currentTime);
+        return;
+      }
+
+      this.currentVideoFormat = q;
+      let src = q.url;
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
       this.$refs.player.src = '';
       this.$refs.player.load();
       this.$refs.player.src = src;
-      this.$refs.audio.currentTime = time;
+      // this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
-      this.$refs.audio.playbackRate = speed;
+      // this.$refs.audio.playbackRate = speed;
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-      // this.aud = this.audSrc;
     },
     audioQualityInfoHandler(q) {
-      let src = q.url;
       localStorage.setItem("audioQuality", q.itag);
       let codec = q.mimeType.replaceAll("; codecs=", ". Codecs: ");
       localStorage.setItem("audioCodec", this.getCodecName(codec));
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
+      if (q.audioTrack?.id) {
+        localStorage.setItem("audioTrackId", q.audioTrack.id);
+      } else {
+        localStorage.removeItem("audioTrackId");
+      }
+
+      if (
+        this.video.metadata?.ustreamerConfig &&
+        this.video.metadata?.serverAbrStreamingUrl
+      ) {
+        const currentTime = this.$refs.player.currentTime;
+        this.loadCombinedViaSabr(this.currentVideoFormat, q, currentTime);
+        return;
+      }
+
+      this.currentAudioFormat = q;
+
       let time = this.$refs.player.currentTime;
       let speed = this.$refs.player.playbackRate;
       this.$refs.player.pause();
-      this.$refs.audio.src = '';
       this.$refs.player.load();
-      this.$refs.audio.src = src;
-      this.$refs.audio.currentTime = time;
       this.$refs.player.currentTime = time;
       this.$refs.player.playbackRate = speed;
-      this.$refs.audio.playbackRate = speed;
       this.hls = false;
       this.dash = false;
       this.hlsStream = null;
-      this.audioSources.forEach((source) => {
-        if (source.url === src && (source?.audioTrack?.id !== undefined && source?.audioTrack?.id !== null)) {
-          localStorage.setItem("audioTrackId", source.audioTrack.id);
-        }
-      });
-
-      let interval = setInterval(() => {
-        console.log(this.aud.readyState);
-        if (this.aud.readyState < 3) {
-          this.$refs.player.pause();
-          this.bufferingDetected = true;
-        }
-        else {
-          this.bufferingDetected = false;
-          this.$refs.player.play();
-          clearInterval(interval);
-        }
-      }, 1000);
     },
     async captionsHandler(q) {
       if (q.baseUrl != null) {
@@ -1258,11 +1348,26 @@ export default {
     getPlayer() {
       return this.$refs.player;
     },
+
+    async loadVideoViaSabr(selectedFormat = null, startTimeSec = 0) {
+      return sabr.loadVideoViaSabr(this, selectedFormat, startTimeSec);
+    },
+
+    async loadAudioViaSabr(selectedFormat = null, startTimeSec = 0) {
+      return sabr.loadAudioViaSabr(this, selectedFormat, startTimeSec);
+    },
+
+    async loadCombinedViaSabr(selectedVideoFormat = null, selectedAudioFormat = null, startTimeSec = 0) {
+      return sabr.loadCombinedViaSabr(this, selectedVideoFormat, selectedAudioFormat, startTimeSec);
+    },
+
     pauseHandler() {
       this.$refs.player.pause();
-      this.$refs.audio.pause();
       clearTimeout(this.bufferingDetected);
       this.bufferingDetected = false;
+    },
+    playHandler() {
+      this.$refs.player.play().catch(() => {});
     },
   },
 };

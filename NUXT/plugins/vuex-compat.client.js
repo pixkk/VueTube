@@ -5,6 +5,7 @@ import { useHistoryStore } from "~/stores/history";
 import { usePlaylistStore } from "~/stores/playlist";
 import { useSearchStore } from "~/stores/search";
 import { useChannelStore } from "~/stores/channel";
+import { useAuthStore } from "~/stores/auth";
 
 const storeMap = {
   main: useMainStore,
@@ -14,6 +15,7 @@ const storeMap = {
   playlist: usePlaylistStore,
   search: useSearchStore,
   channel: useChannelStore,
+  auth: useAuthStore,
 };
 
 function resolveModuleAndAction(type) {
@@ -63,7 +65,23 @@ class VuexCompat {
     console.warn(`[vuex-compat] Unknown dispatch: ${type}`);
   }
 
-  getters = {};
+  get getters() {
+    const stores = this._stores;
+    return new Proxy(
+      {},
+      {
+        get(_target, type) {
+          const [mod, getter] = resolveModuleAndAction(type);
+          const store = stores[mod];
+          if (store && getter in store) {
+            return store[getter];
+          }
+          console.warn(`[vuex-compat] Unknown getter: ${type}`);
+          return undefined;
+        },
+      }
+    );
+  }
 }
 
 export default defineNuxtPlugin(() => {

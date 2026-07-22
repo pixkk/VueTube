@@ -1,7 +1,7 @@
 <template>
   <div class="fill-width">
     <h4
-      v-if="render.headerRenderer"
+      v-if="shelfTitle"
       class="font-weight-bold shelf-header"
       :style="{
         marginLeft:
@@ -10,10 +10,7 @@
             : '0',
       }"
     >
-      {{
-        render.headerRenderer.elementRenderer.newElement.type.componentType
-          .model.shelfHeaderModel.shelfHeaderData.title
-      }}
+      {{ shelfTitle }}
     </h4>
     <div class="pa-0 min-height-0">
       <component
@@ -41,6 +38,19 @@ export default {
     verticalListRenderer,
   },
   props: ["render"],
+
+  computed: {
+    shelfTitle() {
+      const h = this.render?.headerRenderer;
+      if (!h) return null;
+      // TV format: shelfHeaderRenderer.title.simpleText
+      const tvTitle = h.shelfHeaderRenderer?.title?.simpleText;
+      if (tvTitle) return tvTitle;
+      // Non-TV format: elementRenderer path
+      return h.elementRenderer?.newElement?.type?.componentType?.model
+        ?.shelfHeaderModel?.shelfHeaderData?.title || null;
+    },
+  },
 
   methods: {
     getComponents() {

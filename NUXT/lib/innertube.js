@@ -6,7 +6,7 @@
 // https://www.youtube.com/youtubei/v1
 
 import { CapacitorHttp as Http } from "@capacitor/core";
-import {delay, getBetweenStrings, getCpn} from "./utils";
+import {delay, getBetweenStrings, getCpn, getThumbnailUtil} from "./utils";
 import rendererUtils from "./renderers";
 import constants from "./constants";
 import * as acorn from "acorn";
@@ -32,7 +32,7 @@ class Innertube {
     this.getPot = "";
     this.pot = "";
     this.secretArrayName = "";
-    this.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false)
+    this.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false);
   }
 
   checkErrorCallback() {
@@ -46,77 +46,71 @@ class Innertube {
       signatureIntValue[0].replace(/\D/g, "")
     );
   }
-
-  async initAsync() {
-    const html = await Http.get({
-      url: constants.URLS.YT_EMBED,
-      params: { hl: localStorage.getItem("language") || "en", },
-    }).catch((error) => error);
-    // Get url of base.js file
-    let baseJsUrl =
-      constants.URLS.YT_MOBILE +
-      getBetweenStrings(html.data, '"jsUrl":"', '","');
-
-    // if (baseJsUrl.indexOf("player-plasma") > 0) {
-    // baseJsUrl = baseJsUrl.replace(".vflset", "").replace("player-plasma-ias-phone-", "player_ias.vflset/")
-    // }
-
-      baseJsUrl = baseJsUrl.replace(
-        /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-        'player-plasma-ias-phone-$1.vflset/base.js'
-      )
-      baseJsUrl = baseJsUrl.replace(
-        /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-        'player-plasma-ias-phone-$1.vflset/base.js'
-      )
-
-    baseJsUrl = baseJsUrl.replace(
-      /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
-      'player-plasma-ias-phone-$1.vflset/base.js'
-    )
-    // baseJsUrl = baseJsUrl.replace("player_es6", "player_ias");
-    // baseJsUrl = baseJsUrl.replace("player_embed_es6", "player_ias");
-    // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
-    // Get base.js content
-    // 377ca75b
-    const baseJs = await Http.get({
-      url: baseJsUrl,
-    }).catch((error) => error);
-
-    await this.initTimeStamp(baseJs);
-    await this.makeDecipherFunctionWithAst(baseJs);
-
-    console.warn("one");
-
-    await this.getNFunctionAst(baseJs);
-    console.warn("two");
-
-    console.warn("three");
+  saveBaseJSVersion(baseJsUrl) {
     const regex = /\/player\/([a-f0-9]{8})\/player/;
     const match = baseJsUrl.match(regex);
     if (match) {
       localStorage.setItem("baseJsVersion", match[1]);
     }
+  }
+  parseBaseJSUrl(html) {
+    let baseJSUrl = constants.URLS.YT_MOBILE + getBetweenStrings(html, '"jsUrl":"', '","');
+    baseJSUrl = baseJSUrl.replace(
+      /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    baseJSUrl = baseJSUrl.replace(
+      /player_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    baseJSUrl = baseJSUrl.replace(
+      /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
+      'player-plasma-ias-phone-$1.vflset/base.js'
+    )
+    return baseJSUrl;
+  }
+  getYTConfig(html) {
+    return JSON.parse(
+      "{" + getBetweenStrings(html, "ytcfg.set({", ");")
+    );
+  }
+  async initAsync() {
+    const html = await Http.get({
+      url: constants.URLS.YT_MOBILE,
+      params: { hl: localStorage.getItem("language") || "en", },
+    }).catch((error) => error);
+    // Get url of base.js file
+    let baseJsUrl = this.parseBaseJSUrl(html.data);
+    this.saveBaseJSVersion(baseJsUrl);
+    // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
+    // Get base.js content
+    const baseJsContent = await Http.get({
+      url: baseJsUrl,
+    }).catch((error) => error);
+
+    await this.initTimeStamp(baseJsContent);
+    await this.makeDecipherFunctionWithAst(baseJsContent);
+
+    console.warn("Decipher function created");
+    await this.getNFunctionAst(baseJsContent);
+    console.warn("N-function created");
+
     try {
       if (html instanceof Error && this.checkErrorCallback)
         this.ErrorCallback(html.message, true);
 
       try {
-        const data = JSON.parse(
-          "{" + getBetweenStrings(html.data, "ytcfg.set({", ");")
-        );
-        // console.warn(data);
-        this.visitorData = data.VISITOR_DATA || data.EOM_VISITOR_DATA;
-        if (data.INNERTUBE_CONTEXT) {
-          this.key = data.INNERTUBE_API_KEY;
-          this.context = data.INNERTUBE_CONTEXT;
-          this.logged_in = data.LOGGED_IN;
+        const ytClient = this.getYTConfig(html.data);
+        this.visitorData = ytClient.VISITOR_DATA || ytClient.EOM_VISITOR_DATA;
+        if (ytClient.INNERTUBE_CONTEXT) {
+          this.key = ytClient.INNERTUBE_API_KEY;
+          this.context = ytClient.INNERTUBE_CONTEXT;
+          this.logged_in = ytClient.LOGGED_IN;
 
           if (this.recommendationsFix) {
             console.log("Applying patch for Emulators (recommendation page fix)");
-            this.context.client.userAgent =  constants.YT_API_VALUES.USER_AGENT;
+            this.context.client.userAgent = constants.YT_API_VALUES.USER_AGENT;
           }
-
           this.context.client = constants.INNERTUBE_CLIENT(this.context.client);
           this.header = constants.INNERTUBE_HEADER(this.context.client);
         }
@@ -126,7 +120,7 @@ class Innertube {
           this.ErrorCallback(html.data, true);
           this.ErrorCallback(err, true);
         }
-        if (this.retry_count < 10) {
+        if (this.retry_count < 3) {
           this.retry_count += 1;
           if (this.checkErrorCallback)
             this.ErrorCallback(
@@ -153,7 +147,6 @@ class Innertube {
 
   static async createAsync(ErrorCallback) {
     const created = new Innertube(ErrorCallback);
-
     await created.initAsync();
     return created;
   }
@@ -161,21 +154,23 @@ class Innertube {
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
+    const isAuthed = !!localStorage.getItem("vt_active_access_token");
     let data = {
       context: {
-        client: constants.INNERTUBE_CLIENT(this.context.client),
+        client: isAuthed
+          ? constants.INNERTUBE_CLIENT_TV(this.context.client)
+          : constants.INNERTUBE_CLIENT(this.context.client),
       },
     };
-
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
-        //args.browseId = "FEtrending";
         break;
-      case "trending":
-        // args.browseId = "FEwhat_to_watch";
-        args.browseId = "FEtrending";
-        break;
+      //   Trending was removed from the YT:
+      //   https://support.google.com/youtube/thread/356702168/changes-to-discovering-trending-content-on-youtube
+      // case "trending":
+      //   args.browseId = "FEtrending";
+      //   break;
       case "playlist":
       case "aboutChannelInfo":
         data = {
@@ -215,20 +210,20 @@ class Innertube {
     }
     data = { ...data, ...args };
 
-    console.log(data);
+    // console.log(data);
 
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
       data: data,
-      headers: { "Content-Type": "application/json" },
+      headers: constants.AUTHED_JSON_HEADER(),
     }).catch((error) => error);
     console.log(response);
 
-    if (response instanceof Error)
+    if (response instanceof Error || response.data.error)
       return {
         success: false,
         status_code: response.status,
-        message: response.message,
+        message: response.data.message,
       };
 
     return {
@@ -243,17 +238,18 @@ class Innertube {
       context: { ...contextAdditional },
       continuation: continuation,
     };
-    if (contextAdditional.client ? contextAdditional.client.clientName === "MWEB" : false) {
+    const isMweb = contextAdditional.client?.clientName === "MWEB";
+    if (isMweb) {
       data.context.client = {
         ...constants.INNERTUBE_VIDEO(this.context.client),
+        clientName: contextAdditional.client.clientName,
+        clientVersion: contextAdditional.client.clientVersion,
       };
-      data.context.client.clientName = contextAdditional.client.clientName;
-      data.context.client.clientVersion = contextAdditional.client.clientVersion;
-    }
-    else {
-      data.context.client = {
-        ...constants.INNERTUBE_CLIENT(this.context.client),
-      };
+    } else {
+      const isAuthed = !!localStorage.getItem("vt_active_access_token");
+      data.context.client = isAuthed
+        ? { ...constants.INNERTUBE_CLIENT_TV(this.context.client) }
+        : { ...constants.INNERTUBE_CLIENT(this.context.client) };
     }
     let url;
     switch (type.toLowerCase()) {
@@ -273,7 +269,9 @@ class Innertube {
     const response = await Http.post({
       url: url,
       data: data,
-      headers: { "Content-Type": "application/json" },
+      headers: isMweb
+        ? constants.INNERTUBE_HEADER(this.context.client, true)
+        : constants.AUTHED_JSON_HEADER(),
     }).catch((error) => error);
     if (response instanceof Error) {
       return {
@@ -290,158 +288,124 @@ class Innertube {
   }
 
   async getCaptions(id) {
-    let data = {
-      context: this.context,
-      // context: {
-      //   client: constants.INNERTUBE_TECHNICAL(this.context.client),
-      // },
-      videoId: id,
-    };
-    let response = "";
-
-    const clientConfigs  = constants.clientConfigs;
-    for (const config of clientConfigs) {
-      if (config.CLIENTNAME !== "ANDROID_VR") continue
-      data.context.client.clientName = config.CLIENTNAME;
-      data.context.client.clientVersion = config.VERSION_WEB;
-      console.warn("Trying with client config - ", data.context.client);
-      if (data.context.client.clientName === "TVHTML5") continue;
-      // this.context.client = data.context.client;
-      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
-        data.context.thirdParty = {
-          "embedUrl": constants.URLS.YT_EMBED + id,
-        }
-      }
-      response = await Http.post({
-        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-        data: {
-          ...data,
-        },
-        headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
-      }).catch((error) => error);
-
-      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
-        response?.data?.playabilityStatus?.status !== "LOGIN_REQUIRED" &&
-        response?.data?.playabilityStatus?.status !== "ERROR") {
-        break;
-      }
-
-    }
+    const response = await this.playerRequest(id);
     return response.data;
   }
 
-
-  async getVidAsync(id) {
-    let data = {
-      context: {
-        client: constants.INNERTUBE_VIDEO(this.context.client),
-      },
-      videoId: id,
-    };
-    let dataForNext = {
-      context: {
-        client: {
-          ...constants.INNERTUBE_VIDEO(this.context.client),
-          clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
-          clientVersion: constants.YT_API_VALUES.VERSION_WEB,
-          gl: this.context.client.gl,
-          hl: this.context.client.hl,
-          remoteHost: this.context.client.remoteHost,
-        },
-      },
-      videoId: id,
+// Currently only one client is playable
+  async playerRequest(id, reloadPlaybackContext = null) {
+    const androidClient = constants.INNERTUBE_CLIENT_VISION_OS(this.context.client);
+    let headers = {
+      // ...constants.AUTHED_JSON_HEADER(),
+      ...constants.INNERTUBE_HEADER_VISION_OS(androidClient),
     };
 
-    const responseNext = await Http.post({
-      url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
+    return Http.post({
+      url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
       data: {
-        ...dataForNext,
-      },
-      headers: constants.INNERTUBE_HEADER(this.context.client),
-    }).catch((error) => error);
-
-    // this.pot = this.getPot(this.visitorData, 2);
-    let response = "";
-
-    const clientConfigs  = constants.clientConfigs;
-    for (const config of clientConfigs) {
-      if (this.recommendationsFix) {
-        console.log("Applying patch for Emulators (recommendation page fix)");
-        data.context.client.userAgent = config.CLIENTNAME;
-      }
-      data.context.client.clientName = config.CLIENTNAME;
-      data.context.client.clientVersion = config.VERSION_WEB;
-      data.context.client.clientScreen = config.clientScreen;
-      config.deviceMake ? data.context.client.deviceMake = config.deviceMake : ""
-      config.deviceModel ? data.context.client.deviceModel = config.deviceModel : ""
-      config.browserName ? data.context.client.browserName = config.browserName : ""
-      config.browserVersion ? data.context.client.browserVersion = config.browserVersion : ""
-      config.platform ? data.context.client.platform = config.platform : ""
-      config.USER_AGENT ? data.context.client.userAgent = config.USER_AGENT : ""
-      console.warn("Trying with client config - ", data.context.client);
-      if (config.clientScreen === "EMBED" && config.CLIENTNAME === "WEB_EMBEDDED_PLAYER") {
-        data.context.thirdParty = {
-          "embedUrl": constants.URLS.YT_EMBED + id,
-        }
-      }
-      // this.context.client = data.context.client;
-      response = await Http.post({
-        url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-        data: {
-          ...data,
-          ...{
-            playerParams: this.playerParams,
-            contentCheckOk: false,
-            racyCheckOk: false,
-            // TODO: fix embedded config
-            // serializedThirdPartyEmbedConfig: {
-            //   enc: "value_for_embedded_video",
-            // },
-            // serviceIntegrityDimensions: {
-            //   poToken: this.pot
-            // },
-            playbackContext: {
-              contentPlaybackContext: {
-                currentUrl: "/watch?v=" + id + "&pp=" + this.playerParams,
-                vis: 0,
-                splay: false,
-                autoCaptionsDefaultOn: false,
-                autonavState: "STATE_NONE",
-                html5Preference: "HTML5_PREF_WANTS",
-                signatureTimestamp: this.signatureTimestamp,
-                referer: "https://m.youtube.com/",
-                lactMilliseconds: "-1",
-                watchAmbientModeContext: {
-                  watchAmbientModeEnabled: true,
-                },
-              },
-            },
+        context: { client: androidClient },
+        videoId: id,
+        contentCheckOk: true,
+        racyCheckOk: true,
+        playbackContext: {
+          ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
+          contentPlaybackContext: {
+            signatureTimestamp: this.signatureTimestamp,
+            html5Preference: "HTML5_PREF_WANTS",
+            lactMilliseconds: "-1",
           },
         },
-        headers: constants.INNERTUBE_NEW_HEADER(data.context.client),
+      },
+      headers: headers,
+    }).catch((error) => error);
+  }
+
+  async getVidAsync(id, reloadPlaybackContext = null, tvParams = null) {
+    const isAuthed = !!localStorage.getItem("vt_active_access_token");
+    let responseNext;
+    let response = "";
+
+    if (isAuthed) {
+      const tvClient = constants.INNERTUBE_CLIENT_TV(this.context.client);
+      const tvContext = {
+        client: tvClient,
+        user: { enableSafetyMode: false },
+        request: { internalExperimentFlags: [], consistencyTokenJars: [] },
+      };
+
+      responseNext = await Http.post({
+        url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
+        data: {
+          context: tvContext,
+          videoId: id,
+          playlistId: `RD${id}`,
+          playlistIndex: 0,
+          racyCheckOk: true,
+          contentCheckOk: true,
+          playbackContext: { lactMilliseconds: "-1" },
+          autonavState: "STATE_NONE",
+          ...(tvParams ? { params: tvParams } : {}),
+        },
+        headers: constants.AUTHED_JSON_HEADER(),
       }).catch((error) => error);
 
-      if (response?.data?.playabilityStatus?.status !== "UNPLAYABLE" &&
-        response?.data?.playabilityStatus?.status !== "LOGIN_REQUIRED" &&
-        response?.data?.playabilityStatus?.status !== "ERROR") {
-        break;
-      }
+      const [responsePlayer, responseNextMobile] = await Promise.all([
+        this.playerRequest(id, reloadPlaybackContext),
+        Http.post({
+          url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
+          data: {
+            context: {
+              client: {
+                ...constants.INNERTUBE_VIDEO(this.context.client),
+                clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
+                clientVersion: constants.YT_API_VALUES.VERSION_WEB,
+                gl: this.context.client.gl,
+                hl: this.context.client.hl,
+                remoteHost: this.context.client.remoteHost,
+              },
+            },
+            videoId: id,
+          },
+          headers: constants.INNERTUBE_HEADER(this.context.client, true),
+        }).catch((error) => error),
+      ]);
+      response = responsePlayer;
+      responseNext.data._mobileNext = responseNextMobile.error ? null : responseNextMobile.data;
+    } else {
+      responseNext = await Http.post({
+        url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
+        data: {
+          context: {
+            client: {
+              ...constants.INNERTUBE_VIDEO(this.context.client),
+              clientName: constants.YT_API_VALUES.CLIENT_WEB_M,
+              clientVersion: constants.YT_API_VALUES.VERSION_WEB,
+              gl: this.context.client.gl,
+              hl: this.context.client.hl,
+              remoteHost: this.context.client.remoteHost,
+            },
+          },
+          videoId: id,
+        },
+        headers: constants.INNERTUBE_HEADER(this.context.client),
+      }).catch((error) => error);
 
+      response = await this.playerRequest(id, reloadPlaybackContext);
     }
-    if (response.error) {
 
+    if (response.error) {
       return {
         success: false,
         status_code: response.status,
         message: response.message,
-      };}
-
-    else if (responseNext.error)
+      };
+    } else if (responseNext.error) {
       return {
         success: false,
         status_code: responseNext.status,
         message: responseNext.message,
       };
+    }
 
     return {
       success: true,
@@ -451,12 +415,16 @@ class Innertube {
   }
 
   async searchAsync(query) {
-    let data = { context: this.context, query: query };
+    const isAuthed = !!localStorage.getItem("vt_active_access_token");
+    const client = isAuthed
+      ? constants.INNERTUBE_CLIENT_TV(this.context.client)
+      : constants.INNERTUBE_CLIENT(this.context.client);
+    let data = { context: { ...this.context, client }, query: query };
 
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/search?key=${this.key}`,
       data: data,
-      headers: { "Content-Type": "application/json" },
+      headers: constants.AUTHED_JSON_HEADER(),
     }).catch((error) => error);
 
     if (response instanceof Error)
@@ -473,69 +441,9 @@ class Innertube {
     };
   }
 
-  async getEndPoint(url, skipCheck = false) {
+  async getEndPoint(url) {
     let data;
     let response;
-    if (!skipCheck) {
-      data = { context: this.context, url: url };
-
-      response = await Http.get({
-        // url: `${url}/navigation/resolve_url?key=${this.key}`,
-        url: `${url}`,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      }).catch(() => {
-
-        // console.warn(browseId);
-      });
-      const html = response.data; // Assuming data property holds the HTML content
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      const metaTags = doc.querySelectorAll('meta[itemprop="identifier"]');
-
-      let browseId;
-      if (metaTags.length > 0) {
-        browseId = metaTags[0].content;
-      }
-      else {
-        let match;
-        let regex = /{"browseId":"([A-z0-9-]+)"}/gm;
-        while ((match = regex.exec(html)) !== null) {
-          browseId = match[1];
-        }
-
-      }
-      data.context = {
-        ...data.context,
-        request: constants.INNERTUBE_REQUEST(),
-      };
-      data = {
-        ...data,
-        browseId: browseId,
-        context: {
-          client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-        },
-      };
-      data.context.client = {
-        ...data.context.client,
-        clientFormFactor: "LARGE_FORM_FACTOR",
-      };
-      response = await Http.post({
-        // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
-        url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
-        data: data,
-        headers: { "Content-Type": "application/json" },
-      }).catch((error) => error);
-
-      if (response instanceof Error)
-        return {
-          success: false,
-          status_code: response.status,
-          message: response.message,
-        };
-    }
-    else {
       data = { context: this.context, browseId: url };
       data.context = {
         ...data.context,
@@ -557,7 +465,7 @@ class Innertube {
         // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
         url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
         data: data,
-        headers: { "Content-Type": "application/json" },
+        headers: constants.AUTHED_JSON_HEADER(),
       }).catch((error) => error);
 
       if (response instanceof Error)
@@ -566,7 +474,6 @@ class Innertube {
           status_code: response.status,
           message: response.message,
         };
-    }
 
     return {
       success: true,
@@ -577,7 +484,7 @@ class Innertube {
 
   // WARNING: This is tracking the user's activity, but is required for recommendations to properly work
   async apiStats(params, url) {
-    console.warn(params);
+    // console.warn(params);
     params = {
       ...params,
       ...{
@@ -599,27 +506,7 @@ class Innertube {
   // Static methods
 
   static async getThumbnail(id, resolution) {
-    if (resolution === "max" || resolution === "resmax") {
-      let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      try {
-        let xhr = new XMLHttpRequest();
-        xhr.responseType = 'blob';
-        return new Promise((resolve, reject) => {
-          xhr.open('GET', maxResUrl, true);
-          xhr.onload = () => {
-            if (xhr.status === 200) {
-              resolve(URL.createObjectURL(xhr.response));
-            } else {
-              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
-            }
-          };
-          xhr.send();
-        });
-      } catch (error) {
-        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
-      }
-    }
-    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    return getThumbnailUtil(id, resolution);
   }
 
   // Simple Wrappers
@@ -628,7 +515,7 @@ class Innertube {
     return rec;
   }
   async getChannelAsync(url, tab="main") {
-    const channelEndpoint = await this.getEndPoint(url, true);
+    const channelEndpoint = await this.getEndPoint(url);
     if (
       channelEndpoint.success &&
       channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[1].tabRenderer.endpoint?.browseEndpoint
@@ -659,18 +546,18 @@ class Innertube {
             channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs[channelEndpoint.data.contents.singleColumnBrowseResultsRenderer.tabs.length-2].tabRenderer.endpoint?.browseEndpoint
           );
       }
-
     } else {
       throw new ReferenceError("Cannot find channel");
     }
   }
 
-  async VidInfoAsync(id) {
-    let response = await this.getVidAsync(id);
+  async VidInfoAsync(id, tvParams = null) {
+    // TODO: OPTIMIZE IT !!!
+    let response = await this.getVidAsync(id, null, tvParams);
 
     if (
       response.success == false ||
-      response.data.output?.playabilityStatus?.status == ("ERROR" || undefined)
+      response.data.output?.playabilityStatus?.status == ("ERROR" || "LOGIN_REQUIRED" || "UNPLAYABLE" || undefined)
     )
       throw new Error(
         `Could not get information for video: ${
@@ -680,13 +567,28 @@ class Innertube {
           response.message || response.data.output?.playabilityStatus?.reason
         }`
       );
+
     const responseInfo = response.data.output;
     const responseNext = response.data.outputNext;
-    let details = responseInfo.videoDetails;
 
+    let details = responseInfo.videoDetails;
     const publishDate =
       responseInfo?.microformat?.playerMicroformatRenderer?.publishDate;
     let resolutions = responseInfo.streamingData;
+    let ustreamerConfig = responseInfo?.playerConfig?.mediaCommonConfig?.mediaUstreamerRequestConfig?.videoPlaybackUstreamerConfig || null;
+    let serverAbrStreamingUrl = responseInfo?.streamingData?.serverAbrStreamingUrl || null;
+    if (serverAbrStreamingUrl) {
+      try {
+        const sabrParams = new URLSearchParams(new URL(serverAbrStreamingUrl).search);
+        const sabrN = sabrParams.get("n");
+        if (sabrN) {
+          const sabrNDecoded = this.nfunction(sabrN);
+          serverAbrStreamingUrl = serverAbrStreamingUrl.replace(/&n=[^&]*/, "&n=" + sabrNDecoded);
+        }
+      } catch (e) {
+        console.warn("[SABR] Failed to decode n param in serverAbrStreamingUrl", e);
+      }
+    }
     let hls = responseInfo.streamingData?.hlsManifestUrl ? responseInfo.streamingData?.hlsManifestUrl : null;
     let dash = responseInfo.streamingData?.dashManifestUrl ? responseInfo.streamingData?.dashManifestUrl : null;
 
@@ -697,61 +599,129 @@ class Innertube {
       // dash = null;
     }
     // console.warn(hls)
+    // `_mobileNext` is only present when getVidAsync fetched an authenticated TV /next
+    // response (responseNext itself is then the TV-shaped response) — falls back to
+    // responseNext itself for the anonymous (non-TV) path.
+    const mobileNext = responseNext._mobileNext || responseNext;
     const columnUI =
       responseNext.contents.singleColumnWatchNextResults.results.results;
-    const vidMetadata = columnUI.contents.find(
-      (content) => content.slimVideoMetadataSectionRenderer
-    ).slimVideoMetadataSectionRenderer;
 
-    // const recommendations = columnUI?.contents.find(
-    //   (content) => content?.itemSectionRenderer?.targetId == "watch-next-feed"
-    // )?.itemSectionRenderer;
-    const recommendations = {contents: columnUI?.contents
-        ?.filter(c => c.itemSectionRenderer?.contents)
-        ?.flatMap(c =>
-          c.itemSectionRenderer.contents.filter(
-            item => !item.videoMetadataCarouselViewModel &&
-              !item.compactRadioRenderer
-          )
-        )}
+    // TV response uses videoMetadataRenderer directly inside itemSectionRenderer
+    const tvVidMeta = columnUI.contents[0]?.itemSectionRenderer?.contents?.find(
+      (c) => c.videoMetadataRenderer
+    )?.videoMetadataRenderer;
+    const isTVResponse = !!tvVidMeta;
 
-    console.warn(recommendations)
-    if (details.title == null) {
-      vidMetadata?.contents.forEach((content) => {
-        let text = content?.slimVideoInformationRenderer?.title.runs[0].text;
-        if (text !== undefined) {
-          details.title = text;
-          return;
+    const vidMetadata = isTVResponse
+      ? (() => {
+          const descHeader = mobileNext.engagementPanels
+            ?.find((p) => p.engagementPanelSectionListRenderer?.panelIdentifier === "video-description-ep-identifier")
+            ?.engagementPanelSectionListRenderer?.content?.structuredDescriptionContentRenderer?.items
+            ?.find((i) => i.videoDescriptionHeaderRenderer)
+            ?.videoDescriptionHeaderRenderer;
+          const viewsText = descHeader?.views?.simpleText
+            || tvVidMeta.viewCount?.videoViewCountRenderer?.viewCount?.simpleText
+            || "";
+          const dateText = tvVidMeta.dateText?.accessibility.accessibilityData.label
+            || tvVidMeta.dateText?.simpleText
+            || "";
+          const accessibilityLabel = tvVidMeta.dateText?.accessibility.accessibilityData.label || "";
+          return {
+            contents: [
+              {
+                slimVideoInformationRenderer: {
+                  title: { runs: [{ text: tvVidMeta.title?.runs?.[0]?.text || "" }] },
+                  collapsedSubtitle: {
+                    runs: [
+                      { text: viewsText },
+                      ...(dateText ? [{ text: " • " }, { text: dateText }] : []),
+                    ],
+                  },
+                  expandedSubtitle: { runs: [{ text: accessibilityLabel }] },
+                },
+              },
+            ],
+          };
+        })()
+      : columnUI.contents.find(
+          (content) => content.slimVideoMetadataSectionRenderer
+        )?.slimVideoMetadataSectionRenderer;
+
+    const tvPivotSectionList = responseNext.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer;
+    const recommendations = isTVResponse
+      ? (() => {
+          const shelves = tvPivotSectionList?.contents || [];
+          const items = shelves
+            .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+            .flatMap((s) =>
+              (s.shelfRenderer.content.horizontalListRenderer.items || [])
+                .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+                .map((i) => ({ tileRenderer: i.tileRenderer }))
+            );
+          return { contents: items.slice(1) };
+        })()
+      : {
+          contents: columnUI?.contents
+            ?.filter((c) => c.itemSectionRenderer?.contents)
+            ?.flatMap((c) =>
+              c.itemSectionRenderer.contents.filter(
+                (item) =>
+                  !item.videoMetadataCarouselViewModel &&
+                  !item.compactRadioRenderer
+              )
+            ),
+        };
+
+    // console.warn(recommendations);
+
+    let metadata = {};
+    if (isTVResponse) {
+      if (!details.title) {
+        details.title = tvVidMeta.title?.runs?.[0]?.text || "";
+      }
+      // likes from transportControls
+      try {
+        const likeBtn = responseNext.transportControls?.transportControlsRenderer?.buttons
+          ?.find((b) => b.type === "TRANSPORT_CONTROLS_BUTTON_TYPE_LIKE_BUTTON")
+          ?.button?.likeButtonRenderer;
+        if (likeBtn) {
+          metadata.likes = likeBtn.likeCount.toLocaleString();
+        }
+      } catch (e) {}
+    } else {
+      if (!details.title) {
+        vidMetadata?.contents?.forEach((content) => {
+          const text = content?.slimVideoInformationRenderer?.title.runs[0].text;
+          if (text !== undefined) { details.title = text; }
+        });
+      }
+      vidMetadata?.contents?.forEach((content) => {
+        let likesCount = content?.slimVideoActionBarRenderer?.buttons[0].slimMetadataButtonRenderer.button.segmentedLikeDislikeButtonViewModel.likeButtonViewModel.likeButtonViewModel.toggleButtonViewModel.toggleButtonViewModel.defaultButtonViewModel.buttonViewModel.accessibilityText;
+        if (likesCount !== undefined) {
+          likesCount = likesCount.replaceAll(/\D+/gm, "");
+          likesCount = parseInt(likesCount);
+          metadata.likes = likesCount.toLocaleString();
         }
       });
     }
-    let metadata = {};
-    vidMetadata?.contents.forEach((content) => {
-      let likesCount = content?.slimVideoActionBarRenderer?.buttons[0].slimMetadataButtonRenderer.button.segmentedLikeDislikeButtonViewModel.likeButtonViewModel.likeButtonViewModel.toggleButtonViewModel.toggleButtonViewModel.defaultButtonViewModel.buttonViewModel.accessibilityText;
 
-      if (likesCount !== undefined) {
-        likesCount = likesCount.replaceAll(/\D+/gm, "")
-        likesCount = parseInt(likesCount);
-        metadata.likes = likesCount.toLocaleString();
-        return;
-      }
-    });
+    const tvOwner = isTVResponse ? tvVidMeta.owner?.videoOwnerRenderer : null;
+    const ownerData = isTVResponse
+      ? null
+      : vidMetadata?.contents?.find((content) => content.slimOwnerRenderer)?.slimOwnerRenderer;
 
-    const ownerData = vidMetadata.contents.find(
-      (content) => content.slimOwnerRenderer
-    )?.slimOwnerRenderer;
     let isLive = false;
     const captions = responseInfo.captions?.playerCaptionsTracklistRenderer?.captionTracks;
     captions?.unshift({
       baseUrl: null,
       name: {
-        runs: [{text: "Disable captions"}]
-      }
-    })
+        runs: [{ text: "Disable captions" }],
+      },
+    });
     try {
-      console.log(vidMetadata.contents);
-      this.playerParams =
-        ownerData.navigationEndpoint.watchEndpoint.playerParams;
+      if (!isTVResponse) {
+        this.playerParams = ownerData.navigationEndpoint.watchEndpoint.playerParams;
+      }
     } catch (e) {}
     // Deciphering urls
     resolutions = resolutions?.formats ? resolutions?.formats.concat(resolutions.adaptiveFormats) : resolutions?.adaptiveFormats;
@@ -772,10 +742,6 @@ class Innertube {
           let decipheredValue;
           try {
             decipheredValue = this.decodeUrl(cipher);
-
-            // if (decipheredValue === undefined || decipheredValue === true || decipheredValue === false) {
-            //   decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
-            // }
           }catch (e) {
             // decipheredValue = this.decodeUrl(parseInt(this.decodeUrlFirstArg), cipher);
           }
@@ -787,10 +753,7 @@ class Innertube {
         }
       }
 
-
-
-      var searchParams = new URLSearchParams(source.url);
-
+      const searchParams = new URLSearchParams(source.url);
       //Iterate the search parameters.
       let n = searchParams.get("n");
       //let clen = searchParams.get("clen");
@@ -798,92 +761,111 @@ class Innertube {
       if (n !== null) {
         try {
             nValue = "&n=" + this.nfunction(n)
-          if (nValue === undefined) {
-            // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n)
-          }
         }
-        catch (e) {
-          // nValue = "&n=" + this.nfunction(1, n)
-          // nValue = "&n=" + window[this.nfunction](parseInt(this.nfunctionFirstArg), n.toString())
-        }
+        catch (e) {}
       }
       searchParams.delete("n");
 
-      // For some reasons, searchParams.delete not removes &n in music videos
-      source["url"] = source["url"].replace(/&n=[^&]*/g, "");
-      source["url"] = source["url"] + nValue;
-      // source["url"] = source["url"] + "&alr=yes";
-      source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
-      // source["url"] = source["url"] + "&ump=1";
-      // source["url"] = source["url"] + "&srfvp=1";
-      source["url"] = source["url"] + "&cpn=" + getCpn();
-      // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
-      // source["url"] = source["url"] + "&range=0-" + source.contentLength;
-      if (searchParams.get("mime").indexOf("audio") < 0) {
-        // source["url"] = source["url"] + "&range=0-";
+      try {
+        source["url"] = source["url"].replace(/&n=[^&]*/g, "");
+        source["url"] = source["url"] + nValue;
         // source["url"] = source["url"] + "&alr=yes";
+        source["url"] = source["url"] + "&cver=" + constants.YT_API_VALUES.VERSION_WEB;
+        // source["url"] = source["url"] + "&ump=1";
+        // source["url"] = source["url"] + "&srfvp=1";
+        source["url"] = source["url"] + "&cpn=" + getCpn();
+        // source["url"] = source["url"] + "&pot=" + encodeURIComponent(this.pot);
+        // source["url"] = source["url"] + "&range=0-" + source.contentLength;
+      }catch (e) {
+        console.error(e)
       }
+
     });
+    const channelName = isTVResponse
+      ? (tvOwner?.title?.simpleText || "")
+      : (ownerData?.title?.runs?.[0]?.text || "");
+    const channelSubs = isTVResponse
+      ? (tvOwner?.subscriberCountText?.simpleText.split(" ")[0] || "")
+      : (ownerData?.collapsedSubtitle?.runs?.[0]?.text || "");
+    const channelUrl = isTVResponse
+      ? (tvOwner?.navigationEndpoint?.browseEndpoint?.canonicalBaseUrl || "")
+      : rendererUtils.getNavigationEndpoints(ownerData?.navigationEndpoint);
+    const channelImg = isTVResponse
+      ? (tvOwner?.thumbnail?.thumbnails?.[0]?.url || "")
+      : (ownerData?.thumbnail?.thumbnails?.[0]?.url || "");
+
+    const descPanel = mobileNext.engagementPanels
+      ?.find(
+        (panel) =>
+          panel.engagementPanelSectionListRenderer?.panelIdentifier ===
+          "video-description-ep-identifier"
+      );
+    const descItems = descPanel
+      ?.engagementPanelSectionListRenderer?.content
+      ?.structuredDescriptionContentRenderer?.items || [];
+    const descriptionRenderer = descItems.find(
+      (item) => item?.expandableVideoDescriptionBodyRenderer
+    )?.expandableVideoDescriptionBodyRenderer || null;
+
     const vidData = {
       id: details.videoId,
       title: details.title,
       isLive: details.isLiveContent,
-      channelName: ownerData?.title.runs[0].text,
-      channelSubs: ownerData?.collapsedSubtitle?.runs[0]?.text,
-      channelUrl: rendererUtils.getNavigationEndpoints(
-        ownerData.navigationEndpoint
-      ),
-      channelImg: ownerData?.thumbnail?.thumbnails[0].url,
+      channelName,
+      channelSubs,
+      channelUrl,
+      channelImg,
       captions: captions,
       endscreen: responseInfo.endscreen,
-      storyboards: responseInfo.storyboards.playerStoryboardSpecRenderer?.spec,
-      availableResolutions: resolutions.formats ? resolutions.formats : resolutions,
+      storyboards: responseInfo.storyboards?.playerStoryboardSpecRenderer?.spec || null,
+      availableResolutions: resolutions?.formats ? resolutions.formats : resolutions,
       availableResolutionsAdaptive: resolutions?.adaptiveFormats ? resolutions.adaptiveFormats : resolutions,
       hls: hls,
       dash: dash,
       metadata: {
+        ustreamerConfig: ustreamerConfig,
+        serverAbrStreamingUrl: serverAbrStreamingUrl,
         publishDate: publishDate,
-        contents: vidMetadata.contents,
+        contents: vidMetadata?.contents || [],
         description: details.shortDescription,
         thumbnails: details.thumbnails?.thumbnails,
         isPrivate: details.isPrivate,
-        viewCount: details.viewCount,
+        viewCount: isTVResponse
+          ? (tvVidMeta.viewCount?.videoViewCountRenderer?.viewCount?.simpleText  + " · " || details.viewCount + " · ")
+          : details.viewCount,
         lengthSeconds: details.lengthSeconds,
         isLive: isLive,
         likes: metadata.likes,
       },
       renderedData: {
-        description: responseNext.engagementPanels
-          .find(
-            (panel) =>
-              panel.engagementPanelSectionListRenderer.panelIdentifier ==
-              "video-description-ep-identifier"
-          )
-          .engagementPanelSectionListRenderer.content.structuredDescriptionContentRenderer.items.find(
-            (item) => item?.expandableVideoDescriptionBodyRenderer
-          )?.expandableVideoDescriptionBodyRenderer || null,
+        description: descriptionRenderer,
         recommendations: recommendations,
-        recommendationsContinuation:
-          recommendations?.contents[recommendations.contents.length - 1] ? recommendations?.contents[recommendations.contents.length - 1].continuationItemRenderer?.continuationEndpoint.continuationCommand.token : null,
+        recommendationsContinuation: isTVResponse
+          ? (tvPivotSectionList?.continuations?.[0]?.nextContinuationData?.continuation || null)
+          : (recommendations?.contents?.[recommendations.contents.length - 1]
+              ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null),
       },
-      engagementPanels: responseNext.engagementPanels,
-      commentData: columnUI.contents
-        .find((content) => content.itemSectionRenderer?.contents)
-        ?.itemSectionRenderer.contents[0].videoMetadataCarouselViewModel,
+      engagementPanels: mobileNext.engagementPanels || [],
+      commentData: (() => {
+          const col = isTVResponse
+            ? mobileNext.contents?.singleColumnWatchNextResults?.results?.results
+            : columnUI;
+          return col?.contents
+            ?.find((content) => content.itemSectionRenderer?.contents)
+            ?.itemSectionRenderer?.contents?.[0]?.videoMetadataCarouselViewModel || null;
+        })(),
       playbackTracking: responseInfo.playbackTracking,
-      commentContinuation: responseNext.engagementPanels
-        .find(
+      commentContinuation: mobileNext.engagementPanels
+        ?.find(
           (panel) =>
-            panel.engagementPanelSectionListRenderer.panelIdentifier ==
+            panel.engagementPanelSectionListRenderer?.panelIdentifier ===
             "engagement-panel-comments-section"
         )
-        ?.engagementPanelSectionListRenderer.content.sectionListRenderer.contents.find(
-          (content) => content.itemSectionRenderer
-        )
-        ?.itemSectionRenderer.contents.find(
-          (content) => content.continuationItemRenderer
-        )?.continuationItemRenderer.continuationEndpoint.continuationCommand
-        .token,
+        ?.engagementPanelSectionListRenderer?.content?.sectionListRenderer?.contents
+        ?.find((content) => content.itemSectionRenderer)
+        ?.itemSectionRenderer?.contents
+        ?.find((content) => content.continuationItemRenderer)
+        ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null,
     };
 
     return vidData;
@@ -913,9 +895,15 @@ class Innertube {
     let decipherFunctionFirstArg = decipherFunction[2];
     let decipherFunctionName = decipherFunction[1];
 
+    // console.warn("decipherFunction", decipherFunction);
+    // console.warn("decipherFunctionSecondArg", decipherFunctionSecondArg);
+    // console.warn("decipherFunctionThirdPart", decipherFunctionThirdPart);
+    // console.warn("decipherFunctionFirstArg", decipherFunctionFirstArg);
+    // console.warn("decipherFunctionName", decipherFunctionName);
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
+   // console.warn("startFunc", startFunc);
     let additionalCode = collectDependencies(generate(startFunc), decipherFunctionName, parsedBaseJs)
     let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
 
@@ -966,6 +954,7 @@ class Innertube {
 
     let firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
     let gph = firstPoint[1];
+
     // Explicitly include the constructor definition
     const ctorNode = findMethodByName(parsedBaseJs, gph);
     const ctorCode = ctorNode
@@ -981,6 +970,7 @@ class Innertube {
       const rawCode = generate(n).replace("};;", "};").replace("};\n;", "};\n");
       return ensureVarDeclaration(n, rawCode);
     }).join("\n");
+
     // Collect deps for constructor + prototype methods (e.g. g.** used in clone())
     // These may not be in **'s dep chain and would otherwise be missing at runtime
     const gphDeps = collectDependencies(ctorCode + "\n" + protoMethodsCode, gph, parsedBaseJs);
@@ -989,4 +979,5 @@ class Innertube {
     return {r, url, gph, gphProtoMethods};
   }
 }
+
 export default Innertube;

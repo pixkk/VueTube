@@ -13,7 +13,7 @@ const url = {
   VT_BETA_UPDATES: "https://api.github.com/repos/pixkk/VueTube/actions/runs"
 };
 
-const webVersion = "2.20260123.01.00";
+const webVersion = "2.20260715.04.00";
 
 const androidApiVal = {
   // VERSION: "19.09",
@@ -53,19 +53,33 @@ const MWEB = {
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
+
+const visionOsClient = {
+  CLIENTNAME: "VISIONOS",
+  CLIENT_ID: 101,
+  VERSION_WEB: "0.1",
+  USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+  REFERER: url.YT_URL,
+  browserName: "Chrome",
+  browserVersion: "125.0.0.0",
+  osName: "Windows",
+  osVersion: "10.0",
+  platform: "DESKTOP",
+};
+
 const tvApiVal = {
   CLIENTNAME: "TVHTML5",
   clientScreen: "WATCH",
-  VERSION_WEB: "7.20260125.19.00",
+  VERSION_WEB: "7.20260713.15.00",
   deviceModel: "BRAVIA 8K UR2",
   deviceMake: "Sony",
-  USER_AGENT: "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
+  USER_AGENT: "Mozilla/5.0 (Linux; Android 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
   browserName: "Opera",
   browserVersion: "46.0.2207.0",
   platform: "TV",
-  VERSION: "7.20260125.19.00",
+  VERSION: "7.20260713.15.00",
 };
 
 // TODO: fix embedded config
@@ -79,8 +93,8 @@ const tvApiVal = {
 // openPopupAction.popup.sharingEmbedRenderer.encryptedEmbedConfig exists encryptedEmbedConfig. use it in "enc"
 const clientConfigs = [
   webEmbeddedApiVal,
-  androidVrApiVal,
   tvApiVal,
+  androidVrApiVal,
   MWEB
 ];
 const filesystem = {
@@ -90,11 +104,33 @@ const filesystem = {
 export default {
   URLS: url,
   YT_API_VALUES: androidApiVal,
+  VISION_OS_API_VALUES: visionOsClient,
   fs: filesystem,
   clientConfigs: clientConfigs,
 
-  INNERTUBE_HEADER: (info) => {
-    return {
+  getAccessToken: () => {
+    if (typeof localStorage === "undefined") return null;
+    return localStorage.getItem("vt_active_access_token") || null;
+  },
+
+  AUTHED_JSON_HEADER: () => {
+    const headers = { "Content-Type": "application/json" };
+    if (typeof localStorage !== "undefined") {
+      const token = localStorage.getItem("vt_active_access_token");
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+        headers["x-youtube-client-name"] = String(tvApiVal.CLIENT_WEB_M);
+        headers["x-youtube-client-version"] = tvApiVal.VERSION;
+      }
+    }
+    return headers;
+  },
+
+  INNERTUBE_HEADER: (info, noAuth = false) => {
+    const token = !noAuth && typeof localStorage !== "undefined"
+      ? localStorage.getItem("vt_active_access_token")
+      : null;
+    const headers = {
       accept: "*/*",
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
@@ -104,10 +140,15 @@ export default {
       "x-youtube-client-name": androidApiVal.CLIENTNAME,
       "x-youtube-client-version": androidApiVal.VERSION,
     };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
   },
 
-  INNERTUBE_NEW_HEADER: (info) => {
-    return {
+  INNERTUBE_NEW_HEADER: (info, auth = true) => {
+    const token = typeof localStorage !== "undefined"
+      ? localStorage.getItem("vt_active_access_token") && auth
+      : null;
+    const headers = {
       accept: "*/*",
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
@@ -117,6 +158,8 @@ export default {
       "x-youtube-client-name": info.CLIENT_WEB_M || info.clientVersion || 7,
       "x-youtube-client-version": info.VERSION || info.clientVersion || androidApiVal.VERSION,
     };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
   },
   INNERTUBE_CLIENT: (info) => {
     return {
@@ -127,8 +170,8 @@ export default {
       // deviceModel: info.deviceModel,
       deviceModel: "Nexus 5",
       userAgent: info.userAgent,
-      clientName: androidApiVal.CLIENTNAME,
-      clientVersion: androidApiVal.VERSION,
+      clientName: webEmbeddedApiVal.CLIENTNAME,
+      clientVersion: webEmbeddedApiVal.VERSION,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
@@ -139,6 +182,27 @@ export default {
       visitorData: info.visitorData,
     };
   },
+  INNERTUBE_CLIENT_TV: (info) => {
+    return {
+      gl: info.gl,
+      hl: localStorage.getItem("language") || "en",
+      deviceMake: tvApiVal.deviceMake,
+      deviceModel: tvApiVal.deviceModel,
+      userAgent: tvApiVal.USER_AGENT,
+      clientName: tvApiVal.CLIENTNAME,
+      clientVersion: tvApiVal.VERSION,
+      osName: info.osName,
+      osVersion: info.osVersion,
+      platform: tvApiVal.platform,
+      browserName: tvApiVal.browserName,
+      browserVersion: tvApiVal.browserVersion,
+      originalUrl: info.originalUrl,
+      configInfo: info.configInfo,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+  },
+
   INNERTUBE_CLIENT_FOR_CHANNEL: (info) => {
     return {
       gl: info.gl,
@@ -205,12 +269,38 @@ export default {
       },
     };
   },
-  INNERTUBE_TECHNICAL: (info) => {
+
+  INNERTUBE_CLIENT_VISION_OS: (info) => {
     return {
       gl: info.gl,
       hl: localStorage.getItem("language") || "en",
-      clientName: webEmbeddedApiVal.CLIENTNAME,
-      clientVersion: webEmbeddedApiVal.VERSION_WEB,
+      userAgent: visionOsClient.USER_AGENT,
+      clientName: visionOsClient.CLIENTNAME,
+      clientVersion: visionOsClient.VERSION_WEB,
+      osName: visionOsClient.osName,
+      osVersion: visionOsClient.osVersion,
+      platform: visionOsClient.platform,
+      browserName: visionOsClient.browserName,
+      browserVersion: visionOsClient.browserVersion,
+      clientFormFactor: "UNKNOWN_FORM_FACTOR",
+      originalUrl: visionOsClient.REFERER,
+      remoteHost: info.remoteHost,
+      visitorData: info.visitorData,
+    };
+  },
+
+  INNERTUBE_HEADER_VISION_OS: (info) => {
+    return {
+      accept: "*/*",
+      "user-agent": visionOsClient.USER_AGENT,
+      "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
+      "content-type": "application/json",
+      origin: visionOsClient.REFERER,
+      referer: visionOsClient.REFERER,
+      "x-goog-authuser": 0,
+      "x-goog-visitor-id": info.visitorData || "",
+      "x-youtube-client-name": String(visionOsClient.CLIENT_ID),
+      "x-youtube-client-version": visionOsClient.VERSION_WEB,
     };
   },
 };

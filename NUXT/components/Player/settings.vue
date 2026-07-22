@@ -82,7 +82,7 @@ export default {
   },
   methods: {
     handleVolumeChange(value) {
-      document.getElementsByTagName("audio")[0].volume = value;
+      // document.getElementsByTagName("audio")[0].volume = value;
       document.getElementsByTagName("video")[0].volume = value;
       localStorage.setItem("volume", value);
     },
@@ -92,7 +92,7 @@ export default {
     }
   },
 mounted() {
-  document.getElementsByTagName("audio")[0].volume = localStorage.getItem("volume") !== null ? parseFloat(localStorage.getItem("volume")) : 1;
+  // document.getElementsByTagName("audio")[0].volume = localStorage.getItem("volume") !== null ? parseFloat(localStorage.getItem("volume")) : 1;
   document.getElementsByTagName("video")[0].volume = localStorage.getItem("volume") !== null ? parseFloat(localStorage.getItem("volume")) : 1;
   document.getElementsByTagName("video")[0].style.filter = `brightness(${localStorage.getItem("brightness") !== null ? parseFloat(localStorage.getItem("brightness")) : 1})`;
 }

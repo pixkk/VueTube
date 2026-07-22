@@ -9,9 +9,14 @@ export const useMainStore = defineStore("main", {
     recommendationsFix: false,
     channelData: {},
     channel: {},
+    pendingTvParams: null,
   }),
 
   actions: {
+    setPendingTvParams(params) {
+      this.pendingTvParams = params;
+    },
+
     initRecommendationsFixPreference() {
       if (
         localStorage.getItem("recommendationsFix") == null ||

@@ -8,9 +8,9 @@
         <v-btn
       elevation="0" icon variant="text" size="small" color="white" v-bind="activatorProps">
           {{
-            sources.find((src) => src.url == currentSource.src)?.qualityLabel
-              ? sources.find((src) => src.url == currentSource.src)?.qualityLabel
-              : sources.find((src) => src.url == currentSource.src)?.quality || "Auto"
+            currentVideoFormat
+              ? (currentVideoFormat.qualityLabel || currentVideoFormat.quality)
+              : (sources.find((src) => src.url == currentSource.src)?.qualityLabel || sources.find((src) => src.url == currentSource.src)?.quality || "Auto")
           }}
         </v-btn>
       </template>
@@ -46,8 +46,8 @@
                     class="d-flex align-center px-4 py-2">
                     <v-avatar>
                       <v-icon
-                        :color="currentSource.src === src.url ? 'primary' : 'grey'"
-                      >{{currentSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
+                        :color="isVideoActive(src) ? 'primary' : 'grey'"
+                      >{{isVideoActive(src) ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
                     </v-avatar>
                     <div class="w-100">
                       <v-list-item-title>
@@ -81,8 +81,8 @@
                       class="d-flex align-center px-4 py-2">
                       <v-avatar>
                         <v-icon
-                          :color="currentAudioSource.src === src.url ? 'primary' : 'grey'"
-                        >{{currentAudioSource.src === src.url ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
+                          :color="isAudioActive(src) ? 'primary' : 'grey'"
+                        >{{isAudioActive(src) ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
                       </v-avatar>
                       <div class="w-100">
                         <v-list-item-title>
@@ -112,6 +112,14 @@ export default {
   props: {
     currentSource: {},
     currentAudioSource: {},
+    currentVideoFormat: {
+      type: Object,
+      default: null,
+    },
+    currentAudioFormat: {
+      type: Object,
+      default: null,
+    },
     sources: {
       type: Array,
       required: true,
@@ -132,6 +140,18 @@ export default {
     },
     prevTab() {
       if (this.tab > 0) this.tab--;
+    },
+    isVideoActive(src) {
+      if (this.currentVideoFormat) {
+        return this.currentVideoFormat === src;
+      }
+      return this.currentSource.src === src.url;
+    },
+    isAudioActive(src) {
+      if (this.currentAudioFormat) {
+        return this.currentAudioFormat === src;
+      }
+      return this.currentAudioSource.src === src.url;
     },
 
     handleAudioQualityClick(src) {

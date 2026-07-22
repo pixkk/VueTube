@@ -391,9 +391,16 @@ export default {
     getVideo() {
       this.loaded = false;
 
-      this.$youtube.getVid(this.$route.query.v).then((result) => {
+      const tvParams = this.$store.state.pendingTvParams;
+      this.$youtube.getVid(this.$route.query.v, tvParams).then((result) => {
         // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
-        this.sources = result.availableResolutionsAdaptive;
+        // Drop premium/alt-track (xtags) variants from the video candidates, and keep
+        // the audio filter on its own line so no video-only or duplicate formats leak in.
+        const videoSources = result.availableResolutionsAdaptive
+          .filter(s => !s.xtags && s.mimeType.includes("video"));
+        const audioSources = result.availableResolutionsAdaptive
+          .filter(s => s.mimeType.includes("audio"));
+        this.sources = videoSources.concat(audioSources);
         this.captions = result.captions;
         this.storyboards = result.storyboards;
         console.log("Video info data", result);
@@ -405,10 +412,10 @@ export default {
         //---   Content Stuff   ---//
         // this.interactions[0].value = result.metadata.likes.toLocaleString();
         this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
-          this.likes = result.metadata.likes || data.likes.toLocaleString();
-          this.dislikes = data.dislikes.toLocaleString();
-          this.interactions[0].value = data.likes.toLocaleString();
-          this.interactions[1].value = data.dislikes.toLocaleString();
+          this.likes = result.metadata.likes || data.likes;
+          this.dislikes = data.dislikes;
+          this.interactions[0].value = this.likes?.toLocaleString();
+          this.interactions[1].value = this.dislikes?.toLocaleString();
         });
         this.loaded = true;
         this.recommends = result.renderedData.recommendations;

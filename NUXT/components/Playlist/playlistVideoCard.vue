@@ -2,7 +2,7 @@
   <v-card
     v-ripple
     class="background d-flex flex-row overflow-hidden mb-4 mx-4"
-    style="height: 4.5rem !important"
+    style="height: 4.5rem !important; justify-content: space-between;"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
         ? $vuetify.theme.current.dark
@@ -18,7 +18,7 @@
     flat
   >
     <v-card
-      class="d-flex flex-row w-50 elevation-0"
+      class="d-flex flex-row elevation-0 w-100"
       :to="`/watch?v=${video.id}`"
     >
       <v-img
@@ -36,7 +36,7 @@
       <div
         v-emoji
         style="font-size: 0.75rem !important"
-        class="d-flex flex-column ml-2"
+        class="d-flex flex-column ml-2 w-100"
       >
         <b
           class="text-left"
@@ -68,7 +68,7 @@
       </div>
     </v-card>
 
-    <v-spacer></v-spacer>
+<!--    <v-spacer></v-spacer>-->
     <div class="d-flex w-50 flex-column">
       <v-btn
       elevation="0"
