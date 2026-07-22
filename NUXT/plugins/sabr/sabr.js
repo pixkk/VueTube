@@ -428,7 +428,7 @@ const SABR_CLIENT_NAME_IDS = {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
     const clientOsName = innertube?.context?.client?.osName || 'Windows';
     const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
@@ -553,7 +553,7 @@ const SABR_CLIENT_NAME_IDS = {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
     const clientOsName = innertube?.context?.client?.osName || 'Windows';
     const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
@@ -1102,7 +1102,7 @@ const SABR_CLIENT_NAME_IDS = {
     const yt = window.$nuxt ? window.$nuxt.$youtube : null;
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20240101.00.00';
+    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
     const clientOsName = innertube?.context?.client?.osName || 'Windows';
     const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
@@ -1323,8 +1323,11 @@ const SABR_CLIENT_NAME_IDS = {
       if (mediaSource.readyState === 'open') mediaSource.endOfStream();
     }).catch(e => {
       if (e.name === 'AbortError') {
-        console.log('[SABR combined] Stream aborted');
-        _sabrFallbackFromCombined(component, streamParams);
+        // A newer seek/quality-change already aborted this controller and started its own
+        // session, which now owns the player. Falling back here would race that newer
+        // session for the same MediaSource/SourceBuffers and is what caused playback to
+        // get stuck needing a manual quality reselect — so just stop, no fallback.
+        console.log('[SABR combined] Stream aborted (superseded by a newer load)');
       } else {
         console.warn('[SABR combined] Stream error:', e);
         if (videoChunks === 0 && audioChunks === 0 && !signal?.aborted) {
