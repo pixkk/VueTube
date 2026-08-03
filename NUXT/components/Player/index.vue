@@ -8,6 +8,7 @@
       width: 'auto',
       height: isFullscreen ? '100vh' : 'auto',
       maxHeight: isFullscreen ? '' : '50vh',
+      paddingTop: isFullscreen ? '' : 'env(safe-area-inset-top)',
       borderRadius:
         $store.state.tweaks.roundWatch && !isFullscreen
           ? `${$store.state.tweaks.roundTweak / 3}rem ${
