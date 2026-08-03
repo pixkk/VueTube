@@ -38,7 +38,7 @@
               style="font-size: 0.75rem"
               class="background--text pa-0"
               :class="
-                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
+                theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
             >
               <div>
@@ -58,7 +58,7 @@
           class="d-flex justify-space-around"
           :class="
             $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.current.dark
+              ? theme.global.current.value.dark
                 ? 'background lighten-1'
                 : 'background darken-1'
               : ''
@@ -139,7 +139,7 @@
           class="channel-section py-2 px-3 background"
           :class="
             $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.current.dark
+              ? theme.global.current.value.dark
                 ? 'background lighten-1'
                 : 'background darken-1'
               : ''
@@ -166,7 +166,7 @@
               <div
                 class="caption background--text"
                 :class="
-                  $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
+                  theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
                 "
                 v-text="video.channelSubs + ' subscribers'"
               />
@@ -216,7 +216,7 @@
 <!--          class="comment-renderer px-3 background"-->
 <!--          :class="-->
 <!--            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0-->
-<!--              ? $vuetify.theme.current.dark-->
+<!--              ? theme.global.current.value.dark-->
 <!--                ? 'background lighten-1'-->
 <!--                : 'background darken-1'-->
 <!--              : ''-->
@@ -288,7 +288,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">Save To Playlist</v-card-title>
@@ -323,8 +323,16 @@ import SlimVideoDescriptionRenderer from "~/components/UtilRenderers/slimVideoDe
 
 import backType from "~/lib/classes/backType";
 import Comments from "../components/Player/comments.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     Comments,
     player,

@@ -53,7 +53,7 @@
       <div
         style="margin-top: 1em"
         class="background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         <div>
           {{ lang.published }}:
@@ -75,11 +75,11 @@
       <div
         style="margin-top: 1em"
         class="background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         <b>Changelog</b>
       </div>
-      <div class="background--text" :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion?.body)?.replace(/\[![A-Za-z0-9]+\]/i, '')">
+      <div class="background--text" :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'" v-html="mkdwn.makeHtml(latestVersion?.body)?.replace(/\[![A-Za-z0-9]+\]/i, '')">
       </div>
 
       <v-progress-linear
@@ -95,7 +95,7 @@
           rounded
           depressed
           :class="
-            $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+            theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
           "
           @click="navigateBack"
         >
@@ -121,8 +121,16 @@ import { Device } from "@capacitor/device";
 import showdown from "showdown";
 import {useRuntimeConfig} from "nuxt/app";
 import { humanFileSize, delay } from "~/lib/utils";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   layout: "empty",
   created() {
     window.openExternal = this.openExternal;

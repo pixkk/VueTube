@@ -5,7 +5,7 @@
         src="/icon.svg"
         width="10rem"
         height="10rem"
-        :class="$vuetify.theme.current.dark ? '' : 'invert'"
+        :class="theme.global.current.value.dark ? '' : 'invert'"
       />
       <div style="height: 3rem" />
       <h1>{{ lang.welcome }}</h1>
@@ -79,7 +79,15 @@
 <script>
 import language from "~/components/Settings/language.vue";
 import {useRuntimeConfig} from "nuxt/app";
+import {useTheme} from "vuetify";
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     language,
   },

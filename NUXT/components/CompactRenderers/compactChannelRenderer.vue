@@ -5,7 +5,7 @@
     class="entry gridVideoRenderer background"
     :class="
       roundThumb && roundTweak > 0
-        ? $vuetify.theme.current.dark
+        ? theme.global.current.value.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -43,7 +43,7 @@
 
         <div
           class="caption background--text"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
           v-text="parseBottom(video)"
         />
       </v-card-text>
@@ -53,7 +53,7 @@
         variant="text"
         :elevation="0"
         class="background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
         style="width: 50px !important; height: 50px !important; z-index: 420"
       >
         <v-icon>mdi-share-outline</v-icon>
@@ -63,7 +63,15 @@
 </template>
 
 <script>
+import { useTheme } from 'vuetify'
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: ["video"],
   computed: {
     roundTweak() {

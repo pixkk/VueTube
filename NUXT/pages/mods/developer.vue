@@ -29,7 +29,7 @@
       <v-card
         class="card"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
         :style="{ borderRadius: `${roundTweak / 2}rem` }"
       >
@@ -54,7 +54,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">{{ lang.confirmdelete }}</v-card-title>
@@ -82,7 +82,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5" v-text="selectedKey" />
@@ -109,7 +109,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5">{{ lang.createentryfull }}</v-card-title>
@@ -140,7 +140,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   data() {
     return {
       lang: {},

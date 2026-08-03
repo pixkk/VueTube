@@ -5,7 +5,7 @@
       variant="flat"
       class="pb-5 background"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
@@ -23,7 +23,7 @@
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.current.dark
+          ? theme.global.current.value.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -68,7 +68,7 @@
         class="my-auto pa-4 ml-n4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.current.dark
+            ? theme.global.current.value.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -85,7 +85,7 @@
         <div class="mb-4">{{ lang.personalizedrecommendations }}</div>
         <div
           class="background--text"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
           {{ lang.personalizedrecommendationsinfo }}
@@ -107,7 +107,7 @@
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.current.dark
+          ? theme.global.current.value.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -145,7 +145,7 @@
         class="my-auto pa-4 ml-n4 background ma-0"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.current.dark
+            ? theme.global.current.value.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -162,7 +162,7 @@
         <div class="mb-4">SponsorBlock Settings</div>
         <div
           class="background--text"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
           Open settings related with SponsorBlock integration.
@@ -184,7 +184,7 @@
       style="overflow: hidden; position: relative"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.current.dark
+          ? theme.global.current.value.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -229,7 +229,7 @@
         class="my-auto pa-4 ml-n4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.current.dark
+            ? theme.global.current.value.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
@@ -354,9 +354,17 @@
 </template>
 
 <script>
+import { useTheme } from 'vuetify'
 import language from "~/components/Settings/language.vue";
 import {useRuntimeConfig} from "nuxt/app";
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     language,
   },

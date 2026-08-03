@@ -19,7 +19,7 @@
         !($store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0)
       "
       class="separator-bottom background"
-      :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+      :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
       :style="{ height: render.separatorDetails.height + 'px' }"
     ></div>
   </div>
@@ -38,8 +38,16 @@ import compactChannelRenderer from "~/components/CompactRenderers/compactChannel
 import gridVideoRenderer from "~/components/gridRenderers/gridVideoRenderer.vue";
 import videoWithContextRenderer from "~/components/gridRenderers/videoWithContextRenderer.vue";
 import tileRenderer from "~/components/gridRenderers/tileRenderer.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     gridVideoRenderer,
     compactVideoRenderer,

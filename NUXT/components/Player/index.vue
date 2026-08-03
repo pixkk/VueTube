@@ -179,7 +179,7 @@
     >
       <!-- top controls row -->
       <div
-        style="position: absolute; width: 100%; top: 0.25rem; filter: drop-shadow(0 0 0.5rem #000)"
+        style="width: 100%; margin-top: 1rem; filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-center px-2"
       >
         <minimize />
@@ -266,7 +266,7 @@
            In non-fullscreen is raised so seekbar stays below it.
            In fullscreen rises above the seekbar wrapper (seekbar bottom=55px + height=3rem ≈ 6.4rem). -->
       <div
-        :style="isFullscreen ? 'bottom: 7rem' : 'bottom: 1rem'"
+        :style="isFullscreen ? 'bottom: 5rem' : 'bottom: 1rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
         style="position: absolute; width: 100%; filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"
@@ -793,9 +793,20 @@ export default {
     }
   },
   created() {
-    screen.orientation.addEventListener("change", () =>
-      this.fullscreenHandler(false)
-    );
+    screen.orientation.addEventListener("change", (e) => {
+      // Swiping open the notification shade while in immersive fullscreen
+      // can fire a spurious orientation "change" event on Android even
+      // though the orientation didn't actually change. Only auto-exit
+      // fullscreen when the new orientation is actually the "wrong" one
+      // for the current fullscreen mode (i.e. the user physically rotated
+      // the device back).
+      if (!this.isFullscreen) return;
+      const isPortrait = e.target.type.startsWith("portrait");
+      const wrongOrientation = this.verticalFullscreen
+        ? !isPortrait
+        : isPortrait;
+      if (wrongOrientation) this.fullscreenHandler(false);
+    });
   },
   beforeUnmount() {
     this.cleanup();

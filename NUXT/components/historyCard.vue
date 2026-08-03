@@ -5,7 +5,7 @@
     style="height: 4.5rem !important; justify-content: space-between;"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.current.dark
+        ? theme.global.current.value.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -25,7 +25,7 @@
         :src="thumbnail"
         aspect-ratio="1.7778"
         style="position: relative; width: 8rem"
-        :class="$vuetify.theme.current.dark ? 'lighten-3' : 'darken-3'"
+        :class="theme.global.current.value.dark ? 'lighten-3' : 'darken-3'"
         :style="{
           borderRadius: $store.state.tweaks.roundThumb
             ? `${$store.state.tweaks.roundTweak / 3}rem`
@@ -56,7 +56,7 @@
         </b>
         <div
           class="background--text caption mt-2 text-left d-inline-block text-truncate"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="
              {
               height: 0.75rem;
@@ -86,7 +86,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: ["video"],
   computed: {
     thumbnail() {

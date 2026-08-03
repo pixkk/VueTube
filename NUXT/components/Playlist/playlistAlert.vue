@@ -3,7 +3,7 @@
     <v-card
       class="rounded-lg"
       :class="
-        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+        theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
       "
     >
       <v-card-title class="text-h5">Save To Playlist</v-card-title>
@@ -30,7 +30,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: { dialog: Boolean, currentVideo: { type: Object, required: true } },
   computed: {
     playlists() {

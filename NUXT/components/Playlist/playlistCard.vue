@@ -8,7 +8,7 @@
     style="height: 6rem !important"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.current.dark
+        ? theme.global.current.value.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -25,7 +25,7 @@
       :src="thumbnail"
       class="background"
       style="position: relative; max-width: 8rem !important"
-      :class="$vuetify.theme.current.dark ? 'lighten-3' : 'darken-3'"
+      :class="theme.global.current.value.dark ? 'lighten-3' : 'darken-3'"
       :style="{
         borderRadius: $store.state.tweaks.roundThumb
           ? `${$store.state.tweaks.roundTweak / 3}rem`
@@ -45,7 +45,7 @@
 
       <div
         class="background--text caption mt-2"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         Updated: {{ getTimeOfPlaylist(playlist?.time) }} <br />
         {{ playlist.videos.length }} videos
@@ -78,7 +78,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: {
     playlist: { type: Object, required: true },
   },

@@ -42,7 +42,7 @@
                 :color="
                   currentSpeed === sped
                     ? 'primary'
-                    : $vuetify.theme.current.dark
+                    : theme.global.current.value.dark
                     ? 'background lighten-2'
                     : 'background darken-2'
                 "
@@ -58,7 +58,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: {
     currentSpeed: {
       type: Number,

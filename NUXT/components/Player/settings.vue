@@ -45,7 +45,6 @@
               :max="1"
               :step="0.01"
               :thumb-label="true"
-              :thumb-size="25"
               v-model="volume"
               class="slider"
             ></v-slider>
@@ -60,7 +59,6 @@
               :max="1"
               :step="0.01"
               :thumb-label="true"
-              :thumb-size="25"
               class="slider"
             ></v-slider>
           </div>

@@ -9,7 +9,7 @@
       class="mx-4 my-2 px-4 py-2 d-flex flex-row background"
       style="transition-duration: 0.3s; transition-property: border-radius"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{
         borderRadius: `${roundTweak / 2}rem`,
@@ -17,7 +17,7 @@
     >
       <h3
         class="my-auto background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
+        :class="theme.global.current.value.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
         {{ lang.fullscreen }}
       </h3>
@@ -38,7 +38,7 @@
       class="mx-4 my-2 px-4 py-2 d-flex flex-row background"
       style="transition-duration: 0.3s; transition-property: border-radius"
       :class="
-        roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+        roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
       "
       :style="{
         borderRadius: `${roundTweak / 2}rem`,
@@ -46,7 +46,7 @@
     >
       <h3
         class="my-auto background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
+        :class="theme.global.current.value.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
         {{ lang.navbarblur }}
       </h3>
@@ -81,7 +81,7 @@
         variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
@@ -106,7 +106,7 @@
         variant="flat"
         class="mb-1 px-4 py-2 d-flex flex-row background"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
@@ -132,9 +132,8 @@
         class="pr-8 pl-4 pt-3 pb-0 background"
         :max="4"
         step=".25"
-        thumb-size="64"
         :class="
-          roundTweak > 0 ? ($vuetify.theme.current.dark ? 'lighten-1' : 'darken-1') : ''
+          roundTweak > 0 ? (theme.global.current.value.dark ? 'lighten-1' : 'darken-1') : ''
         "
         :style="{
           borderRadius: `${roundTweak / 12}rem`,
@@ -176,7 +175,7 @@
         style="width: calc(100% / 3) !important"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.current.dark
+            ? theme.global.current.value.dark
               ? launchTheme === 0
                 ? 'primary darken-4'
                 : 'background lighten-1'
@@ -209,7 +208,7 @@
         style="width: calc(100% / 3) !important"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.current.dark
+            ? theme.global.current.value.dark
               ? launchTheme === 1
                 ? 'primary darken-4'
                 : 'background lighten-1'
@@ -561,7 +560,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   data() {
     return {
       lang: {},

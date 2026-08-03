@@ -12,7 +12,7 @@
     </div>
     <div
       class="placeholder-text background--text"
-      :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+      :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
       v-text="
         boxRenderer.placeholderText.runs[
           boxRenderer.placeholderText.runs.length - 1
@@ -23,7 +23,16 @@
 </template>
 
 <script>
+import { useTheme } from 'vuetify'
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: ["comment"],
 
   data() {

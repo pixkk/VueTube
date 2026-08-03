@@ -6,7 +6,7 @@
           <v-img
             width="69px"
             src="/icon.svg"
-            :class="$vuetify.theme.current.dark ? '' : 'invert'"
+            :class="theme.global.current.value.dark ? '' : 'invert'"
           />
         </div>
         <h1 style="font-size: 2rem">VueTube</h1>
@@ -18,7 +18,7 @@
       variant="flat"
       class="obj"
       :class="
-        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+        theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
       "
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
@@ -103,8 +103,16 @@
 import {Device} from "@capacitor/device";
 import {UserAgent} from '@adeprez/capacitor-user-agent';
 import {useRuntimeConfig} from "nuxt/app";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   data() {
 
     const config = useRuntimeConfig();

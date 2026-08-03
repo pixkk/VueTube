@@ -9,7 +9,7 @@
       >
         <v-color-picker
           v-model="$vuetify.theme.current[pickerMode]"
-          :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+          :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
           style="min-width: 100%"
           class="background"
           hide-mode-switch
@@ -28,12 +28,12 @@
           style="max-width: 100%; overflow-x: auto"
         >
           <v-radio
-            v-for="color in $vuetify.theme.current.dark ? primaryDark : primaryLight"
+            v-for="color in theme.global.current.value.dark ? primaryDark : primaryLight"
             :key="color"
             color="background"
             on-icon="mdi-check"
-            :light="$vuetify.theme.current.dark"
-            :dark="!$vuetify.theme.current.dark"
+            :light="theme.global.current.value.dark"
+            :dark="!theme.global.current.value.dark"
             active-class="border-primary"
             style="transition-duration: 0.3s"
             :style="{
@@ -49,7 +49,7 @@
             icon
             class="background"
             style="height: 1.75rem; width: 1.75rem"
-            :class="$vuetify.theme.current.dark ? 'lighten-2' : 'darken-2'"
+            :class="theme.global.current.value.dark ? 'lighten-2' : 'darken-2'"
             @click="(pickerState = true), (pickerMode = 'primary')"
           >
             <v-icon>mdi-plus</v-icon>
@@ -63,7 +63,7 @@
           style="max-width: 100%; overflow-x: auto"
         >
           <div
-            v-for="background in $vuetify.theme.current.dark
+            v-for="background in theme.global.current.value.dark
               ? backgroundsDark
               : backgroundsLight"
             :key="background.color"
@@ -90,16 +90,16 @@
               active-class="px-6 border-primary primary"
               style="transition-duration: 0.3s"
               :style="{
-                background: $vuetify.theme.current.dark
+                background: theme.global.current.value.dark
                   ? 'var(--v-primary-darken4) !important'
                   : 'var(--v-primary-lighten4) !important',
-                border: $vuetify.theme.current.dark
+                border: theme.global.current.value.dark
                   ? '2px solid var(--v-primary-darken4)'
                   : '2px solid var(--v-primary-lighten4)',
                 borderRadius: `${$store.state.tweaks.roundTweak / 3}rem`,
               }"
               class="pa-4 ma-2"
-              :value="$vuetify.theme.current.dark ? adaptiveDark : adaptiveLight"
+              :value="theme.global.current.value.dark ? adaptiveDark : adaptiveLight"
             />
             {{ lang.adaptive }}
           </div>
@@ -168,7 +168,17 @@
 </template>
 
 <script>
+import { useTheme } from 'vuetify'
+
 export default {
+
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   data() {
     return {
       primaryLight: [

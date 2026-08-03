@@ -11,6 +11,7 @@
         box-shadow: none !important;
         padding: 0 !important;
         position: relative;
+        height: 100%;
       "
       class="transparent nav"
       :shift="$store.state.tweaks.navigationShift"
@@ -34,15 +35,15 @@
             color:
               tabSelection == i
                 ? 'var(--v-primary-base)'
-                : $vuetify.theme.current.dark
+                : theme.global.current.value.dark
                 ? 'var(--v-background-lighten4)'
                 : 'var(--v-background-darken4)',
           }"
           :class="
             tabSelection == i && $store.state.tweaks.navigationShift
-              ? $vuetify.theme.current.dark
-                ? 'tab primary darken-4 '
-                : 'tab primary lighten-4 '
+              ? theme.global.current.value.dark
+                ? 'tab primary text--darken-4 '
+                : 'tab primary text--lighten-4 '
               : ''
           "
         >
@@ -86,15 +87,15 @@
           :color="
             tabSelection == i
               ? 'primary'
-              : $vuetify.theme.current.dark
-              ? 'background lighten-4'
-              : 'background darken-4'
+              : theme.global.current.value.dark
+              ? 'background text--lighten-4'
+              : 'background text--darken-4'
           "
           :class="
             tabSelection == i && $store.state.tweaks.navigationShift
-              ? $vuetify.theme.current.dark
-                ? 'tab primary darken-4'
-                : 'tab primary lighten-4'
+              ? theme.global.current.value.dark
+                ? 'tab primary text--darken-4'
+                : 'tab primary text--lighten-4'
               : ''
           "
           :icon="item.icon"
@@ -121,7 +122,15 @@
 </template>
 
 <script>
+import { useTheme } from 'vuetify'
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   methods: {
     moveIndicator(index) {
       try {

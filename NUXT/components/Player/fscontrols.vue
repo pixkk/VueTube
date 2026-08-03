@@ -3,7 +3,7 @@
     v-if="isFullscreen"
     :style="
       verticalFullscreen
-        ? 'position: absolute; height: calc(100vh - 14rem); bottom: 7rem; right: 0;'
+        ? 'position: absolute; height: calc(100vh - 14rem); bottom: 5rem; right: 0;'
         : ''
     "
     :class="verticalFullscreen ? 'd-flex flex-column justify-end' : ''"
@@ -20,7 +20,7 @@
       :disabled="item.disabled"
       :hidden="item.hidden ? item.hidden : false"
     >
-      <v-icon v-text="item.icon" />
+      <v-icon>{{ item.icon }}</v-icon>
     </v-btn>
   </div>
 </template>

@@ -5,7 +5,7 @@
     class="background"
     :class="
       $store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0
-        ? $vuetify.theme.current.dark
+        ? theme.global.current.value.dark
           ? 'lighten-1'
           : 'darken-1'
         : ''
@@ -28,7 +28,7 @@
         <b>{{ channelName }}</b>
         <div
           class="background--text"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
         >
           {{ publishedTime }}
         </div>
@@ -56,7 +56,7 @@
         v-if="backstageAttachment?.backstageAttachment?.backstageImageRenderer"
       contain
       class="background my-4"
-      :class="$vuetify.theme.current.dark ? 'lighten-2' : 'darken-2'"
+      :class="theme.global.current.value.dark ? 'lighten-2' : 'darken-2'"
       style="max-height: 15rem"
       :style="{
         borderRadius: `${$store.state.tweaks.roundTweak / 4}rem`,
@@ -83,7 +83,16 @@
 
 <script>
 // import YtTextFormatter from "~/components/UtilRenderers/YtTextFormatterNew.vue";
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {},
   props: [
     "channelName",

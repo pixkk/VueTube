@@ -31,7 +31,7 @@
           class="pa-4 d-flex flex-row background"
           :class="
             $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.current.dark
+              ? theme.global.current.value.dark
                 ? 'lighten-1'
                 : 'darken-1'
               : ''
@@ -57,7 +57,7 @@
             <div
               class="background--text"
               :class="
-                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
+                theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
               style="font-size: 0.75rem"
             >
@@ -119,7 +119,7 @@
           class="mb-1 pa-4 d-flex flex-row background"
           :class="
             $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.current.dark
+              ? theme.global.current.value.dark
                 ? 'lighten-1'
                 : 'darken-1'
               : ''
@@ -137,7 +137,7 @@
             <div
               class="background--text pr-4"
               :class="
-                $vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'
+                theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
               style="font-size: 0.75rem"
             >
@@ -159,7 +159,7 @@
             :current-speed="speed"
             :class="
               $store.state.tweaks.roundTweak > 0
-                ? $vuetify.theme.current.dark
+                ? theme.global.current.value.dark
                   ? 'lighten-1'
                   : 'darken-1'
                 : ''
@@ -172,14 +172,13 @@
           <v-slider
             v-model="speed"
             step=".25"
-            thumb-size="64"
             class="pa-0 pt-5 pl-6 pb-2 ma-0 background"
             :rules="[(s) => s <= 4 || 'Might cause issues with buffering.']"
             :min="0.25"
             :max="16"
             :class="
               $store.state.tweaks.roundTweak > 0
-                ? $vuetify.theme.current.dark
+                ? theme.global.current.value.dark
                   ? 'lighten-1'
                   : 'darken-1'
                 : ''
@@ -406,8 +405,16 @@
 <script>
 import speed from "../../components/Player/speed.vue";
 import quality from "../../components/Player/quality.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     speed,
   },

@@ -33,7 +33,7 @@
       label="Search"
       style="margin-top: 7px"
       :background-color="
-        $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+        theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
       "
       @update:modelValue="$emit('text-changed', text)"
       @keyup.enter="$emit('search-btn', text)"
@@ -89,7 +89,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: {
     search: {
       type: Boolean,

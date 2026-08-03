@@ -31,14 +31,14 @@
     <div class="comment-content">
       <div
         class="comment-content--header background--text"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-5' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-5' : 'text--darken-4'"
         style="font-size: 0.8rem !important"
       >
         <div
           class="author-badge-name mr-2"
           :class="
             commentRenderer.authorIsChannelOwner
-              ? $vuetify.theme.current.dark
+              ? theme.global.current.value.dark
                 ? 'owner primary--text background lighten-2'
                 : 'owner primary--text background darken-2'
               : ''
@@ -178,6 +178,7 @@
 </style>
 
 <script>
+import { useTheme } from 'vuetify'
 import collapsableText from "~/components/UtilRenderers/collapsableText.vue";
 import YtTextFormatter from "~/components/UtilRenderers/YtTextFormatter.vue";
 import AuthorCommentBadgeRenderer from "~/components/Comments/authorCommentBadgeRenderer.vue";
@@ -185,6 +186,13 @@ import SponsorCommentBadgeRenderer from "~/components/Comments/sponsorCommentBad
 import $rendererUtils from "../../lib/renderers";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   computed: {
     $rendererUtils() {
       return $rendererUtils

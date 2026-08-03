@@ -22,7 +22,7 @@
     <div
       v-if="render.separator && render.separator.hasBottomSeparator"
       class="separator-bottom background"
-      :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+      :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
       :style="{ height: render.separator.height + 'px' }"
     ></div>
   </div>
@@ -31,8 +31,16 @@
 <script>
 import verticalListRenderer from "~/components/ListRenderers/verticalListRenderer.vue";
 import horizontalListRenderer from "~/components/ListRenderers/horizontalListRenderer.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     horizontalListRenderer,
     verticalListRenderer,

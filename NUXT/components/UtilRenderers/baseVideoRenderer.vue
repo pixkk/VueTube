@@ -31,7 +31,7 @@
       class="background mt-1 d-flex flex-row"
       :class="
         roundThumb && roundTweak > 0
-          ? $vuetify.theme.current.dark
+          ? theme.global.current.value.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -61,7 +61,7 @@
 
         <div
           class="background--text caption"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-5' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-5' : 'text--darken-4'"
           v-text="bottomText"
         />
       </v-card-text>
@@ -70,7 +70,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   props: {
     vidId: {
       type: String,

@@ -6,7 +6,7 @@
         v-model="activeTab"
         mobile-breakpoint="0"
         background-color="background"
-        :color="$vuetify.theme.current.dark ? 'white' : 'black'"
+        :color="theme.global.current.value.dark ? 'white' : 'black'"
       >
         <v-tab
           v-for="(tab, index) in tabs"
@@ -84,8 +84,16 @@ import Videos from "./videos.vue";
 import Community from "./community.vue";
 import About from "./about.vue";
 import Shorts from "~/pages/channel/shorts.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {Shorts, About, Community, Videos, GeneralPage},
   mounted() {
     this.isLoading = true;

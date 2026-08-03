@@ -35,7 +35,7 @@
     <div class="d-flex justify-space-between mb-2 mx-4">
       <h4
         class="background--text w-50"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
+        :class="theme.global.current.value.dark ? 'text--lighten-3' : 'text--darken-3'"
       >
         Last videos:
       </h4>
@@ -57,7 +57,7 @@
       <div class="d-flex justify-space-between mb-2 mx-4">
         <h4
           class="background--text w-50"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-3' : 'text--darken-3'"
+          :class="theme.global.current.value.dark ? 'text--lighten-3' : 'text--darken-3'"
         >
           {{ library.localplaylists }}
         </h4>
@@ -84,7 +84,7 @@
       <v-card
         class="rounded-lg"
         :class="
-          $vuetify.theme.current.dark ? 'background lighten-1' : 'background darken-1'
+          theme.global.current.value.dark ? 'background lighten-1' : 'background darken-1'
         "
       >
         <v-card-title class="text-h5"> {{library.createplaylist}}</v-card-title>
@@ -110,7 +110,15 @@
 
 <script>
 import playlistCard from "~/components/Playlist/playlistCard.vue";
+import {useTheme} from "vuetify";
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: { playlistCard },
   data() {
     return {

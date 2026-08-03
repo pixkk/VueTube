@@ -4,7 +4,7 @@
       v-if="!isLoading"
         :src="this.$props.bannerUrl"
         class=""
-        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+        :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
       style="position: relative; width: 100%; height: max-content"
         contain
         position="top center"
@@ -13,7 +13,7 @@
     <v-avatar
         size="60"
         class="mt-2 background"
-        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+        :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
     >
       <img
           v-if="!isLoading"
@@ -35,12 +35,12 @@
         variant="flat"
         style="font-size: 0.75rem; text-oveflow: ellipsis; overflow: hidden"
         class="background background--text text-center px-4"
-        :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+        :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
     >
       {{ this.$props.descriptionPreview.slice(0, this.$props.descriptionPreview.indexOf(".") || 100) }}...
       <v-icon
           class="background--text"
-          :class="$vuetify.theme.current.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
       >
         mdi-chevron-right
       </v-icon>
@@ -63,8 +63,16 @@
 </template>
 <script>
 import CompactVideoRenderer from "../../components/CompactRenderers/compactVideoRenderer.vue";
+import {useTheme} from "vuetify";
 
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {CompactVideoRenderer},
 
   props: [

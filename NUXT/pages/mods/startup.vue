@@ -3,7 +3,7 @@
     <v-card
       variant="flat"
       class="pb-5 background"
-      :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+      :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
       :style="{ borderRadius: `${roundTweak / 2}rem` }"
     >
       <v-card-title>{{ lang.mods.startup.defaultpage }}</v-card-title>
@@ -22,7 +22,16 @@
 </template>
 
 <script>
+import {useTheme} from "vuetify";
+
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   computed: {
     roundTweak() {
       return this.$store.state.tweaks.roundTweak;

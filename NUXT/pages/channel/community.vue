@@ -23,7 +23,7 @@
         !($store.state.tweaks.roundThumb && $store.state.tweaks.roundTweak > 0)
       "
         class="separator-bottom background"
-        :class="$vuetify.theme.current.dark ? 'lighten-1' : 'darken-1'"
+        :class="theme.global.current.value.dark ? 'lighten-1' : 'darken-1'"
         style="height: 4px"
       ></div>
 
@@ -41,7 +41,15 @@
 <script>
 import communityCard from "../../components/communityCard.vue";
 import VideoWithContextRenderer from "@/components/gridRenderers/videoWithContextRenderer.vue";
+import {useTheme} from "vuetify";
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     VideoWithContextRenderer,
     communityCard,

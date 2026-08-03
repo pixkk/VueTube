@@ -13,7 +13,7 @@
       style="position: absolute; z-index: 10000; overflow: visible; pointer-events: none;"
       :style="
         fullscreen
-          ? 'width: 100%; left: 0; bottom: 55px; height: 3rem;'
+          ? 'width: stretch; left: 0; bottom: 55px; height: 3rem; margin-right: 1rem; margin-left: 1rem; '
           : 'width: 100%; left: 0; bottom: -0.875rem; height: 3rem;'
       "
     >
@@ -89,6 +89,7 @@
 </style>
 <script>
 import sponsorblock from "~/components/Player/sponsorblock.vue";
+import {full} from "acorn-walk";
 
 export default {
   components: { sponsorblock },
@@ -139,6 +140,7 @@ export default {
     }
   },
   methods: {
+    full,
     startScrubbing(v) {
       this.scrubValue = this.currentTime;
       this.isScrubbing = true;
