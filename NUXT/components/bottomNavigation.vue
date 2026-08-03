@@ -4,9 +4,9 @@
     class="bottomNav background"
     ref="navRoot"
   >
-    <v-divider v-if="!$store.state.tweaks.roundTweak" />
+    <v-divider v-if="!$store.state.tweaks.roundTweak"/>
     <v-bottom-navigation
-      v-model="tabSelection"
+      :model-value="activeIndex"
       style="
         box-shadow: none !important;
         padding: 0 !important;
@@ -18,89 +18,94 @@
 
     >
       <v-btn
-      elevation="0"
+        elevation="0"
         v-for="(item, i) in tabs"
         :key="i"
         v-ripple="false"
         active-class="link-active"
         class="navButton link"
         :to="item.link"
+        :value="i"
         variant="plain"
       >
-        <span v-if="$store.state.tweaks.navigationText" v-text="item.name" />
-        <div
-          v-if="$store.state.tweaks.navigationIcons !== 0"
-          class="px-3"
-          :style="{
-            color:
-              tabSelection == i
-                ? 'var(--v-primary-base)'
-                : theme.global.current.value.dark
-                ? 'var(--v-background-lighten4)'
-                : 'var(--v-background-darken4)',
-          }"
-          :class="
-            tabSelection == i && $store.state.tweaks.navigationShift
-              ? theme.global.current.value.dark
-                ? 'tab primary text--darken-4 '
-                : 'tab primary text--lighten-4 '
-              : ''
-          "
-        >
-          <svg
-            v-if="$store.state.tweaks.navigationIcons === 1"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 50 50"
-            height="1.5rem"
-            width="1.5rem"
-            class="mt-1"
-          >
-            <use :href="`/${item.svg}.svg#main`" />
-          </svg>
-          <svg
-            v-if="$store.state.tweaks.navigationIcons === 2"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 21 21"
-            height="1.5rem"
-            width="1.5rem"
-            class="mt-1"
-          >
-            <use :href="`/${item.svg2}.svg#main`" />
-          </svg>
-          <svg
-            v-if="$store.state.tweaks.navigationIcons === 3"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 33 33"
-            height="1.5rem"
-            width="1.5rem"
-            class="mt-1"
-          >
-            <use :href="`/${item.svg3}.svg#main`" />
-          </svg>
-        </div>
+        <!--        <div-->
+        <!--          v-if="$store.state.tweaks.navigationIcons !== 0"-->
+        <!--          class="px-3"-->
+        <!--          style="padding: 6px 18px 6px 18px"-->
+        <!--          :style="{-->
+        <!--            color:-->
+        <!--              tabSelection == i-->
+        <!--                ? 'var(&#45;&#45;v-primary-base)'-->
+        <!--                : theme.global.current.value.dark-->
+        <!--                ? 'var(&#45;&#45;v-background-lighten4)'-->
+        <!--                : 'var(&#45;&#45;v-background-darken4)',-->
+        <!--          }"-->
+        <!--          :class="-->
+        <!--            tabSelection == i && $store.state.tweaks.navigationShift-->
+        <!--              ? theme.global.current.value.dark-->
+        <!--                ? 'tab primary text&#45;&#45;darken-4 '-->
+        <!--                : 'tab primary text&#45;&#45;lighten-4 '-->
+        <!--              : ''-->
+        <!--          "-->
+        <!--        >-->
+        <!--          <svg-->
+        <!--            v-if="$store.state.tweaks.navigationIcons === 1"-->
+        <!--            xmlns="http://www.w3.org/2000/svg"-->
+        <!--            fill="currentColor"-->
+        <!--            viewBox="0 0 50 50"-->
+        <!--            height="1.5rem"-->
+        <!--            width="1.5rem"-->
+        <!--            class="mt-1"-->
+        <!--          >-->
+        <!--            <use :href="`/${item.svg}.svg#main`" />-->
+        <!--          </svg>-->
+        <!--          <svg-->
+        <!--            v-if="$store.state.tweaks.navigationIcons === 2"-->
+        <!--            xmlns="http://www.w3.org/2000/svg"-->
+        <!--            fill="currentColor"-->
+        <!--            viewBox="0 0 21 21"-->
+        <!--            height="1.5rem"-->
+        <!--            width="1.5rem"-->
+        <!--            class="mt-1"-->
+        <!--          >-->
+        <!--            <use :href="`/${item.svg2}.svg#main`" />-->
+        <!--          </svg>-->
+        <!--          <svg-->
+        <!--            v-if="$store.state.tweaks.navigationIcons === 3"-->
+        <!--            xmlns="http://www.w3.org/2000/svg"-->
+        <!--            fill="currentColor"-->
+        <!--            viewBox="0 0 33 33"-->
+        <!--            height="1.5rem"-->
+        <!--            width="1.5rem"-->
+        <!--            class="mt-1"-->
+        <!--          >-->
+        <!--            <use :href="`/${item.svg3}.svg#main`" />-->
+        <!--          </svg>-->
+        <!--        </div>-->
         <v-icon
           v-if="$store.state.tweaks.navigationIcons === 0"
+          :style="
+          activeIndex == i && $store.state.tweaks.navigationShift
+            ? {
+                padding: '6px 18px',
+                backgroundColor: 'rgb(var(--v-theme-primary))',
+                borderRadius: '9999px',
+                color: 'rgb(var(--v-theme-on-primary))'
+              }
+            : {
+                padding: '6px 18px'
+              }
+          "
           class="my-1"
           :color="
-            tabSelection == i
+            activeIndex == i
               ? 'primary'
-              : theme.global.current.value.dark
-              ? 'background text--lighten-4'
-              : 'background text--darken-4'
-          "
-          :class="
-            tabSelection == i && $store.state.tweaks.navigationShift
-              ? theme.global.current.value.dark
-                ? 'tab primary text--darken-4'
-                : 'tab primary text--lighten-4'
-              : ''
+              : 'on-background'
           "
           :icon="item.icon"
         />
-        <!-- + (tabSelection == i ? '' : '-outline') -->
+        <span v-if="$store.state.tweaks.navigationText" v-text="item.name"/>
+        <!-- + (activeIndex == i ? '' : '-outline') -->
       </v-btn>
       <div
         v-if="!$store.state.tweaks.navigationShift"
@@ -122,7 +127,8 @@
 </template>
 
 <script>
-import { useTheme } from 'vuetify'
+import {useTheme} from 'vuetify'
+
 export default {
   setup() {
     const theme = useTheme()
@@ -150,9 +156,13 @@ export default {
       }
     }
   },
+  computed: {
+    activeIndex() {
+      return this.tabs.findIndex((item) => this.$route.path.startsWith(item.link));
+    },
+  },
   data() {
     return {
-      tabSelection: 0,
       tabs: [
         // TODO: pull from Vuex & localStorage for customizations
         {
@@ -191,10 +201,10 @@ export default {
     this.tabs[0].name = lang.home;
     this.tabs[1].name = lang.subscriptions;
     this.tabs[2].name = lang.library;
-    this.$nextTick(() => this.moveIndicator(this.tabSelection));
+    this.$nextTick(() => this.moveIndicator(this.activeIndex));
 
     this._resizeObserver = new ResizeObserver(() => {
-      this.moveIndicator(this.tabSelection);
+      this.moveIndicator(this.activeIndex);
     });
     this._resizeObserver.observe(this.$refs.navRoot.querySelector('.nav'));
   },
@@ -204,7 +214,7 @@ export default {
     }
   },
   watch: {
-    tabSelection(i) {
+    activeIndex(i) {
       this.moveIndicator(i);
     }
   }
@@ -236,10 +246,12 @@ export default {
   width: 100%;
   bottom: 0;
 }
+
 .navButton {
   width: 25vw !important;
   font-size: 0.66rem !important;
 }
+
 .tab {
   padding: 0.1em 0.5em 0.1em 0.5em;
   border-radius: 2rem;

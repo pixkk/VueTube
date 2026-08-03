@@ -120,8 +120,8 @@
 import { Device } from "@capacitor/device";
 import showdown from "showdown";
 import {useRuntimeConfig} from "nuxt/app";
-import { humanFileSize, delay } from "~/lib/utils";
 import {useTheme} from "vuetify";
+import {delay, humanFileSize} from "../../lib/utils";
 
 export default {
   setup() {
@@ -169,6 +169,7 @@ export default {
   },
 
   methods: {
+    humanFileSize,
     openExternal(url) {
       this.$vuetube.openExternal(url);
     },
