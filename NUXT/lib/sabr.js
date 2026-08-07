@@ -144,7 +144,16 @@ const SABR_CLIENT_NAME_IDS = {
     return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
   }
 
-  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [], hl = 'en', osName = 'Windows', osVersion = '10.0', allAudioFormats = null, allVideoFormats = null }) {
+  // Encode a StreamerContext.SabrContext entry (field 5, repeated): { 1: type, 2: value }.
+  function sabrPbSabrContextEntry(type, valueBytes) {
+    const inner = sabrConcat([
+      sabrPbVarint(1, type),
+      valueBytes && valueBytes.length ? sabrPbLenDelim(2, valueBytes) : new Uint8Array(0),
+    ]);
+    return sabrPbLenDelim(5, inner);
+  }
+
+  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [], hl = 'en', osName = 'Windows', osVersion = '10.0', allAudioFormats = null, allVideoFormats = null, sabrContexts = [] }) {
     const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
     const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
@@ -226,9 +235,14 @@ const SABR_CLIENT_NAME_IDS = {
       sabrPbString(18, osName),
       sabrPbString(19, osVersion),
     ]);
-    const streamerContextInner = playbackCookieBytes
-      ? sabrConcat([sabrPbLenDelim(1, clientInfo), sabrPbLenDelim(3, playbackCookieBytes)])
-      : sabrPbLenDelim(1, clientInfo);
+    const sabrContextEntries = sabrContexts.length
+      ? sabrConcat(sabrContexts.map(c => sabrPbSabrContextEntry(c.type, c.value)))
+      : new Uint8Array(0);
+    const streamerContextInner = sabrConcat([
+      sabrPbLenDelim(1, clientInfo),
+      playbackCookieBytes ? sabrPbLenDelim(3, playbackCookieBytes) : new Uint8Array(0),
+      sabrContextEntries,
+    ]);
     const streamerContext = sabrPbLenDelim(19, streamerContextInner);
 
     return sabrConcat([clientAbrState, formatIdsBytes, bufferedRangesBytes, playerTime, ustreamerField, preferredFormat, streamerContext]);
@@ -402,6 +416,105 @@ const SABR_CLIENT_NAME_IDS = {
     return { url, retry: false };
   }
 
+  // SabrContextUpdate (UMP part 57): a keyed blob the server hands us and expects echoed
+  // back on later requests (via StreamerContext.sabr_contexts) until it's superseded or
+  // discarded.
+  //   field 1: type (int32, the key)
+  //   field 2: scope (int32 enum — PLAYBACK/REQUEST/WATCH_ENDPOINT/CONTENT_ADS)
+  //   field 3: value (bytes — opaque payload we must round-trip, not interpret)
+  //   field 4: send_by_default (bool)
+  //   field 5: write_policy (int32 enum — 1 OVERWRITE, 2 KEEP_EXISTING)
+  function sabrParseSabrContextUpdate(data) {
+    const f = sabrParseProtoVarintFields(data);
+    return {
+      type: f[1] || 0,
+      scope: f[2] || 0,
+      value: f[3] instanceof Uint8Array ? f[3] : new Uint8Array(0),
+      sendByDefault: !!f[4],
+      writePolicy: f[5] || 0,
+    };
+  }
+
+  // SabrContextSendingPolicy (UMP part 59): tells us which previously-seen context types to
+  // start/stop echoing, or discard entirely. Fields are repeated int32 (type keys), which
+  // may arrive either unpacked (one tag per value) or packed (length-delimited varint run),
+  // so both wire types are handled here.
+  function sabrParseSabrContextSendingPolicy(data) {
+    const result = { startPolicy: [], stopPolicy: [], discardPolicy: [] };
+    const targets = { 1: result.startPolicy, 2: result.stopPolicy, 3: result.discardPolicy };
+    let offset = 0;
+    while (offset < data.length) {
+      const { value: tag, nextOffset: o1 } = sabrReadVarint(data, offset);
+      if (o1 <= offset) break;
+      const fieldNumber = tag >> 3, wireType = tag & 7;
+      offset = o1;
+      const arr = targets[fieldNumber];
+      if (wireType === 0) {
+        const { value, nextOffset } = sabrReadVarint(data, offset);
+        if (nextOffset <= offset) break;
+        offset = nextOffset;
+        if (arr) arr.push(value);
+      } else if (wireType === 2) {
+        const { value: len, nextOffset } = sabrReadVarint(data, offset);
+        if (nextOffset <= offset) break;
+        offset = nextOffset;
+        const end = offset + len;
+        if (arr) {
+          let po = offset;
+          while (po < end) {
+            const { value, nextOffset: pn } = sabrReadVarint(data, po);
+            if (pn <= po) break;
+            arr.push(value);
+            po = pn;
+          }
+        }
+        offset = end;
+      } else break;
+    }
+    return result;
+  }
+
+  // Per-session store of SABR contexts: which ones we're holding and which are currently
+  // enabled to be echoed back. Discarding SABR_ERROR retries (or reusing stale contexts
+  // across sessions) is what produced the "malformed" SABR responses we used to hit, since
+  // the server expects exactly the contexts it last told us to keep sending.
+  function _sabrCreateContextState() {
+    return { contexts: new Map(), enabled: new Set() };
+  }
+
+  function _sabrApplyContextUpdate(state, update) {
+    const existing = state.contexts.get(update.type);
+    if (update.writePolicy === 2 && existing !== undefined) return; // KEEP_EXISTING
+    state.contexts.set(update.type, update.value);
+    if (update.sendByDefault) state.enabled.add(update.type);
+    console.log('[SABR] Context update type', update.type, 'scope', update.scope, 'sendByDefault', update.sendByDefault);
+  }
+
+  function _sabrApplySendingPolicy(state, policy) {
+    for (const t of policy.startPolicy) state.enabled.add(t);
+    for (const t of policy.stopPolicy) state.enabled.delete(t);
+    for (const t of policy.discardPolicy) { state.contexts.delete(t); state.enabled.delete(t); }
+  }
+
+  function _sabrGetContextsToSend(state) {
+    const out = [];
+    for (const type of state.enabled) {
+      const value = state.contexts.get(type);
+      if (value !== undefined) out.push({ type, value });
+    }
+    return out;
+  }
+
+  // Reacts to any SabrContextUpdate (57) / SabrContextSendingPolicy (59) parts in a parsed
+  // UMP response, mutating the given context state in place.
+  function sabrProcessContextParts(parts, state) {
+    for (const p of parts) {
+      if (p.partId === 57) _sabrApplyContextUpdate(state, sabrParseSabrContextUpdate(p.data));
+    }
+    const policyPart = parts.find(p => p.partId === 59);
+    if (policyPart) _sabrApplySendingPolicy(state, sabrParseSabrContextSendingPolicy(policyPart.data));
+  }
+
   // PLAYBACK_START_POLICY (47) and SELECTABLE_FORMATS (51) are informational — logged
   // once per session so they're visible instead of silently dropped, but not acted upon.
   const sabrLoggedPartTypes = new Set();
@@ -454,14 +567,16 @@ const SABR_CLIENT_NAME_IDS = {
     let initAppended = false;
     let lastSequenceNumber = -1;
     const spsState = { poTokenAttempted: false };
+    const sabrContextState = _sabrCreateContextState();
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats });
+      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats, sabrContexts: _sabrGetContextsToSend(sabrContextState) });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
 
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
+      sabrProcessContextParts(parts, sabrContextState);
       const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
       url = spsResult.url;
       sabrLogDiagnosticParts(parts);
@@ -577,6 +692,7 @@ const SABR_CLIENT_NAME_IDS = {
     let totalDurationMs = 0;
     const allSegments = [];
     const spsState = { poTokenAttempted: false };
+    const sabrContextState = _sabrCreateContextState();
 
     for (let i = 0; i < maxRequests; i++) {
       const body = sabrBuildRequest({
@@ -591,10 +707,12 @@ const SABR_CLIENT_NAME_IDS = {
         osVersion: clientOsVersion,
         allAudioFormats,
         allVideoFormats,
+        sabrContexts: _sabrGetContextsToSend(sabrContextState),
       });
 
       const rawBytes = await sabrFetch(url, body, rn++);
       const parts = [...sabrParseUMP(rawBytes)];
+      sabrProcessContextParts(parts, sabrContextState);
       const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
       url = spsResult.url;
       sabrLogDiagnosticParts(parts);
@@ -1130,6 +1248,7 @@ const SABR_CLIENT_NAME_IDS = {
     let lastAudioSeq = -1;
     let lastVideoSeq = -1;
     const spsState = { poTokenAttempted: false };
+    const sabrContextState = _sabrCreateContextState();
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -1148,11 +1267,13 @@ const SABR_CLIENT_NAME_IDS = {
         osVersion: clientOsVersion,
         allAudioFormats,
         allVideoFormats,
+        sabrContexts: _sabrGetContextsToSend(sabrContextState),
       });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
 
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
+      sabrProcessContextParts(parts, sabrContextState);
       const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
       url = spsResult.url;
       sabrLogDiagnosticParts(parts);
