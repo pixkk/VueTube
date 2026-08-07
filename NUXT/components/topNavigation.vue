@@ -113,6 +113,7 @@ export default {
   data: () => ({
     text: "",
     presettings: false,
+    isAuthed: !!localStorage.getItem("vt_active_access_token")
   }),
   watch: {
     $route(next, prev) {
@@ -133,30 +134,51 @@ export default {
     },
     refreshRecommendations() {
       this.$emit("scroll-to-top");
-      // var continuations = this.$store.state.recommendedVideos[this.$store.state.recommendedVideos.length - 1].continuations;
-      if (this.$store.state.recommendedVideos.length != 0) {
-        const continuations =
-          this.$store.state.recommendedVideos[
-            this.$store.state.recommendedVideos.length - 1
-          ].continuations;
+      if (this.isAuthed) {
         this.$store.commit("updateRecommendedVideos", []);
         this.$youtube
-          .recommendContinuation(
-            continuations.find((element) => element.reloadContinuationData)
-              .reloadContinuationData.continuation,
-            "browse"
-          )
+          .recommend()
           .then((result) => {
-            console.log(result);
-            if (result) this.$store.commit("updateRecommendedVideos", [result]);
+            if (result) {
+
+              if (result) {
+                this.$store.commit("updateRecommendedVideos", [result]);
+              }
+
+            }
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
           });
       }
       else {
-        this.$router.push("/");
+        // var continuations = this.$store.state.recommendedVideos[this.$store.state.recommendedVideos.length - 1].continuations;
+        if (this.$store.state.recommendedVideos.length != 0) {
+          console.warn(this.$store.state.recommendedVideos)
+          const continuations =
+            this.$store.state.recommendedVideos[
+            this.$store.state.recommendedVideos.length - 1
+              ].continuations;
+          this.$store.commit("updateRecommendedVideos", []);
+          this.$youtube
+            .recommendContinuation(
+              continuations.find((element) => element.reloadContinuationData)
+                .reloadContinuationData.continuation,
+              "browse"
+            )
+            .then((result) => {
+              console.log(result);
+              if (result) this.$store.commit("updateRecommendedVideos", [result]);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+        else {
+          this.$router.push("/");
+        }
       }
+
     },
   },
 };

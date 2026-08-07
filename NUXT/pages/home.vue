@@ -14,13 +14,18 @@
     <div v-if="title.length <= 0">
       <!--   Video Loading Animation   -->
       <vid-load-renderer v-if="recommends.length == 0" :count="10" />
-      <div v-for="(section, index) in recommends" :key="index">
-<!--        {{section.contents[0]}}-->
+      <v-pull-to-refresh
+      @load="loadRecommendations"
+      >
+        <div v-for="(section, index) in recommends" :key="index">
+          <!--        {{section.contents[0]}}-->
 
-        <horizontal-list-renderer :render="section.contents[0]" />
-      </div>
-      <vid-load-renderer v-if="loading" :count="1" />
-      <observer @intersect="paginate" v-else-if="recommends.length > 0" />
+          <horizontal-list-renderer :render="section.contents[0]" />
+        </div>
+        <vid-load-renderer v-if="loading" :count="1" />
+        <observer @intersect="paginate" v-else-if="recommends.length > 0" />
+      </v-pull-to-refresh>
+
     </div>
   </div>
 </template>
@@ -70,6 +75,23 @@ export default {
         this.loading = false;
       }
     },
+    async loadRecommendations(options) {
+      try {
+        const result = await this.$youtube.recommend();
+        if (result) {
+          if (result.title) {
+            this.title = result.title;
+            this.subtitle = result.subtitle;
+          } else {
+            this.recommends = [result];
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        options?.done?.();
+      }
+    }
   },
 
   async mounted() {
@@ -85,22 +107,7 @@ export default {
       await this.$youtube.getAPI();
     }
     if (!this.recommends.length) {
-      this.$youtube
-        .recommend()
-        .then((result) => {
-          if (result) {
-            if (result.title) {
-              this.title = result.title;
-              this.subtitle = result.subtitle;
-            } else {
-              this.recommends = [result];
-            }
-
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      await this.loadRecommendations();
     }
   },
 };

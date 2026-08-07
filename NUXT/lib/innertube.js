@@ -165,6 +165,7 @@ class Innertube {
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
+        if (isAuthed) args.browseId = "default";
         break;
       //   Trending was removed from the YT:
       //   https://support.google.com/youtube/thread/356702168/changes-to-discovering-trending-content-on-youtube
