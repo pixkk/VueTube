@@ -29,6 +29,11 @@
       />
     </v-btn>
     <div class="comment-content">
+      <div v-if="commentRenderer?.pinnedCommentBadge">
+        <v-icon size="16px">mdi-pin</v-icon>
+        <span style="font-size: 0.9rem;"
+              :class="theme.global.current.value.dark ? 'text--lighten-5' : 'text--darken-4'">{{mergeLabelText(commentRenderer.pinnedCommentBadge.pinnedCommentBadgeRenderer.label)}}</span>
+      </div>
       <div
         class="comment-content--header background--text"
         :class="theme.global.current.value.dark ? 'text--lighten-5' : 'text--darken-4'"
@@ -39,17 +44,14 @@
           :class="
             commentRenderer.authorIsChannelOwner
               ? theme.global.current.value.dark
-                ? 'owner primary--text background lighten-2'
-                : 'owner primary--text background darken-2'
+                ? 'owner primary--text background lighten-2 channel-badge-name'
+                : 'owner primary--text background darken-2 channel-badge-name'
               : ''
           "
         >
           <div class="author-name--wrapper">
-            <span class="author-name mr-1" v-emoji v-if="commentRenderer.authorText?.simpleText">
-              {{ commentRenderer.authorText.simpleText }}
-            </span>
-            <span class="author-name mr-1" v-emoji v-if="commentRenderer.authorText?.runs">
-              {{ commentRenderer.authorText?.runs[0]?.text }}
+            <span class="author-name mr-1" v-emoji v-if="commentRenderer.authorText">
+              {{ mergeLabelText(commentRenderer.authorText) }}
             </span>
             <span class="author-name mr-1" v-emoji v-else>
             <!--  {{  commentRenderer.authorText }}-->
@@ -69,16 +71,16 @@
         </div>
         &middot;
         <span class="comment-timestamp ml-2">
-          {{ commentRenderer.publishedTimeText.runs[0].text }}
+          {{ mergeLabelText(commentRenderer.publishedTimeText) }}
         </span>
       </div>
       <collapsable-text
         :lines="3"
         :expand-text="
-          commentRenderer.expandButton.buttonRenderer.text.runs[0].text
+          mergeLabelText(commentRenderer.expandButton.buttonRenderer.text)
         "
         :collapse-text="
-          commentRenderer.collapseButton?.buttonRenderer?.text.runs[0].text
+          mergeLabelText(commentRenderer.collapseButton?.buttonRenderer?.text)
         "
       >
         <yt-text-formatter
@@ -152,7 +154,11 @@
   flex-direction: row;
   align-items: center;
 }
-
+.channel-badge-name {
+  background-color: rgb(var(--v-theme-primary), 0.18);
+  border-radius: 1em;
+  padding: 4px 8px !important;
+}
 .author-badge-name {
   display: flex;
   flex-direction: row;
@@ -168,7 +174,7 @@
 
 .owner {
   border-radius: 1em;
-  padding: 0 0.3em 0 0.6em;
+  padding: 4px 0px 0px 0px;
   font-weight: bold;
 }
 
@@ -212,7 +218,17 @@ export default {
       voteStatus: null,
     };
   },
-
+  methods: {
+    mergeLabelText(label) {
+      if (label?.simpleText) {
+        return label.simpleText;
+      } else if (label?.runs) {
+        return label.runs.map((run) => run.text).join(" ");
+      } else {
+        return label;
+      }
+    }
+  },
   mounted() {
     this.commentRenderer = this.comment?.comment?.commentRenderer;
   },
