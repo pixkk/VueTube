@@ -351,5 +351,5 @@ export function getUndeclaredMethods(funcCode, nFunctionName) {
   unDeclared = new Set([...unDeclared].filter(name => !excludeArrayMethodsName.includes(name)));
   declared = new Set([...declared].filter(name => !excludeArrayMethodsName.includes(name)));
 
-  return unDeclared.difference(declared);
+  return new Set([...unDeclared].filter(name => !declared.has(name)));
 }
