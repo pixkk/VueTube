@@ -34,7 +34,7 @@
         </div>
         <v-divider />
         <v-card-text
-          style="max-height: 50vh; overflow-y: auto;"
+          style="max-height: 50vh; overflow-y: auto; height: 50vh"
           class="pa-0 d-flex flex-column"
         >
           <div

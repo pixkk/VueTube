@@ -33,7 +33,7 @@
 
         <v-window v-model="tab" v-touch="{ left: nextTab, right: prevTab }">
           <v-window-item>
-            <v-card-text style="max-height: 50vh; overflow-y: auto; " class="pa-0 d-flex flex-column">
+            <v-card-text style="max-height: 50vh; overflow-y: auto; height: 50vh" class="pa-0 d-flex flex-column">
               <v-list-item
                 v-for="src in sources"
                 :key="src.url"
@@ -69,7 +69,7 @@
           </v-window-item>
 
           <v-window-item>
-              <v-card-text style="max-height: 50vh; overflow-y: auto; " class="pa-0 d-flex flex-column">
+              <v-card-text style="max-height: 50vh; overflow-y: auto; height: 50vh" class="pa-0 d-flex flex-column">
                 <v-list-item
                   v-for="src in audioSources"
                   :key="src.url"
