@@ -108,6 +108,7 @@ export default defineNuxtConfig({
         "acorn",
         "astring",
         "acorn-walk",
+        "showdown",
         '@vue/devtools-core',
         '@vue/devtools-kit',
       ],
