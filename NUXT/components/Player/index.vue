@@ -76,13 +76,16 @@
       />
 
 
-    <button id="skipButton"
-            ref="skipButton" class="skip-button"
-    :style="{
+    <div style="position: absolute; right: 0%; margin-right: 1rem; bottom: 20%;">
+      <button id="skipButton"
+              ref="skipButton" class="skip-button"
+              :style="{
       display: isSegment ? 'block' : 'none',
     }"
 
-    >Skip {{ sBblockCategoryText }}</button>
+      >Skip {{ sBblockCategoryText }}</button>
+    </div>
+
 
     <!-- // TODO: merge the bottom 2 into 1 reusable component -->
     <v-btn
@@ -1413,10 +1416,6 @@ export default {
   }
 }
 .skip-button {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  margin-bottom: 5rem;
   background-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-on-primary));
   border: none;
