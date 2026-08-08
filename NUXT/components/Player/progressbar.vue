@@ -12,8 +12,11 @@
       :buffer-value="buffered"
       :model-value="(currentTime / duration) * 100"
       color="primary"
+      bg-color="none"
+      buffer-opacity="0.28"
       :height="seeking ? 4 : 2"
     />
+
     <!-- Sponsorblock segments over the thin bar -->
     <sponsorblock
       v-if="blocks && blocks.segments"
