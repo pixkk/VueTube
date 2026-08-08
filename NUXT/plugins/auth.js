@@ -4,6 +4,7 @@
 
 import { CapacitorHttp as Http } from "@capacitor/core";
 import { useAuthStore } from "~/stores/auth";
+import {delay} from "../lib/utils";
 
 // Scope used by YouTube TV clients
 const SCOPE = "http://gdata.youtube.com https://www.googleapis.com/auth/youtube-paid-content";
@@ -133,10 +134,6 @@ export async function getAccountInfoFromGuide(accessToken) {
   } catch {
     return null;
   }
-}
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // Refreshes the active account's token (if needed) and its display name/avatar.
