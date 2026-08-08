@@ -19,6 +19,8 @@
   >
       <video
         :autoplay="true"
+        playsinline
+        webkit-playsinline
         ref="player"
         v-touch="{
         up: () => {
@@ -60,6 +62,7 @@
         id="playerVideo"
         @loadedmetadata="checkDimensions()"
         @click="controlsHandler()"
+        @error="videoErrorHandler"
       >
         <track default kind="captions" id="captions" src=""/>
       </video>
@@ -394,6 +397,7 @@ import sponsorblock from "~/components/Player/sponsorblock.vue";
 import backType from "~/lib/classes/backType";
 import constants from "~/lib/constants";
 import { Http } from "@capacitor-community/http";
+import { Capacitor } from "@capacitor/core";
 import { convertTranscriptToVTT } from "~/lib/utils";
 import $youtube from "~/lib/innertube";
 import sabr from "~/lib/sabr";
@@ -578,16 +582,25 @@ export default {
     let indexOfPreferredQualityAuto = -1;
     let indexOfPreferredAudioQuality = -1;
     // console.warn(displayInfo);
+    // iOS (Safari/WKWebView) doesn't support VP9/AV1/Opus in <video> or MSE,
+    // so those sources must always be excluded there regardless of the manual toggle.
+    const isIOS = Capacitor.getPlatform() === "ios";
     for (let i = this.sources.length; i > 0; i--) {
       if (i === this.sources.length) continue;
       // console.log(this.sources[i].mimeType.toLowerCase());
       // console.log('video/webm; codecs="vp9"'.indexOf("vp9"));
+      const mimeType = this.sources[i].mimeType.toLowerCase();
+      const isVP9 = mimeType.indexOf("vp9") >= 0 || mimeType.indexOf("vp09") >= 0;
+      const isUnsupportedOnIOS =
+        isVP9 ||
+        mimeType.indexOf("av01") >= 0 ||
+        mimeType.indexOf("opus") >= 0 ||
+        mimeType.indexOf("webm") >= 0;
       if (
-        this.sources[i].mimeType.toLowerCase().indexOf("vp9") >= 0
+        (isVP9 && localStorage.getItem("removeVP9Codec") === "true") ||
+        (isIOS && isUnsupportedOnIOS)
       ) {
-        if (localStorage.getItem("removeVP9Codec") === "true") {
-          this.sources.splice(i, 1);
-        }
+        this.sources.splice(i, 1);
       }
     }
     this.sources.splice(0, 1);
@@ -1275,6 +1288,14 @@ export default {
     },
     brightnessHandler(q) {
 
+    },
+    videoErrorHandler(event) {
+      const error = event?.target?.error;
+      console.error(
+        "[Player] video element error",
+        error ? `code=${error.code} message=${error.message}` : event,
+        "src=", this.$refs.player?.currentSrc
+      );
     },
     checkDimensions() {
       if (this.$refs.player.videoHeight > this.$refs.player.videoWidth) {
