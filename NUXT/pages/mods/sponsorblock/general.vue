@@ -10,7 +10,7 @@
       style="overflow: hidden; position: relative; padding-bottom: 0 !important"
       :class="
         $store.state.tweaks.roundTweak > 0
-          ? $vuetify.theme.dark
+          ? theme.global.current.value.dark
             ? 'lighten-1'
             : 'darken-1'
           : ''
@@ -41,10 +41,6 @@
         class="pr-8 pl-4 py-12"
         style="border-radius: 0rem !important; transition: all 0.2s ease"
         :style="{
-          translate:
-            sponsorBlockIntegration && $store.state.tweaks.roundTweak > 0
-              ? '0 1.75rem'
-              : '0 -1.5rem',
           scale: sponsorBlockIntegration ? '1.1' : '1',
           color: sponsorBlockIntegration ? 'var(--v-primary-base)' : '',
         }"
@@ -59,12 +55,12 @@
         class="my-auto pa-4 ml-n4 background"
         :class="
           $store.state.tweaks.roundTweak > 0
-            ? $vuetify.theme.dark
+            ? theme.global.current.value.dark
               ? 'lighten-1'
               : 'darken-1'
             : ''
         "
-        style="position: relative"
+        style="position: relative; width: 100%"
         :style="{
           boxShadow:
             $store.state.tweaks.roundTweak > 0
@@ -76,7 +72,7 @@
         <div class="mb-4">SponsorBlock integration</div>
         <div
           class="background--text"
-          :class="$vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
           style="font-size: 0.75rem; margin-top: -0.25rem !important"
         >
           Enable SponsorBlock integration.
@@ -94,7 +90,15 @@
 
 <script>
 import language from "~/components/Settings/language.vue";
+import {useTheme} from "vuetify";
 export default {
+  setup() {
+    const theme = useTheme()
+
+    return {
+      theme
+    }
+  },
   components: {
     language,
   },
