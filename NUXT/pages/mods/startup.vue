@@ -12,6 +12,7 @@
           v-model="page"
           background-color="background"
           :items="pages"
+          item-title="text"
           label="Default Page"
           variant="solo"
           rounded
