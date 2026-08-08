@@ -190,7 +190,7 @@
           >
             <template #thumb-label="{ value }">
               <b class="background--text" style="font-size: 1.15rem">
-                {{ value.toFixed(2) }}x
+                {{ value?.toFixed(2) }}x
               </b>
             </template>
           </v-slider>
@@ -216,63 +216,6 @@
           borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
         }"
       >
-        <v-card
-          variant="flat"
-          class="pa-4 d-flex flex-row justify-space-between background"
-          :class="
-            $store.state.tweaks.roundTweak > 0
-              ? $vuetify.theme.dark
-                ? 'lighten-1'
-                : 'darken-1'
-              : ''
-          "
-          :style="{
-            borderRadius: `${$store.state.tweaks.roundTweak / 8}rem`,
-          }"
-        >
-          <div>
-            <div>
-              <v-icon class="mb-1 mr-1" v-text="'mdi-video-outline'" /> {{langPlayer.removevp9}}
-            </div>
-            <div
-              class="background--text pr-4"
-              :class="
-                $vuetify.theme.dark ? 'text--lighten-4' : 'text--darken-4'
-              "
-              style="font-size: 0.75rem"
-            >
-
-            </div>
-          </div>
-          <div
-            class="background d-flex flex-row justify-end rounded-lg"
-            style="max-width: content-width; overflow: hidden"
-            :style="{
-              borderRadius: `${$store.state.tweaks.roundTweak / 3}rem`,
-            }"
-            slider-size="0"
-          >
-            <!--            <v-tab active-class="primary darken-4">AVC</v-tab>-->
-
-            <!--            <v-tab active-class="primary darken-4">VP9</v-tab>-->
-
-            <div>
-              <v-tabs v-model="selectedTab">
-                <v-tab
-                  v-for="tab in tabs"
-                  :id="tab.value.toString()"
-                  :key="tab.id"
-                  :class="{
-                    active: removeCodecValue === tab.value,
-                  }"
-                  @click="handleVideoCodecTabClick($event)"
-                >
-                  {{ tab.label }}
-                </v-tab>
-              </v-tabs>
-            </div>
-          </div>
-        </v-card>
 <!--        <marquee class="background&#45;&#45;text mt-2">-->
 <!--          <b class="primary pa-2 rounded-xl">-->
 <!--            still in progress, not functional yet.-->
@@ -321,6 +264,75 @@
         </v-card>
       </v-card>
     </div>
+
+    <v-divider v-if="!$store.state.tweaks.roundTweak" />
+
+    <!-- Remove VP9 Codec -->
+    <v-card
+      variant="flat"
+      class="d-flex flex-row mx-4 mb-4 pr-4 background"
+      style="overflow: hidden; position: relative"
+      :class="
+        $store.state.tweaks.roundTweak > 0
+          ? $vuetify.theme.dark
+            ? 'lighten-1'
+            : 'darken-1'
+          : ''
+      "
+      :style="{
+        borderRadius: `${$store.state.tweaks.roundTweak / 2}rem`,
+        padding: !$store.state.tweaks.roundTweak ? '1rem !important' : '',
+        margin: !$store.state.tweaks.roundTweak ? '0 !important' : '',
+      }"
+      @click="
+        (removeCodecValue = !removeCodecValue),
+          handleVideoCodecCheckboxChange(removeCodecValue)
+      "
+    >
+      <v-icon
+        class="pr-8 pl-4 py-12"
+        style="border-radius: 0rem !important; transition: all 0.2s ease"
+        :style="{
+          scale: removeCodecValue ? '1.1' : '1',
+          color: removeCodecValue ? 'var(--v-primary-base)' : '',
+        }"
+      >
+        mdi-video-outline
+      </v-icon>
+      <div
+        class="my-auto pa-4 ml-n4 background"
+        :class="
+          $store.state.tweaks.roundTweak > 0
+            ? $vuetify.theme.dark
+              ? 'lighten-1'
+              : 'darken-1'
+            : ''
+        "
+        style="position: relative; width: 100%"
+        :style="{
+          boxShadow:
+            $store.state.tweaks.roundTweak > 0
+              ? 'inset 1rem 0 1rem -1rem var(--v-background-base)'
+              : '',
+          borderRadius: `${$store.state.tweaks.roundTweak / 4}rem`,
+        }"
+      >
+        <div class="mb-4">{{ langPlayer.removevp9 }}</div>
+        <div
+          class="background--text"
+          :class="theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'"
+          style="font-size: 0.75rem; margin-top: -0.25rem !important"
+        >
+          Disables VP9 to use the more widely supported H.264 codec. May reduce CPU usage and improve video playback on older or less compatible devices.
+        </div>
+      </div>
+      <v-switch
+        v-model="removeCodecValue"
+        class="mt-4"
+        style="pointer-events: none"
+        inset
+      />
+    </v-card>
 
     <v-divider v-if="!$store.state.tweaks.roundTweak" />
 
@@ -437,19 +449,6 @@ export default {
       },
     ],
     removeCodecValue: false,
-    tabs: [
-      {
-        label: "no",
-        id: 0,
-        value: false,
-      },
-      {
-        label: "yes",
-        id: 1,
-        value: true,
-      },
-    ],
-    selectedTab: 0,
     lang: {},
     langPlayer: {},
   }),
@@ -507,23 +506,13 @@ export default {
   },
   mounted() {
     this.lang = this.$lang("global");
-    this.tabs[0].label = this.lang.no;
-    this.tabs[1].label = this.lang.yes;
     this.langPlayer = this.$lang("mods").player;
 
     this.removeCodecValue = localStorage.getItem("removeVP9Codec") === "true";
-    const vpTab = this.tabs.find(
-      (tab) => tab.value === this.removeCodecValue
-    );
-    if (vpTab) {
-      this.selectedTab = vpTab.id;
-    }
   },
   methods: {
-    handleVideoCodecTabClick(event) {
-      const value = event.target.id;
-      this.removeCodecValue = value;
-      this.$store.commit("player/setAvailiablityOfVP9Codec", value.toLowerCase().toString());
+    handleVideoCodecCheckboxChange(value) {
+      this.$store.commit("player/setAvailiablityOfVP9Codec", value.toString());
     },
   },
 };
