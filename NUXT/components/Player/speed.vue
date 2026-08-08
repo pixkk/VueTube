@@ -31,25 +31,38 @@
           </v-btn>
         </div>
         <v-divider />
-        <v-card-text style="height: 50vh" class="pa-0">
+
+        <v-card-text
+          style="max-height: 50vh; overflow-y: auto; height: 50vh"
+          class="pa-0 d-flex flex-column"
+        >
           <v-list-item
-            v-for="sped in speeds"
-            :key="sped"
-            @click="(sheet = false), $emit('speed', sped)"
+            v-for="speed in speeds"
+            :key="speed"
+            @click="(sheet = false), $emit('speed', speed)"
+            style="padding: 0 !important;"
           >
-            <v-avatar>
-              <v-icon
-                :color="
-                  currentSpeed === sped
-                    ? 'primary'
-                    : theme.global.current.value.dark
-                    ? 'background lighten-2'
-                    : 'background darken-2'
-                "
-                v-text="currentSpeed === sped ? 'mdi-check' : 'mdi-speedometer'"
-              ></v-icon>
-            </v-avatar>
-            <v-list-item-title>{{ sped }}X</v-list-item-title>
+
+            <div class="d-flex flex-column">
+              <div
+                class="d-flex align-center px-4 py-2">
+                <v-avatar>
+                  <v-icon
+                    :color="currentSpeed === speed ? 'primary' : 'grey'"
+                  >{{currentSpeed === speed ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank'}}</v-icon>
+                </v-avatar>
+                <div class="w-100">
+                  <v-list-item-title>
+                    {{ speed }}X
+                  </v-list-item-title>
+<!--                  <v-list-item-subtitle>-->
+<!--                  </v-list-item-subtitle>-->
+                </div>
+
+              </div>
+              <v-divider v-if="!$store.state.tweaks.roundTweak" />
+            </div>
+
           </v-list-item>
         </v-card-text>
       </v-card>
