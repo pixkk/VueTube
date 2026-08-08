@@ -7,6 +7,10 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <!-- Android 15+ (targetSdk 35) forces edge-to-edge rendering, letting the
+             WebView content draw under the status bar. Opt out so the system
+             keeps reserving space for it, like on older Android versions. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
