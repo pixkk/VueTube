@@ -13,6 +13,7 @@
           size="small"
           color="white"
           v-bind="activatorProps"
+          :disabled="!captions?.length"
         >
           <v-icon>mdi-closed-caption-outline</v-icon>
         </v-btn>
