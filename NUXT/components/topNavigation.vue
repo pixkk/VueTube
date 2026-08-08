@@ -1,5 +1,5 @@
 <template>
-  <v-card style="display: flex" class="rounded-0 pa-3 topNav background">
+  <v-card style="display: flex" class="rounded-0 topNav background">
     <!-- opacity with vue 😉 -->
     <!-- :style="{ background: $vuetify.theme.current.primary + '55' }" -->
     <h3

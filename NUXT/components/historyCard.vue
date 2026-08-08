@@ -23,7 +23,8 @@
     >
       <v-img
         :src="thumbnail"
-        aspect-ratio="1.7778"
+        aspect-ratio="16/9"
+        cover
         style="position: relative; width: 8rem"
         :class="theme.global.current.value.dark ? 'lighten-3' : 'darken-3'"
         :style="{
