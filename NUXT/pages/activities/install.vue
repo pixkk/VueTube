@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="d-flex flex-column justify-center align-center" style="height: 100vh;">
     <center ref="stage0" class="container">
       <v-img
         src="/icon.svg"
@@ -67,6 +67,7 @@
     <v-btn
       elevation="0"
       class="primary nextButton"
+      color="primary"
       style="border-radius: 0.75rem"
       @click="next()"
     >
