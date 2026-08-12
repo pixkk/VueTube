@@ -19,12 +19,7 @@ def capacitor_pods
   pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
   pod 'CapacitorToast', :path => '../../node_modules/@capacitor/toast'
   pod 'CapgoCapacitorNavigationBar', :path => '../../node_modules/@capgo/capacitor-navigation-bar'
-  # pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
-  cordova_plugins_path = '../capacitor-cordova-ios-plugins'
-  cordova_plugins_podspec = File.join(__dir__, cordova_plugins_path, 'CordovaPlugins.podspec')
-  if File.exist?(cordova_plugins_podspec)
-    pod 'CordovaPlugins', :path => cordova_plugins_path
-  end
+  pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
 end
 
 target 'App' do
