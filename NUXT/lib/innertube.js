@@ -381,7 +381,7 @@ class Innertube {
             },
             videoId: id,
           },
-          headers: constants.INNERTUBE_HEADER(this.context.client, true),
+          headers: constants.INNERTUBE_HEADER(this.context.client, false),
         }).catch((error) => error),
       ]);
       response = responsePlayer;
