@@ -8,7 +8,7 @@
       width: 'auto',
       height: isFullscreen ? '100vh' : 'auto',
       maxHeight: isFullscreen ? '' : '50vh',
-      paddingTop: isFullscreen && !verticalFullscreen ? '' : 'env(safe-area-inset-top)',
+      // paddingTop: isFullscreen && !verticalFullscreen ? '' : 'env(safe-area-inset-top)',
       borderRadius:
         $store.state.tweaks.roundWatch && !isFullscreen
           ? `${$store.state.tweaks.roundTweak / 3}rem ${
@@ -176,7 +176,7 @@
     <div
       v-if="$refs.player && $refs.player.currentSrc"
       class="player-controls-overlay"
-      style="transition: opacity 0.15s ease-in-out; position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 20;"
+      style="transition: opacity 0.15s ease-in-out; position: absolute; width: 100%; height: 100%; z-index: 20;"
       :style="
         controls && !seeking
           ? 'opacity: 1; pointer-events: auto;'
@@ -186,7 +186,7 @@
     >
       <!-- top controls row -->
       <div
-        style="width: 100%; margin-top: 1rem; filter: drop-shadow(0 0 0.5rem #000)"
+        style="width: 100%; margin-top: 0.5rem; filter: drop-shadow(0 0 0.5rem #000)"
         class="d-flex justify-center px-2"
       >
         <minimize />
@@ -273,7 +273,7 @@
            In non-fullscreen is raised so seekbar stays below it.
            In fullscreen rises above the seekbar wrapper (seekbar bottom=55px + height=3rem ≈ 6.4rem). -->
       <div
-        :style="isFullscreen ? 'bottom: 5rem' : 'bottom: 1rem'"
+        :style="isFullscreen ? 'bottom: 5rem' : 'bottom: 0.5rem'"
         class="d-flex justify-between align-center pl-4 pr-2"
         style="position: absolute; width: 100%; filter: drop-shadow(0 0 0.5rem #000)"
         @click.self="controlsHandler()"

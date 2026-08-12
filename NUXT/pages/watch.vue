@@ -1,5 +1,5 @@
 <template>
-  <div id="watch-body" class="background">
+  <div id="watch-body" class="background" style="padding-top: env(safe-area-inset-top);">
     <div id="player-container" ref="playerContainer">
       <!-- // TODO: move component to default.vue -->
       <!-- // TODO: pass sources through vuex instead of props -->

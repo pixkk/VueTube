@@ -288,7 +288,7 @@ class Innertube {
     const response = await Http.post({
       url: url,
       data: data,
-      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
+      headers: constants.INNERTUBE_HEADER(this.context.client, false),
     }).catch((error) => error);
     if (response instanceof Error) {
       return {
@@ -361,7 +361,7 @@ class Innertube {
           autonavState: "STATE_NONE",
           ...(tvParams ? { params: tvParams } : {}),
         },
-        headers: constants.AUTHED_JSON_HEADER(),
+        headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
       }).catch((error) => error);
 
       const [responsePlayer, responseNextMobile] = await Promise.all([
