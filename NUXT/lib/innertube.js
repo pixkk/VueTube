@@ -5,7 +5,7 @@
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
-import { CapacitorHttp as Http } from "@capacitor/core";
+import {CapacitorHttp as Http} from "@capacitor/core";
 import {delay, getBetweenStrings, getCpn, getThumbnailUtil} from "./utils";
 import rendererUtils from "./renderers";
 import constants from "./constants";
@@ -13,10 +13,11 @@ import * as acorn from "acorn";
 import {generate} from "astring";
 import {
   collectDependencies,
-  collectPrototypeMethods, ensureVarDeclaration, findDecipherFunction,
+  collectPrototypeMethods,
+  ensureVarDeclaration,
+  findDecipherFunction,
   findGlobalArray,
-  findMethodByName,
-  getUndeclaredMethods
+  findMethodByName
 } from "~/lib/ast/ast";
 
 class Innertube {
@@ -53,8 +54,8 @@ class Innertube {
       localStorage.setItem("baseJsVersion", match[1]);
     }
   }
-  parseBaseJSUrl(html) {
-    let baseJSUrl = constants.URLS.YT_MOBILE + getBetweenStrings(html, '"jsUrl":"', '","');
+  processBaseJSUrl(url) {
+    let baseJSUrl = constants.URLS.YT_MOBILE + url;
     baseJSUrl = baseJSUrl.replace(
       /player_embed_es6\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
       'player-plasma-ias-phone-$1.vflset/base.js'
@@ -69,31 +70,20 @@ class Innertube {
     )
     return baseJSUrl;
   }
+  /**
+   * @returns {YTClient}
+   */
   getYTConfig(html) {
     return JSON.parse(
       "{" + getBetweenStrings(html, "ytcfg.set({", ");")
     );
   }
+
   async initAsync() {
     const html = await Http.get({
       url: constants.URLS.YT_MOBILE,
       params: { hl: localStorage.getItem("language") || "en", },
     }).catch((error) => error);
-    // Get url of base.js file
-    let baseJsUrl = this.parseBaseJSUrl(html.data);
-    this.saveBaseJSVersion(baseJsUrl);
-    // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
-    // Get base.js content
-    const baseJsContent = await Http.get({
-      url: baseJsUrl,
-    }).catch((error) => error);
-
-    await this.initTimeStamp(baseJsContent);
-    await this.makeDecipherFunctionWithAst(baseJsContent);
-
-    console.warn("Decipher function created");
-    await this.getNFunctionAst(baseJsContent);
-    console.warn("N-function created");
 
     try {
       if (html instanceof Error && this.checkErrorCallback)
@@ -101,7 +91,26 @@ class Innertube {
 
       try {
         const ytClient = this.getYTConfig(html.data);
-        this.visitorData = ytClient.VISITOR_DATA || ytClient.EOM_VISITOR_DATA;
+        // Get url of base.js file
+        let baseJsUrl = this.processBaseJSUrl(ytClient.PLAYER_JS_URL);
+        this.saveBaseJSVersion(baseJsUrl);
+        // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
+        // Get base.js content
+        const baseJsContent = await Http.get({
+          url: baseJsUrl,
+        }).catch((error) => error);
+
+        await this.initTimeStamp(baseJsContent);
+        await this.makeDecipherFunctionWithAst(baseJsContent);
+
+        console.warn("Decipher function created");
+        await this.getNFunctionAst(baseJsContent);
+        console.warn("N-function created");
+
+
+
+        this.visitorData = ytClient.SBOX_SETTINGS.VISITOR_DATA || ytClient.EOM_VISITOR_DATA || ytClient.INNERTUBE_CONTEXT.client.visitorData;
+
         if (ytClient.INNERTUBE_CONTEXT) {
           this.key = ytClient.INNERTUBE_API_KEY;
           this.context = ytClient.INNERTUBE_CONTEXT;
@@ -151,10 +160,14 @@ class Innertube {
     return created;
   }
 
+  isAuthedUser() {
+    return !!localStorage.getItem("vt_active_access_token") || false;
+  }
   //--- API Calls ---//
 
   async browseAsync(action_type, args = {}) {
-    const isAuthed = !!localStorage.getItem("vt_active_access_token");
+    const isAuthed = this.isAuthedUser();
+    let headers = constants.INNERTUBE_HEADER(this.context.client, isAuthed);
     let data = {
       context: {
         client: isAuthed
@@ -165,7 +178,12 @@ class Innertube {
     switch (action_type) {
       case "recommendations":
         args.browseId = "FEwhat_to_watch";
-        if (isAuthed) args.browseId = "default";
+        if (isAuthed) {
+          args.browseId = "default"
+        }
+        else {
+          // headers = constants.
+        }
         break;
       //   Trending was removed from the YT:
       //   https://support.google.com/youtube/thread/356702168/changes-to-discovering-trending-content-on-youtube
@@ -216,7 +234,7 @@ class Innertube {
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
       data: data,
-      headers: constants.AUTHED_JSON_HEADER(),
+      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
     }).catch((error) => error);
     console.log(response);
 
@@ -235,6 +253,7 @@ class Innertube {
   }
 
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
+    const isAuthed = this.isAuthedUser();
     let data = {
       context: { ...contextAdditional },
       continuation: continuation,
@@ -247,7 +266,6 @@ class Innertube {
         clientVersion: contextAdditional.client.clientVersion,
       };
     } else {
-      const isAuthed = !!localStorage.getItem("vt_active_access_token");
       data.context.client = isAuthed
         ? { ...constants.INNERTUBE_CLIENT_TV(this.context.client) }
         : { ...constants.INNERTUBE_CLIENT(this.context.client) };
@@ -270,9 +288,7 @@ class Innertube {
     const response = await Http.post({
       url: url,
       data: data,
-      headers: isMweb
-        ? constants.INNERTUBE_HEADER(this.context.client, true)
-        : constants.AUTHED_JSON_HEADER(),
+      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
     }).catch((error) => error);
     if (response instanceof Error) {
       return {
@@ -295,16 +311,15 @@ class Innertube {
 
 // Currently only one client is playable
   async playerRequest(id, reloadPlaybackContext = null) {
-    const androidClient = constants.INNERTUBE_CLIENT_VISION_OS(this.context.client);
+    const activeClient = constants.INNERTUBE_CLIENT_VISION_OS(this.context.client);
     let headers = {
-      // ...constants.AUTHED_JSON_HEADER(),
-      ...constants.INNERTUBE_HEADER_VISION_OS(androidClient),
+      ...constants.INNERTUBE_HEADER_VISION_OS(activeClient),
     };
 
     return Http.post({
       url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
       data: {
-        context: { client: androidClient },
+        context: { client: activeClient },
         videoId: id,
         contentCheckOk: true,
         racyCheckOk: true,
@@ -322,14 +337,13 @@ class Innertube {
   }
 
   async getVidAsync(id, reloadPlaybackContext = null, tvParams = null) {
-    const isAuthed = !!localStorage.getItem("vt_active_access_token");
+    const isAuthed = this.isAuthedUser();
     let responseNext;
-    let response = "";
+    let response;
 
     if (isAuthed) {
-      const tvClient = constants.INNERTUBE_CLIENT_TV(this.context.client);
       const tvContext = {
-        client: tvClient,
+        client: constants.INNERTUBE_CLIENT_TV(this.context.client),
         user: { enableSafetyMode: false },
         request: { internalExperimentFlags: [], consistencyTokenJars: [] },
       };
@@ -416,7 +430,7 @@ class Innertube {
   }
 
   async searchAsync(query) {
-    const isAuthed = !!localStorage.getItem("vt_active_access_token");
+    const isAuthed = this.isAuthedUser();
     const client = isAuthed
       ? constants.INNERTUBE_CLIENT_TV(this.context.client)
       : constants.INNERTUBE_CLIENT(this.context.client);
@@ -425,7 +439,7 @@ class Innertube {
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/search?key=${this.key}`,
       data: data,
-      headers: constants.AUTHED_JSON_HEADER(),
+      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
     }).catch((error) => error);
 
     if (response instanceof Error)
@@ -443,6 +457,7 @@ class Innertube {
   }
 
   async getEndPoint(url) {
+    const isAuthed = this.isAuthedUser();
     let data;
     let response;
       data = { context: this.context, browseId: url };
@@ -466,7 +481,7 @@ class Innertube {
         // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
         url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
         data: data,
-        headers: constants.AUTHED_JSON_HEADER(),
+        headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
       }).catch((error) => error);
 
       if (response instanceof Error)
@@ -512,8 +527,7 @@ class Innertube {
 
   // Simple Wrappers
   async getRecommendationsAsync(recommendationsType = "recommendations") {
-    const rec = await this.browseAsync(recommendationsType);
-    return rec;
+    return await this.browseAsync(recommendationsType);
   }
   async getChannelAsync(url, tab="main") {
     const channelEndpoint = await this.getEndPoint(url);

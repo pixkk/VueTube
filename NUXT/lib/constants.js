@@ -126,8 +126,8 @@ export default {
     return headers;
   },
 
-  INNERTUBE_HEADER: (info, noAuth = false) => {
-    const token = !noAuth && typeof localStorage !== "undefined"
+  INNERTUBE_HEADER: (info, isAuthedUser = false) => {
+    const token = isAuthedUser
       ? localStorage.getItem("vt_active_access_token")
       : null;
     const headers = {
@@ -135,10 +135,10 @@ export default {
       "user-agent": info.userAgent,
       "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
       "content-type": "application/json",
-      "x-goog-authuser": 0,
+      "x-goog-authuser": isAuthedUser ? 1 : 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": androidApiVal.CLIENTNAME,
-      "x-youtube-client-version": androidApiVal.VERSION,
+      "x-youtube-client-name": isAuthedUser ? tvApiVal.CLIENT_WEB_M : androidApiVal.CLIENTNAME,
+      "x-youtube-client-version": isAuthedUser ? tvApiVal.VERSION : androidApiVal.VERSION,
     };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
@@ -170,8 +170,8 @@ export default {
       // deviceModel: info.deviceModel,
       deviceModel: "Nexus 5",
       userAgent: info.userAgent,
-      clientName: webEmbeddedApiVal.CLIENTNAME,
-      clientVersion: webEmbeddedApiVal.VERSION,
+      clientName: androidApiVal.CLIENTNAME,
+      clientVersion: androidApiVal.VERSION,
       osName: info.osName,
       osVersion: info.osVersion,
       platform: "MOBILE",
