@@ -131,6 +131,7 @@ const module = {
         ? StatusBar.setStyle({ style: Style.Dark })
         : StatusBar.setStyle({ style: Style.Light });
       StatusBar.setBackgroundColor({ color });
+      StatusBar.setOverlaysWebView({ overlay: true });
     },
   },
 
