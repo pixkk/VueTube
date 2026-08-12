@@ -205,6 +205,7 @@ class Innertube {
           ...data.context,
           request: constants.INNERTUBE_REQUEST(),
         };
+        headers = constants.INNERTUBE_HEADER(this.context.client, false);
         break;
       case "channel":
         data = {
@@ -220,6 +221,7 @@ class Innertube {
           ...data.context,
           request: constants.INNERTUBE_REQUEST(),
         };
+        headers = constants.INNERTUBE_HEADER(this.context.client, false);
         if (args && args.browseId) {
           break;
         } else {
@@ -234,7 +236,7 @@ class Innertube {
     const response = await Http.post({
       url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
       data: data,
-      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
+      headers: headers,
     }).catch((error) => error);
     console.log(response);
 
@@ -476,12 +478,13 @@ class Innertube {
         ...data.context.client,
         clientFormFactor: "LARGE_FORM_FACTOR",
       };
+
       // console.warn("DATA" , data);
       response = await Http.post({
         // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
         url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
         data: data,
-        headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
+        headers: { ...constants.INNERTUBE_HEADER(this.context.client, false) },
       }).catch((error) => error);
 
       if (response instanceof Error)
@@ -803,7 +806,7 @@ class Innertube {
       ? (tvOwner?.subscriberCountText?.simpleText.split(" ")[0] || "")
       : (ownerData?.collapsedSubtitle?.runs?.[0]?.text || "");
     const channelUrl = isTVResponse
-      ? (tvOwner?.navigationEndpoint?.browseEndpoint?.canonicalBaseUrl || "")
+      ? (tvOwner?.navigationEndpoint?.browseEndpoint?.browseId || "")
       : rendererUtils.getNavigationEndpoints(ownerData?.navigationEndpoint);
     const channelImg = isTVResponse
       ? (tvOwner?.thumbnail?.thumbnails?.[0]?.url || "")

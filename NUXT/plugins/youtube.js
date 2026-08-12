@@ -226,8 +226,8 @@ const innertubeModule = {
       }
     }
   },
-  async getChannelTab(url, continuation = null) {
-    const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation });
+  async getChannelTab(url, continuation = null, params = null) {
+    const response = await InnertubeAPI.browseAsync("aboutChannelInfo", { browseId: url, continuation: continuation, params: params });
     return response.data;
   },
   // It just works™
