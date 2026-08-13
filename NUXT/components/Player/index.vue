@@ -260,7 +260,7 @@
           class="mx-12"
           @click="
             $router.push(
-              `/watch?v=${recommends.contents[0].videoWithContextRenderer.videoId}`
+              `/watch?v=${recommends.contents[0]?.videoWithContextRenderer?.videoId || recommends.contents[0].tileRenderer.onSelectCommand.watchEndpoint.videoId}`
             )
           "
         >
@@ -456,7 +456,6 @@ export default {
       fullscreenLock: false,
       shortTransition: false,
       verticalFullscreen: false,
-      midRotation: false,
       controls: false,
       seeking: false,
       contain: true,
@@ -817,13 +816,38 @@ export default {
       // fullscreen when the new orientation is actually the "wrong" one
       // for the current fullscreen mode (i.e. the user physically rotated
       // the device back).
-      if (!this.isFullscreen) return;
       const isPortrait = e.target.type.startsWith("portrait");
+
+      if (!this.isFullscreen) {
+        // Auto-enter fullscreen when the user physically rotates the
+        // device to landscape while a (non-vertical) video is loaded,
+        // instead of requiring an explicit tap on the fullscreen button.
+        if (!isPortrait && !this.isVerticalVideo && this.vid) {
+          this.enterFullscreen(true);
+        }
+        return;
+      }
+
       const wrongOrientation = this.verticalFullscreen
         ? !isPortrait
         : isPortrait;
       if (wrongOrientation) this.fullscreenHandler(false);
     });
+
+    // screen.orientation can be shimmed/replaced by a native
+    // Cordova/Capacitor screen-orientation plugin on Android and not
+    // dispatch "change" the way the spec does. matchMedia's orientation
+    // query is a much more universally reliable way to detect a physical
+    // rotation, so use it as a redundant trigger for auto-entering
+    // fullscreen (entering is idempotent — enterFullscreen just no-ops
+    // visually if already fullscreen).
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
+    const onOrientationMediaChange = (e) => {
+      if (!this.isFullscreen && e.matches && !this.isVerticalVideo && this.vid) {
+        this.enterFullscreen(true);
+      }
+    };
+    landscapeQuery.addEventListener("change", onOrientationMediaChange);
   },
   beforeUnmount() {
     this.cleanup();
@@ -1065,7 +1089,7 @@ export default {
     cleanup() {
       if (this.hlsStream) this.hlsStream.destroy();
       if (this.xhr) this.xhr.abort();
-      if (this.isFullscreen) this.exitFullscreen();
+      if (this.isFullscreen) this.exitFullscreen(false);
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
       if (this.videoAbortController) this.videoAbortController.abort();
       if (this.audioAbortController) this.audioAbortController.abort();
@@ -1304,15 +1328,16 @@ export default {
         this.controlsHandler();
       } else {
         this.isVerticalVideo = false;
+        // Device is already physically landscape (e.g. right after switching
+        // to this video while the previous one was fullscreen) — enter
+        // fullscreen immediately instead of waiting for an orientation
+        // "change" event that won't fire again.
+        if (!this.isFullscreen && screen.orientation.type.startsWith("landscape")) {
+          this.enterFullscreen(true);
+        }
       }
     },
     fullscreenHandler(pressedFullscreenBtn) {
-      // Prevent fullscreen button press from being handled twice
-      // (once by pressing fullscreen button, another by the resulting rotation)
-      if (this.midRotation) {
-        this.midRotation = false;
-        return;
-      }
       // Toggle fullscreen state
       if (this.isFullscreen) {
         this.exitFullscreen(pressedFullscreenBtn);
@@ -1320,27 +1345,13 @@ export default {
         this.enterFullscreen(pressedFullscreenBtn);
       }
     },
-    exitFullscreen(unlock) {
-      if (unlock) {
-        if (this.verticalFullscreen) {
-          // Unset vertical fullscreen mode
-          screen.orientation.unlock();
-          this.fullscreenLock = false;
-          this.verticalFullscreen = false;
-        } else {
-          // Unset standard fullscreen mode
-          this.midRotation = true;
-          screen.orientation.lock("portrait");
-          this.fullscreenLock = true;
-          // Locks the rotation to portrait for two seconds,
-          // and will then rotate back to landscape if the
-          // user doesn't rotate first
-          setTimeout(() => {
-            this.fullscreenLock = false;
-            screen.orientation.unlock();
-          }, 2 * 1000);
-        }
-      }
+    exitFullscreen() {
+      // Just release the orientation lock — never force a rotation.
+      // Whatever way the device is physically held is what the screen
+      // should show after leaving fullscreen.
+      screen.orientation.unlock();
+      this.fullscreenLock = false;
+      this.verticalFullscreen = false;
       this.$vuetube.navigationBar.show();
       this.$vuetube.statusBar.show();
       this.isFullscreen = false;
@@ -1348,15 +1359,22 @@ export default {
     enterFullscreen(force) {
       if (force) {
         this.fullscreenLock = true;
-        if (this.isVerticalVideo) {
-          // Vertical fullscreen mode (vertical video only)
-          screen.orientation.lock("portrait");
-          this.verticalFullscreen = true;
-        } else {
-          // Standard fullscreen mode
-          this.midRotation = true;
-          screen.orientation.lock("landscape");
+        // screen.orientation.lock() can throw synchronously (or reject) on
+        // some WebViews when not called from a direct user gesture — e.g.
+        // when triggered by an orientation "change" event. Never let that
+        // stop the fullscreen UI state below from applying.
+        try {
+          if (this.isVerticalVideo) {
+            // Vertical fullscreen mode (vertical video only)
+            screen.orientation.lock("portrait")?.catch(() => {});
+          } else {
+            // Standard fullscreen mode
+            screen.orientation.lock("landscape")?.catch(() => {});
+          }
+        } catch (e) {
+          console.warn("[Player] screen.orientation.lock failed", e);
         }
+        if (this.isVerticalVideo) this.verticalFullscreen = true;
       }
       this.$vuetube.navigationBar.hide();
       this.$vuetube.statusBar.hide();
