@@ -38,26 +38,14 @@
                            :subscribe-alt="getDataChannel().subscribeAlt"
                            :isLoading="isLoading"
               />
-              <videos v-if="tabTypes[index] === 'video'"
-                      :videos="getVideosOfChannel()"
+              <component
+                v-if="tabComponents[tabTypes[index]]"
+                :is="tabComponents[tabTypes[index]]"
+                v-bind="tabProps[index]"
               />
-
-              <videos v-if="tabTypes[index] === 'slim'"
-                      :videos="tabContents[index]"
-              />
-              <community v-if="tabTypes[index] === 'community'"
-                         :communityData="tabContents[index]"
-                />
-              <shorts v-if="tabTypes[index] === 'shorts'"
-                         :shortsData="tabContents[index]"
-                />
               <div v-if="tabTypes[index] === 'playlists'">
                   Playlists will be here...
               </div>
-              <about v-if="tabTypes[index] === 'about'"
-              :full-channel-info="tabContents[index]"
-                     :another-info="getDataChannel()"
-              />
 
             </v-card-text>
           </v-card>
@@ -100,7 +88,14 @@ export default {
       // Content is keyed by tab index so that switching tabs never lets one
       // tab's freshly-loaded data bleed into another tab's slot.
       tabTypes: {},
-      tabContents: {},
+      tabProps: {},
+      tabComponents: {
+        video: "Videos",
+        slim: "Videos",
+        community: "Community",
+        shorts: "Shorts",
+        about: "About",
+      },
     };
   },
   computed: {
@@ -153,12 +148,12 @@ export default {
       switch (res?.continuationContents?.richGridContinuation?.style) {
         case "RICH_GRID_STYLE_SHORTS_GRID": {
           this.tabTypes[index] = "shorts";
-          this.tabContents[index] = res?.continuationContents?.richGridContinuation;
+          this.tabProps[index] = { shortsData: res?.continuationContents?.richGridContinuation };
           return;
         }
         case "RICH_GRID_STYLE_SLIM": {
           this.tabTypes[index] = "slim";
-          this.tabContents[index] = res?.continuationContents?.richGridContinuation;
+          this.tabProps[index] = { videos: res?.continuationContents?.richGridContinuation };
           return;
         }
       }
@@ -166,11 +161,10 @@ export default {
       if (sectionListContents) {
         if (sectionListContents.contents[0]?.itemSectionRenderer?.targetId === "backstage-item-section" || sectionListContents.contents[0]?.itemSectionRenderer?.sectionIdentifier === "comment-item-section") {
           this.tabTypes[index] = "community";
-          this.tabContents[index] = sectionListContents;
+          this.tabProps[index] = { communityData: sectionListContents };
         }
         if (sectionListContents.contents[0]?.itemSectionRenderer?.contents[0]?.compactPlaylistRenderer) {
           this.tabTypes[index] = "playlists";
-          this.tabContents[index] = sectionListContents.contents[0]?.itemSectionRenderer?.contents;
         }
       }
 
@@ -178,7 +172,10 @@ export default {
         if (res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction
           ?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel) {
           this.tabTypes[index] = "about";
-          this.tabContents[index] = res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel;
+          this.tabProps[index] = {
+            fullChannelInfo: res?.onResponseReceivedEndpoints[0]?.appendContinuationItemsAction?.continuationItems[0]?.aboutChannelRenderer?.metadata?.aboutChannelViewModel,
+            anotherInfo: this.getDataChannel(),
+          };
         }
       }
     },
@@ -187,6 +184,7 @@ export default {
       this.loadedContent[index] = res.videoList;
       this.$store.state.channel.videoData = res.videoList;
       this.tabTypes[index] = "video";
+      this.tabProps[index] = { videos: res.videoList };
     },
   },
   beforeUnmount() {
