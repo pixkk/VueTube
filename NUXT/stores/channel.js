@@ -32,6 +32,9 @@ export const useChannelStore = defineStore("channel", {
     setError(error) {
       this.error = error;
     },
+    setCommunity(community) {
+      this.community = community;
+    },
     setChannelData(channelData) {
       this.avatar = channelData.avatar;
       this.banner = channelData.banner;

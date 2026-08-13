@@ -6,9 +6,9 @@
   * -->
   <div style="display: flex; flex-wrap: wrap">
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="shorts.contents && shorts.contents.length == 0" :count="10" />
-    <template v-if="shorts.contents">
-    <div v-for="(section, index) in shorts.contents" :key="index" v-show="section.richItemRenderer" class="shorts-grid-item">
+    <vid-load-renderer v-if="localShorts.contents && localShorts.contents.length == 0" :count="10" />
+    <template v-if="localShorts.contents">
+    <div v-for="(section, index) in localShorts.contents" :key="index" v-show="section.richItemRenderer" class="shorts-grid-item">
       <shorts-renderer v-if="section.richItemRenderer?.content?.shortsLockupViewModel"
       :shorts="section.richItemRenderer?.content?.shortsLockupViewModel" style="display: flex; flex-direction: column"
       />
@@ -16,7 +16,7 @@
     </template>
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="shorts.contents && shorts.contents.length > 0"
+      v-else-if="localShorts.contents && localShorts.contents.length > 0"
       @intersect="paginate"
     />
   </div>
@@ -32,14 +32,22 @@ export default {
   components: {ShortsRenderer, CompactVideoRenderer, VideoWithContextRenderer, VidLoadRenderer, Observer },
 
   props: [
-    "shorts",
+    "shortsData",
   ],
-  data: () => ({
-    loading: false,
-    title: "",
-    subtitle: "",
-  }),
+  data() {
+    return {
+      loading: false,
+      title: "",
+      subtitle: "",
+      localShorts: this.shortsData,
+    };
+  },
 
+  watch: {
+    shortsData(val) {
+      this.localShorts = val;
+    },
+  },
   computed: {
     // channelData: {
     //   get() {
@@ -57,7 +65,7 @@ export default {
   },
   methods: {
     paginate() {
-      let recommends = this.shorts;
+      let recommends = this.localShorts;
       this.loading = true;
       const continuationCode =
         recommends.contents[recommends.contents.length - 1]
@@ -68,13 +76,13 @@ export default {
           .recommendContinuationForChannel(continuationCode, "browse")
           .then((result) => {
             this.loading = false;
-            this.shorts = { ...this.shorts };
-            this.shorts.contents = this.shorts.contents.concat(
+            this.localShorts = { ...this.localShorts };
+            this.localShorts.contents = this.localShorts.contents.concat(
               result.contents
             );
-            this.shorts.continuations =
-              this.shorts.continuations.concat(result.continuations);
-            this.$store.state.channel.shortsVideoData = this.shorts;
+            this.localShorts.continuations =
+              this.localShorts.continuations.concat(result.continuations);
+            this.$store.state.channel.shortsVideoData = this.localShorts;
           });
       } else {
         this.loading = false;

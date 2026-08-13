@@ -2,8 +2,8 @@
   <div>
 
 <!--    <vid-load-renderer v-if="communityData.contents.length == 0" :count="10" />-->
-    <template v-if="community?.contents[0]?.itemSectionRenderer?.contents[0]">
-    <div v-for="(section, index) in community.contents[0].itemSectionRenderer.contents" :key="index">
+    <template v-if="localCommunity?.contents[0]?.itemSectionRenderer?.contents[0]">
+    <div v-for="(section, index) in localCommunity.contents[0].itemSectionRenderer.contents" :key="index">
 <!--        {{-->
 <!--        section.backstagePostThreadRenderer.post.backstagePostRenderer}}-->
       <community-card
@@ -32,7 +32,7 @@
 
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="community?.contents[0]?.itemSectionRenderer?.contents.length > 0"
+      v-else-if="localCommunity?.contents[0]?.itemSectionRenderer?.contents.length > 0"
       @intersect="paginate"
     />
   </div>
@@ -54,25 +54,23 @@ export default {
     VideoWithContextRenderer,
     communityCard,
   },
-  data: () => ({
-    loading: false,
-    title: "",
-    subtitle: "",
-  }),
-  props: ["community"],
-  computed: {
-    // communityData: {
-    //   get() {
-    //     return { ...this.$store.state.channel.community };
-    //   },
-    //   set(val) {
-    //     this.$store.commit("updateCommunityData", val);
-    //   },
-    // },
+  data() {
+    return {
+      loading: false,
+      title: "",
+      subtitle: "",
+      localCommunity: this.communityData,
+    };
+  },
+  props: ["communityData"],
+  watch: {
+    communityData(val) {
+      this.localCommunity = val;
+    },
   },
   methods: {
     paginate() {
-      let recommends = this.community;
+      let recommends = this.localCommunity;
       this.loading = true;
       const continuationCode =
           recommends?.contents[0]?.itemSectionRenderer?.contents[recommends?.contents[0]?.itemSectionRenderer?.contents.length - 1]
@@ -83,14 +81,12 @@ export default {
           .recommendContinuationForChannel(continuationCode, "browse")
           .then((result) => {
             this.loading = false;
-            this.community = { ...this.community };
-            this.community.contents[0].itemSectionRenderer.contents = this.community.contents[0]?.itemSectionRenderer?.contents.concat(
+            this.localCommunity = { ...recommends };
+            this.localCommunity.contents[0].itemSectionRenderer.contents = this.localCommunity.contents[0]?.itemSectionRenderer?.contents.concat(
               result.contents
             );
 
-            // this.community.contents[0].itemSectionRenderer.contents =
-            //   this.community.contents[0]?.itemSectionRenderer?.continuations.concat(result.continuations);
-            this.$store.state.channel.community = this.community;
+            this.$store.commit("channel/setCommunity", this.localCommunity);
           });
       } else {
         this.loading = false;

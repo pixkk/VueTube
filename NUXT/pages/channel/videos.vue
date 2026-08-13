@@ -6,9 +6,9 @@
   * -->
   <div>
     <!--   Video Loading Animation   -->
-    <vid-load-renderer v-if="videos.contents && videos.contents.length == 0" :count="10" />
-    <template v-if="videos.contents">
-    <div v-for="(section, index) in videos.contents" :key="index">
+    <vid-load-renderer v-if="localVideos.contents && localVideos.contents.length == 0" :count="10" />
+    <template v-if="localVideos.contents">
+    <div v-for="(section, index) in localVideos.contents" :key="index">
       <compact-video-renderer
         v-if="section.richItemRenderer?.content?.compactVideoRenderer?.videoId"
         :video="section.richItemRenderer?.content?.compactVideoRenderer"
@@ -23,7 +23,7 @@
     </template>
     <vid-load-renderer v-if="loading" :count="1" />
     <observer
-      v-else-if="videos.contents && videos.contents.length > 0"
+      v-else-if="localVideos.contents && localVideos.contents.length > 0"
       @intersect="paginate"
     />
   </div>
@@ -41,11 +41,20 @@ export default {
     "videos",
     "isShorts"
   ],
-  data: () => ({
-    loading: false,
-    title: "",
-    subtitle: "",
-  }),
+  data() {
+    return {
+      loading: false,
+      title: "",
+      subtitle: "",
+      localVideos: this.videos,
+    };
+  },
+
+  watch: {
+    videos(val) {
+      this.localVideos = val;
+    },
+  },
 
   computed: {
     // channelData: {
@@ -64,7 +73,7 @@ export default {
   },
   methods: {
     paginate() {
-      let recommends = this.videos;
+      let recommends = this.localVideos;
       this.loading = true;
       const continuationCode =
         recommends.contents[recommends.contents.length - 1]
@@ -75,17 +84,17 @@ export default {
           .recommendContinuationForChannel(continuationCode, "browse")
           .then((result) => {
             this.loading = false;
-            this.videos = { ...this.videos };
-            this.videos.contents = this.videos.contents.concat(
+            this.localVideos = { ...this.localVideos };
+            this.localVideos.contents = this.localVideos.contents.concat(
               result.contents
             );
-            this.videos.continuations =
-              this.videos.continuations.concat(result.continuations);
+            this.localVideos.continuations =
+              this.localVideos.continuations.concat(result.continuations);
             if (!this.isShorts) {
-              this.$store.state.channel.videoData = this.videos;
+              this.$store.state.channel.videoData = this.localVideos;
             }
             else {
-              this.$store.state.channel.shortsVideoData = this.videos;
+              this.$store.state.channel.shortsVideoData = this.localVideos;
             }
           });
       } else {
