@@ -79,7 +79,7 @@
       />
 
 
-    <div style="position: absolute; right: 0%; margin-right: 1rem; bottom: 20%;">
+    <div style="position: absolute; right: 0%; margin-right: 1rem; bottom: 20%; z-index: 99999">
       <button id="skipButton"
               ref="skipButton" class="skip-button"
               :style="{
@@ -816,7 +816,8 @@ export default {
       // fullscreen when the new orientation is actually the "wrong" one
       // for the current fullscreen mode (i.e. the user physically rotated
       // the device back).
-      const isPortrait = e.target.type.startsWith("portrait");
+      const type = e.target?.type || screen.orientation?.type || "";
+      const isPortrait = type.startsWith("portrait");
 
       if (!this.isFullscreen) {
         // Auto-enter fullscreen when the user physically rotates the
@@ -836,11 +837,9 @@ export default {
 
     // screen.orientation can be shimmed/replaced by a native
     // Cordova/Capacitor screen-orientation plugin on Android and not
-    // dispatch "change" the way the spec does. matchMedia's orientation
-    // query is a much more universally reliable way to detect a physical
-    // rotation, so use it as a redundant trigger for auto-entering
-    // fullscreen (entering is idempotent — enterFullscreen just no-ops
-    // visually if already fullscreen).
+    // dispatch "change" reliably the way the spec does — observed: entering
+    // fullscreen on rotation only ever worked through matchMedia, never
+    // through screen.orientation's "change" event above.
     const landscapeQuery = window.matchMedia("(orientation: landscape)");
     const onOrientationMediaChange = (e) => {
       if (!this.isFullscreen && e.matches && !this.isVerticalVideo && this.vid) {
@@ -848,9 +847,56 @@ export default {
       }
     };
     landscapeQuery.addEventListener("change", onOrientationMediaChange);
+
+    // Detecting rotation back OUT of fullscreen can't rely on
+    // matchMedia/screen.orientation at all: once fullscreen calls
+    // screen.orientation.lock(), the OS refuses to actually rotate the
+    // app's window, so the window/CSS orientation never changes and
+    // neither of those APIs ever fires again — there's nothing for them to
+    // detect. The only way to know the user physically rotated the device
+    // while the window itself stays locked is the raw accelerometer via
+    // "devicemotion".
+    this._motionOrientationHandler = (event) => {
+      if (!this.isFullscreen) return;
+      const now = Date.now();
+      if (now - this._lastTiltCheckAt < 250) return; // throttle
+      const acc = event.accelerationIncludingGravity;
+      if (!acc || acc.x == null || acc.y == null) return;
+      const { x, y } = acc;
+      // Ignore near-flat readings (phone lying flat on a table) where
+      // gravity is dominated by the z axis and x/y are unreliable.
+      if (Math.abs(x) < 2 && Math.abs(y) < 2) return;
+      this._lastTiltCheckAt = now;
+      const isPhysicallyPortrait = Math.abs(y) > Math.abs(x) * 1.4;
+      const isPhysicallyLandscape = Math.abs(x) > Math.abs(y) * 1.4;
+      const wrongOrientation = this.verticalFullscreen
+        ? isPhysicallyLandscape
+        : isPhysicallyPortrait;
+      if (wrongOrientation) this.exitFullscreenViaSensor();
+    };
+    this._lastTiltCheckAt = 0;
+    this._motionPermissionRequested = false;
+
+    if (
+      typeof DeviceMotionEvent !== "undefined" &&
+      typeof DeviceMotionEvent.requestPermission === "function"
+    ) {
+      // iOS 13+ requires an explicit permission grant, and it must be
+      // requested from inside a user gesture (a tap) or it's silently
+      // denied. We can't ask for it here in created(), so it's requested
+      // lazily from the first fullscreen button tap — see
+      // ensureMotionPermission() / fullscreenHandler().
+    } else {
+      // Not gated behind a permission prompt (Android, older iOS) — just
+      // start listening right away.
+      window.addEventListener("devicemotion", this._motionOrientationHandler);
+    }
   },
   beforeUnmount() {
     this.cleanup();
+    if (this._motionOrientationHandler) {
+      window.removeEventListener("devicemotion", this._motionOrientationHandler);
+    }
   },
   methods: {
     loadedAudioEvent() {
@@ -1089,7 +1135,7 @@ export default {
     cleanup() {
       if (this.hlsStream) this.hlsStream.destroy();
       if (this.xhr) this.xhr.abort();
-      if (this.isFullscreen) this.exitFullscreen(false);
+      if (this.isFullscreen) this.exitFullscreen();
       if (this.bufferingDetected) clearTimeout(this.bufferingDetected);
       if (this.videoAbortController) this.videoAbortController.abort();
       if (this.audioAbortController) this.audioAbortController.abort();
@@ -1338,23 +1384,114 @@ export default {
       }
     },
     fullscreenHandler(pressedFullscreenBtn) {
+      if (pressedFullscreenBtn) this.ensureMotionPermission();
       // Toggle fullscreen state
       if (this.isFullscreen) {
-        this.exitFullscreen(pressedFullscreenBtn);
+        this.exitFullscreen();
       } else {
         this.enterFullscreen(pressedFullscreenBtn);
       }
+    },
+    waitForResize(callback) {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        window.removeEventListener("resize", onResize);
+        callback();
+      };
+      const onResize = () => finish();
+      window.addEventListener("resize", onResize);
+      // Safety net only, in case resize never fires for some reason —
+      // not the primary mechanism.
+      setTimeout(finish, 600);
+    },
+    ensureMotionPermission() {
+      // Must be called from directly inside a user gesture (tap) — iOS
+      // silently denies the prompt otherwise. fullscreenHandler is only
+      // called this way when triggered by an actual button/swipe tap.
+      if (
+        this._motionPermissionRequested ||
+        typeof DeviceMotionEvent === "undefined" ||
+        typeof DeviceMotionEvent.requestPermission !== "function"
+      ) {
+        return;
+      }
+      this._motionPermissionRequested = true;
+      DeviceMotionEvent.requestPermission()
+        .then((state) => {
+          if (state === "granted") {
+            window.addEventListener("devicemotion", this._motionOrientationHandler);
+          } else {
+            console.warn("[Player] devicemotion permission denied:", state);
+          }
+        })
+        .catch((e) => {
+          console.warn("[Player] DeviceMotionEvent.requestPermission failed", e);
+        });
     },
     exitFullscreen() {
       // Just release the orientation lock — never force a rotation.
       // Whatever way the device is physically held is what the screen
       // should show after leaving fullscreen.
-      screen.orientation.unlock();
+      this.releaseOrientationLock();
       this.fullscreenLock = false;
       this.verticalFullscreen = false;
+      this.isFullscreen = false;
       this.$vuetube.navigationBar.show();
       this.$vuetube.statusBar.show();
-      this.isFullscreen = false;
+    },
+    exitFullscreenViaSensor() {
+      // devicemotion only senses a physical tilt — it can't tell whether
+      // the OS will actually honor it (e.g. flipping the phone upside
+      // down into reverse-portrait, which most apps' activities refuse to
+      // rotate into), and it fires well before any real rotation/relayout
+      // happens. Exiting immediately on the raw sensor reading caused two
+      // bugs: the player would visibly collapse out of fullscreen and then
+      // jump again once the real rotation caught up, and it would collapse
+      // even when the screen never actually turned at all.
+      //
+      // So: release the lock so the OS is free to rotate if it agrees,
+      // wait for the window to actually finish resizing, and only then
+      // check whether the orientation genuinely ended up wrong before
+      // exiting for real.
+      if (this._pendingSensorExit) return;
+      this._pendingSensorExit = true;
+      this.releaseOrientationLock();
+      this.waitForResize(() => {
+        this._pendingSensorExit = false;
+        const isLandscapeNow = window.matchMedia("(orientation: landscape)").matches;
+        const stillWrong = this.verticalFullscreen ? isLandscapeNow : !isLandscapeNow;
+        if (stillWrong) this.exitFullscreen();
+      });
+    },
+    releaseOrientationLock() {
+      try {
+        const result = screen.orientation.unlock();
+        result?.catch?.((e) => this.recoverStuckOrientationLock(e));
+      } catch (e) {
+        this.recoverStuckOrientationLock(e);
+      }
+    },
+    recoverStuckOrientationLock(err) {
+      // Some WebView screen-orientation implementations (notably when the
+      // page was locked to the orientation it was already in, e.g. when
+      // auto-entering fullscreen while already landscape) leave the native
+      // lock stuck after a failed/rejected unlock() — no further lock()
+      // or unlock() call has any effect afterwards, breaking rotation
+      // entirely. Nudge it by re-locking to whatever the device is
+      // physically in right now (a trivial, always-valid lock) and
+      // immediately unlocking again, which reliably clears the stuck state.
+      console.warn("[Player] screen.orientation.unlock failed, recovering", err);
+      try {
+        const current = screen.orientation.type?.split("-")[0] || "portrait";
+        screen.orientation
+          .lock(current)
+          ?.then(() => screen.orientation.unlock())
+          ?.catch(() => {});
+      } catch (e) {
+        // Nothing more we can do here.
+      }
     },
     enterFullscreen(force) {
       if (force) {
@@ -1384,7 +1521,7 @@ export default {
       this.$vuetube.addBackAction(
         new backType(
           () => {
-            this.exitFullscreen(true);
+            this.exitFullscreen();
           },
           () => {
             return this.isFullscreen;
