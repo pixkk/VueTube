@@ -398,10 +398,11 @@ import backType from "~/lib/classes/backType";
 import constants from "~/lib/constants";
 import { Http } from "@capacitor-community/http";
 import { Capacitor } from "@capacitor/core";
-import { convertTranscriptToVTT } from "~/lib/utils";
+// import { convertTranscriptToVTT } from "~/lib/utils";
 import $youtube from "~/lib/innertube";
 import sabr from "~/lib/sabr";
 import Endscreen from "./endscreen.vue";
+import {convertTranscriptToVTT} from "../../lib/utils";
 
 export default {
   components: {
@@ -1308,13 +1309,14 @@ export default {
     async captionsHandler(q) {
       if (q.baseUrl != null) {
         let html = await Http.get({
-          url: (constants.URLS.YT_MOBILE + q.baseUrl).replace("https://www.youtube.com", ""),
+          url: (constants.URLS.YT_MOBILE + q.baseUrl + "&fmt=vtt").replace("https://www.youtube.com", ""),
           params: {},
         }).catch((error) => error);
 
         let captions;
         if (html.data !== "") {
-          captions = convertTranscriptToVTT(html.data);
+          // captions = convertTranscriptToVTT(html.data);
+          captions = html.data;
         }
         else {
           let r = await this.$youtube.getCaptions(this.video.id);
@@ -1327,7 +1329,8 @@ export default {
                 params: {},
               }).catch((error) => error);
 
-              captions = convertTranscriptToVTT(html.data);
+              // captions = convertTranscriptToVTT(html.data);
+              captions = html.data;
             }
           }
         }
