@@ -29,12 +29,23 @@ function rgbToHex(r, g, b) {
 }
 
 function getCpn() {
-  const CPN_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
-  let cpn = '';
-  for (let i = 0; i < 16; i++) {
-    cpn += CPN_ALPHABET[Math.floor(Math.random() * 64)];
+  let t = randomByteGenerator(16);
+  let cpn = [];
+  for (let i = 0; i < t.length; i++) {
+    cpn.push("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".charAt(t[i] & 63));
   }
-  return cpn;
+  return cpn.join("");
+}
+function randomByteGenerator(t) {
+  if (window.crypto && window.crypto.getRandomValues)
+    try {
+      var f = Array(t)
+        , H = new Uint8Array(t);
+      window.crypto.getRandomValues(H);
+      for (var Q = 0; Q < f.length; Q++)
+        f[Q] = H[Q];
+      return f
+    } catch (N) {}
 }
 function getThumbnailUtil(id, resolution = "maxresdefault", backupThumbnail) {
   // 19.08.2024 - backupThumbnail temporary unused
