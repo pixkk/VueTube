@@ -386,7 +386,7 @@ export default {
       this.$store.commit("playlist/initPlaylists");
       this.$vuetube.launchBackHandling();
 
-      this.$youtube.getAPI();
+      // this.$youtube.getAPI();
     }
     this.mountedInit();
     this.$vuetube.resetBackActions();
