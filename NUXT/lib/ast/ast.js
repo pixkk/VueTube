@@ -6,6 +6,7 @@ export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
   const processed = new Set();
   const codeMap = new Map();
   const depsMap = new Map();
+  const { globalArrayName, globalArrayData } = findGlobalArray(parsedBaseJs);
 
   function collect(name) {
     if (name === challengeName || processed.has(name)) return;
@@ -19,7 +20,32 @@ export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
     codeMap.set(name, code);
 
     const parsed = acorn.parse(code, { ecmaVersion: 2020 });
-    const deps = getUndeclaredMethods(parsed, challengeName);
+    const deps = new Set(getUndeclaredMethods(parsed, challengeName));
+
+    // `name` may be a constructor used only via `new name(...)` — its
+    // prototype methods (toString, clone, set, ...) are attached via
+    // separate statements elsewhere in the file (either literal
+    // `name.prototype.method = ...` or the `alias = name.prototype;
+    // alias.method = ...` idiom) and are never referenced by the
+    // identifier "name" itself, so the walk above can't find them.
+    // Pull them in explicitly so a dependency's prototype API isn't
+    // silently dropped from the extracted output.
+    const protoMethods = collectPrototypeMethods(parsedBaseJs, name, globalArrayData, globalArrayName);
+    if (protoMethods.length) {
+      const protoKey = name + "$$proto";
+      const protoRawCode = protoMethods.map(n => {
+        const raw = generate(n).replace("};;", "};").replace("};\n;", "};\n");
+        return ensureVarDeclaration(n, raw);
+      }).join("\n");
+      codeMap.set(protoKey, protoRawCode);
+
+      const protoParsed = acorn.parse(protoRawCode, { ecmaVersion: 2020 });
+      const protoDeps = getUndeclaredMethods(protoParsed, challengeName);
+      for (const dep of protoDeps) deps.add(dep);
+      // proto methods must be emitted after the constructor itself
+      depsMap.set(protoKey, new Set([...protoDeps, name]));
+    }
+
     depsMap.set(name, deps);
 
     for (const dep of deps) {
@@ -59,7 +85,8 @@ export function findGlobalArray(parsedBaseJs) {
   let globalArrayName = "";
   let globalArrayData = null;
   let globalArrayFound = false;
-  for (let node of parsedBaseJs.body[1].expression.callee.body.body) {
+  let globalArrayBody = parsedBaseJs.body[1]?.expression.callee.body.body || parsedBaseJs.body[0]?.expression.callee.object.body.body;
+  for (let node of globalArrayBody) {
     if (globalArrayFound) {
       break;
     }
@@ -166,10 +193,11 @@ export function findMethodByName(parsed, funcNode) {
   if (!funcNode) return null;
   let n = null;
   const dotIndex = funcNode.indexOf(".");
+  let body = parsed.body[1]?.expression.callee.body.body || parsed.body[0]?.expression.callee.object.body.body;
   if (dotIndex !== -1) {
     const objName = funcNode.substring(0, dotIndex);
     const propName = funcNode.substring(dotIndex + 1);
-    for (let node of parsed.body[1].expression.callee.body.body) {
+    for (let node of body) {
       if (node?.type === "ExpressionStatement") {
         const expr = node.expression;
         if (
@@ -186,21 +214,52 @@ export function findMethodByName(parsed, funcNode) {
     }
     return null;
   }
-  for (let node of parsed.body[1].expression.callee.body.body) {
+  let bareDeclarationFound = false;
+  for (let node of body) {
+    if (node?.type === "FunctionDeclaration" && node.id?.name === funcNode) {
+      return node;
+    }
     if (node?.type === "VariableDeclaration") {
       for (let v of node.declarations) {
         if (v.id.name === funcNode) {
+          if (!v.init) bareDeclarationFound = true;
           if (v.init) {
-            for (let i = 0; i < v.init?.elements?.length; i++) {
-              v.init = findMethodByName(parsed, v.init.elements[i].name);
+            const wasEmptyArrayLiteral = v.init.type === "ArrayExpression" && v.init.elements.length === 0;
+            // Only arrays of bare function-name references (e.g. `var x = [helperFn]`)
+            // need their element resolved to that function's own definition — an
+            // array of literals (e.g. `var rates = [.25, .5, .75]`) must be left
+            // untouched, otherwise this used to blindly resolve the first element's
+            // (nonexistent) `.name` to null and clobber the whole array with `null`.
+            if (v.init.type === "ArrayExpression" && v.init.elements.every(el => el?.type === "Identifier")) {
+              for (let i = 0; i < v.init.elements.length; i++) {
+                v.init = findMethodByName(parsed, v.init.elements[i].name);
+              }
             }
-            return {
+            const declNode = {
               type: "VariableDeclaration",
               kind: node.kind,
               declarations: [v],
               start: node.start,
               end: node.end,
             };
+
+            // A mutable shared-state array (e.g. `var H=[]`) is populated at
+            // module load time via scattered top-level `H[<literal>]=<literal>;`
+            // statements (not inside any function). Functions that close over
+            // it later read those slots, so they must run too.
+            if (wasEmptyArrayLiteral) {
+              const indexAssignments = findTopLevelLiteralIndexAssignments(body, funcNode);
+              if (indexAssignments.length) {
+                return {
+                  type: "Program",
+                  sourceType: "script",
+                  body: [declNode, ...indexAssignments],
+                  start: node.start,
+                  end: indexAssignments[indexAssignments.length - 1].end,
+                };
+              }
+            }
+            return declNode;
           }
         }
       }
@@ -218,7 +277,106 @@ export function findMethodByName(parsed, funcNode) {
       }
     }
   }
+
+  // Fallback: a bare `var ..., name;` (no initializer) whose value is actually
+  // assigned inside a top-level control-flow statement (e.g. a labeled block
+  // doing browser/UA sniffing: `a:{ ... name = x; break a } name = y`).
+  const assigningStatement = findAssigningStatement(body, funcNode);
+  if (assigningStatement) {
+    return {
+      type: "Program",
+      sourceType: "script",
+      body: [
+        {
+          type: "VariableDeclaration",
+          kind: "var",
+          declarations: [{type: "VariableDeclarator", id: {type: "Identifier", name: funcNode}, init: null}],
+        },
+        assigningStatement,
+      ],
+      start: assigningStatement.start,
+      end: assigningStatement.end,
+    };
+  }
+
+  // Bare `var ..., name;` with no top-level assignment found — the value is
+  // set lazily inside a function's closure (e.g. memoization: `name===void 0&&(name=f())`).
+  // A plain `var name;` (initially undefined) is correct in that case.
+  if (bareDeclarationFound) {
+    return {
+      type: "VariableDeclaration",
+      kind: "var",
+      declarations: [{type: "VariableDeclarator", id: {type: "Identifier", name: funcNode}, init: null}],
+    };
+  }
+
   return n;
+}
+
+// Finds top-level `name[<literal index>] = <literal>;` statements — the pattern
+// used to seed a shared-state array/object with constants that closures read later.
+// Only literal keys/values are collected: anything referencing another identifier
+// is a side effect local to whatever function it lives in, not module-load state.
+function findTopLevelLiteralIndexAssignments(body, name) {
+  const results = [];
+  for (const node of body) {
+    if (node?.type !== "ExpressionStatement") continue;
+    const expr = node.expression;
+    if (expr?.type !== "AssignmentExpression" || expr.operator !== "=") continue;
+    const left = expr.left;
+    if (
+      left?.type === "MemberExpression" &&
+      left.computed &&
+      left.object?.type === "Identifier" &&
+      left.object.name === name &&
+      left.property?.type === "Literal" &&
+      expr.right?.type === "Literal"
+    ) {
+      results.push(node);
+    }
+  }
+  return results;
+}
+
+const CONTROL_FLOW_CONTAINER_TYPES = new Set([
+  "BlockStatement", "IfStatement", "LabeledStatement", "ForStatement", "ForInStatement",
+  "ForOfStatement", "WhileStatement", "DoWhileStatement", "TryStatement", "CatchClause",
+  "SwitchStatement", "SwitchCase",
+]);
+
+// Finds a top-level statement whose control-flow subtree (ignoring nested
+// function bodies) contains an assignment to `funcNode`, without descending
+// into nested functions where an identically-named local could false-match.
+function findAssigningStatement(body, funcNode) {
+  function assignsTarget(node) {
+    if (!node || typeof node !== "object") return false;
+    if (node.type === "AssignmentExpression" && node.left?.type === "Identifier" && node.left.name === funcNode) {
+      return true;
+    }
+    if (!CONTROL_FLOW_CONTAINER_TYPES.has(node.type) && node.type !== "ExpressionStatement" && node.type !== "VariableDeclaration" && node.type !== "VariableDeclarator") {
+      if (node.type.includes("Function") || node.type === "ClassDeclaration" || node.type === "ClassExpression") return false;
+    }
+    if (node.type.includes("Function")) return false;
+    for (const key in node) {
+      if (key === "start" || key === "end" || key === "loc" || key === "range") continue;
+      const value = node[key];
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item.type === "string" && assignsTarget(item)) return true;
+        }
+      } else if (value && typeof value.type === "string") {
+        if (assignsTarget(value)) return true;
+      }
+    }
+    return false;
+  }
+
+  for (const node of body) {
+    if (node && assignsTarget(node)) {
+      return node;
+    }
+  }
+  return null;
 }
 
 /**
@@ -236,18 +394,86 @@ export function findMethodByName(parsed, funcNode) {
  */
 export function collectPrototypeMethods(parsed, constructorName, globalArrayData, globalArrayName) {
   const results = [];
-  const body = parsed.body[1].expression.callee.body.body;
+  const body = parsed.body[1]?.expression.callee.body.body || parsed.body[0]?.expression.callee.object.body.body;
 
   // Normalise constructorName for comparison: generate() output of the left-most object
   // e.g. "g.**" or "**"
   const ctorNorm = constructorName.trim();
 
+  // Tracks the "u = X.prototype; u.method = ...;" idiom, where a single alias
+  // identifier (e.g. "u") is repeatedly reassigned to different constructors'
+  // prototypes throughout the file, and later statements attach methods to
+  // whichever prototype the alias currently points to. Since the alias is
+  // reused for many unrelated classes, we must resolve it based on source
+  // order rather than treating it as a stable reference to one constructor.
+  const aliasMap = new Map();
+
+  function protoTargetOf(node) {
+    // Matches `X.prototype` (literal) or `X[*[*]]` where the array entry is "prototype".
+    if (!node || node.type !== "MemberExpression") return null;
+    if (!node.computed) {
+      if (node.property?.name === "prototype" || node.property?.value === "prototype") {
+        return generate(node.object).trim();
+      }
+      return null;
+    }
+    if (globalArrayData && globalArrayName) {
+      const protoExpr = node.property;
+      if (
+        protoExpr?.type === "MemberExpression" &&
+        protoExpr.object?.name === globalArrayName &&
+        protoExpr.property?.type === "Literal" &&
+        globalArrayData[protoExpr.property.value] === "prototype"
+      ) {
+        return generate(node.object).trim();
+      }
+    }
+    return null;
+  }
+
   for (const node of body) {
+    // Track `u = X.prototype` (assignment) and `var u = X.prototype` (declaration)
+    // so later `u.method = ...` statements can be attributed to X.
+    if (node.type === "VariableDeclaration") {
+      for (const decl of node.declarations) {
+        if (decl.id?.type === "Identifier" && decl.init) {
+          const target = protoTargetOf(decl.init);
+          if (target) aliasMap.set(decl.id.name, target);
+        }
+      }
+    }
+    if (
+      node.type === "ExpressionStatement" &&
+      node.expression?.type === "AssignmentExpression" &&
+      node.expression.left?.type === "Identifier"
+    ) {
+      const target = protoTargetOf(node.expression.right);
+      if (target) aliasMap.set(node.expression.left.name, target);
+    }
+
     if (node.type !== "ExpressionStatement") continue;
     const expr = node.expression;
     if (expr?.type !== "AssignmentExpression") continue;
     const left = expr.left;
     if (left.type !== "MemberExpression") continue;
+
+    // --- Pattern 3: aliased  u.method = function(...)  where u currently
+    // aliases ctorNorm's prototype ---
+    if (!left.computed && left.object?.type === "Identifier") {
+      const aliasTarget = aliasMap.get(left.object.name);
+      if (aliasTarget && aliasTarget === ctorNorm) {
+        // The alias identifier (e.g. "u") only resolves to this
+        // prototype at this specific point in the original source's
+        // execution order — we don't carry that assignment over into
+        // the extracted snippet, so referencing the bare alias here
+        // would be a ReferenceError. Rewrite the statement to target
+        // the constructor's prototype directly instead.
+        const rewritten = JSON.parse(JSON.stringify(node));
+        rewritten.expression.left.object = acorn.parse(ctorNorm + ".prototype", {ecmaVersion: 2020}).body[0].expression;
+        results.push(rewritten);
+        continue;
+      }
+    }
 
     const obj = left.object;
     if (obj.type !== "MemberExpression") continue;
@@ -314,11 +540,6 @@ export function getUndeclaredMethods(funcCode, nFunctionName) {
     },
     ArrowFunctionExpression(node) {
       addDeclaredFromParams(node.params);
-    },
-    AssignmentExpression(node) {
-      if (node.left?.type === "Identifier") {
-        declared.add(node.left.name);
-      }
     },
     MemberExpression(node, ancestors) {
       if (!node.computed && node.object.type === "Identifier") {
