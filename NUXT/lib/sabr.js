@@ -1,6 +1,6 @@
 // SABR (Server Adaptive Bitrate) library
 
-import { getContentPoToken } from "./potoken";
+import {getContentPoToken, getPoToken} from "./potoken";
 
 // --- SABR helper constants ---
 const SABR_CLIENT_NAME_IDS = {
@@ -153,7 +153,7 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrPbLenDelim(5, inner);
   }
 
-  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [], hl = 'en', osName = 'Windows', osVersion = '10.0', allAudioFormats = null, allVideoFormats = null, sabrContexts = [] }) {
+  function sabrBuildRequest({ ustreamerConfigB64, clientName, clientVersion, itag, playerTimeMs = 0, playbackCookieBytes = null, poToken = null, isAudio = false, videoItag = null, audioItag = null, videoXtags = '', audioXtags = '', combined = false, bufferedRanges = [], hl = 'en', osName = 'Windows', osVersion = '10.0', allAudioFormats = null, allVideoFormats = null, sabrContexts = [] }) {
     const ustreamerBytes = sabrBase64Decode(ustreamerConfigB64);
 
     const isAudioFormat = typeof isAudio === 'boolean' ? isAudio : [139, 140, 141, 171, 172, 249, 250, 251, 256, 258, 327, 338].includes(itag);
@@ -224,6 +224,7 @@ const SABR_CLIENT_NAME_IDS = {
     // field 19: streamer_context {
     //   field 1: client_info { 1: hl, 12: deviceMake, 13: deviceModel, 16: client_name,
     //                           17: client_version, 18: osName, 19: osVersion }
+    //   field 2: po_token (bytes) — sits between client_info(1) and playback_cookie(3)
     //   field 3: playback_cookie (bytes, from previous NextRequestPolicy)
     // }
     // Field numbers confirmed against the real player's base.js (v4/YY4 serializers).
@@ -240,6 +241,7 @@ const SABR_CLIENT_NAME_IDS = {
       : new Uint8Array(0);
     const streamerContextInner = sabrConcat([
       sabrPbLenDelim(1, clientInfo),
+      poToken ? sabrPbString(2, poToken) : new Uint8Array(0),
       playbackCookieBytes ? sabrPbLenDelim(3, playbackCookieBytes) : new Uint8Array(0),
       sabrContextEntries,
     ]);
@@ -385,35 +387,53 @@ const SABR_CLIENT_NAME_IDS = {
   // Reacts to a StreamProtectionStatus part (id 58) inside a parsed UMP response.
   // Our /player requests currently use the ANDROID client (no poToken attached), but the
   // SABR stream session itself can still demand one. On status >= 2 we mint a content-bound
-  // poToken (bgutils-js, see lib/potoken.js) once and attach it to the streaming URL as
-  // ?pot=, matching how YouTube's own web client authorizes SABR requests.
+  // poToken (bgutils-js, see lib/potoken.js) once and hand it back so the caller can stash it
+  // in `state.poToken` and thread it into StreamerContext (field 2) on subsequent
+  // sabrBuildRequest calls, matching how YouTube's own web client authorizes SABR requests.
   //
   // status 2 is a soft warning — the current response still carries usable media, so we just
-  // attach the poToken for subsequent requests and keep processing this one as normal.
+  // carry the poToken forward for subsequent requests and keep processing this one as normal.
   // status 3 is a hard block — the current response has no usable media, so callers must
-  // retry the same request slot immediately once a poToken has been attached (`retry: true`),
+  // retry the same request slot immediately once a poToken has been minted (`retry: true`),
   // instead of treating it (or a possible accompanying SABR_ERROR part) as fatal.
-  async function sabrCheckStreamProtection(parts, url, videoId, state) {
-    const spsPart = parts.find(p => p.partId === 58);
-    if (!spsPart) return { url, retry: false };
-    const sps = sabrParseStreamProtectionStatus(spsPart.data);
-    if (sps.status < 2) return { url, retry: false };
-
-    console.warn('[SABR] StreamProtectionStatus', sps.status, 'maxRetries:', sps.maxRetries);
-    if (state.poTokenAttempted || !videoId) return { url, retry: false };
+  // Proactively mints a content-bound poToken before the first SABR request is sent, so it
+  // rides along in StreamerContext from the start instead of only being attached reactively
+  // after a StreamProtectionStatus part demands it (see sabrCheckStreamProtection below).
+  async function sabrPrefetchPoToken(videoId, state) {
+    if (state.poTokenAttempted || !videoId) return;
     state.poTokenAttempted = true;
     try {
       const poToken = await getContentPoToken(videoId);
       if (poToken) {
-        const u = new URL(url);
-        u.searchParams.set('pot', poToken);
-        console.warn('[SABR] Attached poToken to further requests after StreamProtectionStatus', sps.status);
-        return { url: u.toString(), retry: sps.status >= 3 };
+        state.poToken = poToken.replaceAll("_", "/").replaceAll("-", "+");
+        console.warn('[SABR] Pre-attached poToken to StreamerContext before first request');
+      }
+    } catch (e) {
+      console.warn('[SABR] Failed to pre-generate poToken', e);
+    }
+  }
+
+  async function sabrCheckStreamProtection(parts, videoId, state) {
+    const spsPart = parts.find(p => p.partId === 58);
+    if (!spsPart) return { retry: false };
+    const sps = sabrParseStreamProtectionStatus(spsPart.data);
+    // TEMP: always attach poToken regardless of status
+    // if (sps.status < 2) return { retry: false };
+
+    console.warn('[SABR] StreamProtectionStatus', sps.status, 'maxRetries:', sps.maxRetries);
+    if (state.poTokenAttempted || !videoId) return { retry: false };
+    state.poTokenAttempted = true;
+    try {
+      const poToken = await getContentPoToken(videoId);
+      if (poToken) {
+        state.poToken = poToken.replaceAll("_", "/").replaceAll("-", "+");
+        console.warn('[SABR] Attached poToken to StreamerContext after StreamProtectionStatus', sps.status);
+        return { retry: sps.status >= 3 };
       }
     } catch (e) {
       console.warn('[SABR] Failed to generate poToken for StreamProtectionStatus', e);
     }
-    return { url, retry: false };
+    return { retry: false };
   }
 
   // SabrContextUpdate (UMP part 57): a keyed blob the server hands us and expects echoed
@@ -568,17 +588,17 @@ const SABR_CLIENT_NAME_IDS = {
     let lastSequenceNumber = -1;
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
+    await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
-      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats, sabrContexts: _sabrGetContextsToSend(sabrContextState) });
+      const body = sabrBuildRequest({ ustreamerConfigB64: videoPlaybackUstreamerConfig, clientName, clientVersion, itag, playerTimeMs: currentPlayerTimeMs, playbackCookieBytes, poToken: spsState.poToken, isAudio, videoItag, audioItag, hl: clientHl, osName: clientOsName, osVersion: clientOsVersion, allAudioFormats, allVideoFormats, sabrContexts: _sabrGetContextsToSend(sabrContextState) });
       const rawBytes = await sabrFetch(url, body, rn++, signal);
 
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
       sabrProcessContextParts(parts, sabrContextState);
-      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
-      url = spsResult.url;
+      const spsResult = await sabrCheckStreamProtection(parts, videoId, spsState);
       sabrLogDiagnosticParts(parts);
       if (spsResult.retry) { i--; continue; }
       const redirectPart = parts.find(p => p.partId === 43);
@@ -693,6 +713,7 @@ const SABR_CLIENT_NAME_IDS = {
     const allSegments = [];
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
+    await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       const body = sabrBuildRequest({
@@ -702,6 +723,7 @@ const SABR_CLIENT_NAME_IDS = {
         itag,
         playerTimeMs,
         playbackCookieBytes,
+        poToken: spsState.poToken,
         hl: clientHl,
         osName: clientOsName,
         osVersion: clientOsVersion,
@@ -713,8 +735,7 @@ const SABR_CLIENT_NAME_IDS = {
       const rawBytes = await sabrFetch(url, body, rn++);
       const parts = [...sabrParseUMP(rawBytes)];
       sabrProcessContextParts(parts, sabrContextState);
-      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
-      url = spsResult.url;
+      const spsResult = await sabrCheckStreamProtection(parts, videoId, spsState);
       sabrLogDiagnosticParts(parts);
       if (spsResult.retry) { i--; continue; }
 
@@ -1249,6 +1270,7 @@ const SABR_CLIENT_NAME_IDS = {
     let lastVideoSeq = -1;
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
+    await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -1258,6 +1280,7 @@ const SABR_CLIENT_NAME_IDS = {
         itag: videoItag,
         playerTimeMs: currentPlayerTimeMs,
         playbackCookieBytes,
+        poToken: spsState.poToken,
         isAudio: false,
         audioItag, videoItag,
         audioXtags, videoXtags,
@@ -1274,8 +1297,7 @@ const SABR_CLIENT_NAME_IDS = {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const parts = [...sabrParseUMP(rawBytes)];
       sabrProcessContextParts(parts, sabrContextState);
-      const spsResult = await sabrCheckStreamProtection(parts, url, videoId, spsState);
-      url = spsResult.url;
+      const spsResult = await sabrCheckStreamProtection(parts, videoId, spsState);
       sabrLogDiagnosticParts(parts);
       if (spsResult.retry) { i--; continue; }
 

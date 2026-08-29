@@ -1,16 +1,18 @@
 // PoToken (Proof of Origin) generation via BotGuard.
-// 1. Mint a BotGuard integrity token once per visitorData ("session" scope).
-// 2. Reuse the resulting minter to mint a content-bound token per videoId
-//    for every /player request, and a session-bound token from visitorData.
+// 1. Fetch a BotGuard challenge from the Create endpoint (api/jnn/v1/Create), keyed by the
+//    fixed WEB-family REQUEST_KEY.
+// 2. Run the challenge through BotGuard to get a snapshot response.
+// 3. Exchange the snapshot for an integrity token via GenerateIT, and use that token directly
+//    as the poToken (serviceIntegrityDimensions.poToken) — no WebPoMinter/minting involved.
 // Library: bgutils-js
 
 import { CapacitorHttp as Http } from "@capacitor/core";
 import { BotGuardClient, getChallenge } from "bgutils-js/botguard";
-import { WebPoMinter } from "bgutils-js/webpo";
-import { buildURL, getHeaders } from "bgutils-js/utils";
+import { buildURL } from "bgutils-js/utils";
 
-// Public request key used by YouTube's own WEB-family BotGuard challenge.
-const REQUEST_KEY = "O43z0dpjhgX20SCx4KAo";
+// Public request key used by YouTube's own BotGuard challenge.
+// Z1elNkAKLpSR3oPOUMSN - for TV, O43z0dpjhgX20SCx4KAo - for WEB
+const REQUEST_KEY = "Z1elNkAKLpSR3oPOUMSN";
 
 async function capacitorFetch(url, options = {}) {
   const resp = await Http.post({
@@ -30,9 +32,9 @@ async function capacitorFetch(url, options = {}) {
   };
 }
 
-function loadInterpreter(challenge) {
+async function loadInterpreter(challenge) {
   const script = challenge.interpreterJavascript
-    ?.privateDoNotAccessOrElseSafeScriptWrappedValue;
+    ?.privateDoNotAccessOrElseSafeScriptWrappedValue || challenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
   if (!script) {
     throw new Error("potoken: BotGuard challenge did not include an interpreter script");
   }
@@ -41,64 +43,91 @@ function loadInterpreter(challenge) {
   if (!document.getElementById(scriptId)) {
     const el = document.createElement("script");
     el.id = scriptId;
-    el.textContent = script;
+    let te = await fetch(script).then((r) => r.text());
+    el.textContent = te;
     document.head.appendChild(el);
   }
 }
 
 async function generateIntegrityToken(botguardResponse) {
+  const headers = {
+    'content-type': 'application/json+protobuf',
+    'x-goog-api-key': 'AIzaSyDyT5W0Jh49F30Pqqtyfdf7pDLFKLJoAnw',
+  };
   const resp = await capacitorFetch(buildURL("GenerateIT", true), {
-    headers: getHeaders(),
+    headers: headers,
     body: JSON.stringify([REQUEST_KEY, botguardResponse]),
   });
   if (!resp.ok) {
     throw new Error(`potoken: GenerateIT failed with status ${resp.status}`);
   }
-  const [integrityToken, estimatedTtlSecs, mintRefreshThreshold] = await resp.json();
+  // Response shape is [null, estimatedTtlSecs, mintRefreshThreshold, integrityToken].
+  // const [integrityToken, estimatedTtlSecs, mintRefreshThreshold] = await resp.json();
+  const [emptyVal, estimatedTtlSecs, mintRefreshThreshold = 100, integrityToken] = await resp.json();
   return { integrityToken, estimatedTtlSecs, mintRefreshThreshold };
 }
 
-async function createMinter() {
-  const challenge = await getChallenge({
-    requestKey: REQUEST_KEY,
-    fetchFunction: capacitorFetch,
-    useYouTubeAPI: true,
+async function mintIntegrityToken() {
+  let f = await fetch("https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl", {
+    "headers": {
+      "device-memory": "16",
+      "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}`,
+    },
+    "body": null,
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "include"
   });
+  f = await f.text();
+  f = f.replace(")]}'\n", "");
+  f = JSON.parse(f);
+  console.log("f", f);
+  let ch = JSON.parse(f.challengeParams.R)
+  // console.log("ch1", f.challengeParams.R);
+  console.log("ch", ch);
+  // const challenge = await getChallenge({
+  //   requestKey: REQUEST_KEY,
+  //   fetchFunction: capacitorFetch,
+  //   interpreterHash: ch.bgChallenge.interpreterHash,
+  //   useYouTubeAPI: false,
+  // });
 
-  loadInterpreter(challenge);
+  await loadInterpreter(ch.bgChallenge);
+  console.log("globalName", ch.bgChallenge.globalName)
+  console.log("program", ch.bgChallenge.program)
 
   const botguardClient = await BotGuardClient.create({
     globalObject: window,
-    globalName: challenge.globalName,
-    program: challenge.program,
+    globalName: ch.bgChallenge.globalName,
+    program: ch.bgChallenge.program,
   });
 
   const webPoSignalOutput = [];
   const botguardResponse = await botguardClient.snapshot({ webPoSignalOutput });
 
   const integrityTokenResponse = await generateIntegrityToken(botguardResponse);
-  const minter = await WebPoMinter.create(integrityTokenResponse, webPoSignalOutput);
 
   const ttlSecs = integrityTokenResponse.estimatedTtlSecs || 21600;
   const refreshThresholdSecs = integrityTokenResponse.mintRefreshThreshold || 0;
   const expiresAt = Date.now() + (ttlSecs - refreshThresholdSecs) * 1000;
 
-  return { minter, expiresAt };
+  return { token: integrityTokenResponse.integrityToken, expiresAt };
 }
 
-let cache = null; // { minter, expiresAt }
+let cache = null; // { token, expiresAt }
 let creating = null;
 
-async function ensureMinter() {
-  if (cache && Date.now() < cache.expiresAt) {
-    return cache.minter;
+// Returns the raw integrityToken from GenerateIT, cached until it's close to expiry.
+async function ensureIntegrityToken() {
+  if (cache && Date.now() < cache.expiresAt && cache.token?.length > 0) {
+    return cache.token;
   }
   if (!creating) {
-    creating = createMinter()
+    creating = mintIntegrityToken()
       .then((result) => {
         cache = result;
         creating = null;
-        return result.minter;
+        return result.token;
       })
       .catch((err) => {
         creating = null;
@@ -108,12 +137,17 @@ async function ensureMinter() {
   return creating;
 }
 
+export async function getPoToken() {
+  let token = await ensureIntegrityToken();
+  console.log("token", token);
+  return token;
+}
+
 // Content-bound token for a /player request, bound to the videoId.
 export async function getContentPoToken(videoId) {
   if (typeof window === "undefined" || !videoId) return null;
   try {
-    const minter = await ensureMinter();
-    return await minter.mintAsWebsafeString(videoId);
+    return await ensureIntegrityToken();
   } catch (err) {
     console.warn("[potoken] Failed to generate content poToken", err);
     return null;
@@ -124,8 +158,7 @@ export async function getContentPoToken(videoId) {
 export async function getSessionPoToken(visitorData) {
   if (typeof window === "undefined" || !visitorData) return null;
   try {
-    const minter = await ensureMinter();
-    return await minter.mintAsWebsafeString(visitorData);
+    return await ensureIntegrityToken();
   } catch (err) {
     console.warn("[potoken] Failed to generate session poToken", err);
     return null;

@@ -19,6 +19,7 @@ import {
   findGlobalArray,
   findMethodByName
 } from "~/lib/ast/ast";
+import {getContentPoToken, getPoToken, getSessionPoToken} from "./potoken";
 
 class Innertube {
   //--- Initiation ---//
@@ -31,7 +32,9 @@ class Innertube {
     this.nfunction = "";
     this.visitorData = "";
     this.getPot = "";
+    this.ytConfig = null;
     this.pot = "";
+    this.isTcl = false;
     this.secretArrayName = "";
     this.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false);
   }
@@ -47,12 +50,19 @@ class Innertube {
       signatureIntValue[0].replace(/\D/g, "")
     );
   }
-  saveBaseJSVersion(baseJsUrl) {
+  parseBaseJsString(baseJsUrl) {
     const regex = /\/player\/([a-f0-9]{8})\/player/;
     const match = baseJsUrl.match(regex);
     if (match) {
-      localStorage.setItem("baseJsVersion", match[1]);
+      return match[1];
     }
+    return null;
+  }
+  saveBaseJSVersion(baseJsUrl) {
+    localStorage.setItem("baseJsVersion", this.parseBaseJsString(baseJsUrl));
+  }
+  getBaseJSVersion(){
+    return localStorage.getItem("baseJsVersion");
   }
   processBaseJSUrl(url) {
     let baseJSUrl = constants.URLS.YT_MOBILE + url;
@@ -73,10 +83,17 @@ class Innertube {
   /**
    * @returns {YTClient}
    */
-  getYTConfig(html) {
-    return JSON.parse(
+  processYTConfig(html) {
+    this.ytConfig = JSON.parse(
       "{" + getBetweenStrings(html, "ytcfg.set({", ");")
     );
+    return this.ytConfig;
+  }
+  /**
+   * @returns {YTClient}
+   */
+  getYTConfig() {
+    return this.ytConfig;
   }
 
   async initAsync() {
@@ -90,26 +107,58 @@ class Innertube {
         this.ErrorCallback(html.message, true);
 
       try {
-        const ytClient = this.getYTConfig(html.data);
+        const ytClient = this.processYTConfig(html.data);
         // Get url of base.js file
-        let baseJsUrl = this.processBaseJSUrl(ytClient.PLAYER_JS_URL);
+        console.warn(ytClient)
+        let baseJsUrl = this.processBaseJSUrl(ytClient.PLAYER_JS_URL || ytClient.WEB_PLAYER_CONTEXT_CONFIGS?.WEB_PLAYER_CONTEXT_CONFIG_ID_EMBEDDED_PLAYER.jsUrl);
+        // baseJsUrl = "https://www.youtube.com/s/player/b7457b7c/tv-player-ias-tcl.vflset/tv-player-ias-tcl.js";
+
+        if (this.isAuthedUser()) {
+          let f = await fetch("https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl", {
+            "headers": {
+              "device-memory": "16",
+              ...(this.isAuthedUser()
+                ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
+                : {}),
+            },
+            "body": null,
+            "method": "GET",
+            "mode": "cors",
+            "credentials": "include"
+          });
+          f = await f.text();
+          f = f.replace(")]}'\n", "");
+          f = JSON.parse(f);
+          console.log(f)
+          if (f.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl.indexOf("-tcl.js") > -1) {
+            baseJsUrl = this.processBaseJSUrl(f.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl);
+            this.isTcl = true;
+          }
+        }
+
         this.saveBaseJSVersion(baseJsUrl);
-        // baseJsUrl = "https://m.youtube.com/s/player/74edf1a3/player_ias.vflset/en_US/base.js";
+
         // Get base.js content
         const baseJsContent = await Http.get({
           url: baseJsUrl,
         }).catch((error) => error);
 
         await this.initTimeStamp(baseJsContent);
-        await this.makeDecipherFunctionWithAst(baseJsContent);
+        // if (lastBaseJSVersion !== this.getBaseJSVersion() || (localStorage.getItem("nFunctionAst") === "undefined" || localStorage.getItem("nFunctionAst") === undefined || localStorage.getItem("nFunctionAst") === null)) {
+        if (true) {
+          // TODO: cache nFunction, decipherFunction and refresh when base.js is updated (commit hash and "tcl" part)
+          await this.makeDecipherFunctionWithAst(baseJsContent, this.isTcl);
+          console.warn("Decipher function created");
+          await this.getNFunctionAst(baseJsContent, this.isTcl);
+          console.warn("N-function created");
+        }
+        else {
+          // this.nfunction = new Function(localStorage.getItem("nFunctionAst"))();
+          // this.decodeUrl = new Function(localStorage.getItem("decodeUrl"))();
+        }
+        // console.warn(this.nfunction)
 
-        console.warn("Decipher function created");
-        await this.getNFunctionAst(baseJsContent);
-        console.warn("N-function created");
-
-
-
-        this.visitorData = ytClient.SBOX_SETTINGS.VISITOR_DATA || ytClient.EOM_VISITOR_DATA || ytClient.INNERTUBE_CONTEXT.client.visitorData;
+        this.visitorData = ytClient.SBOX_SETTINGS?.VISITOR_DATA || ytClient?.EOM_VISITOR_DATA || ytClient?.INNERTUBE_CONTEXT.client?.visitorData || ytClient?.VISITOR_DATA;
 
         if (ytClient.INNERTUBE_CONTEXT) {
           this.key = ytClient.INNERTUBE_API_KEY;
@@ -255,7 +304,7 @@ class Innertube {
   }
 
   async getContinuationsAsync(continuation, type, contextAdditional = {}) {
-    const isAuthed = this.isAuthedUser();
+    let isAuthed = this.isAuthedUser();
     let data = {
       context: { ...contextAdditional },
       continuation: continuation,
@@ -282,6 +331,7 @@ class Innertube {
         break;
       case "next":
         url = `${constants.URLS.YT_BASE_API}/next?key=${this.key}`;
+        isAuthed = false; //TEMPORARY
         break;
       default:
         throw "Invalid type";
@@ -290,7 +340,7 @@ class Innertube {
     const response = await Http.post({
       url: url,
       data: data,
-      headers: constants.INNERTUBE_HEADER(this.context.client, false),
+      headers: constants.INNERTUBE_HEADER(this.context.client, isAuthed),
     }).catch((error) => error);
     if (response instanceof Error) {
       return {
@@ -311,30 +361,163 @@ class Innertube {
     return response.data;
   }
 
-// Currently only one client is playable
+// Currently, VISION_OS is fully playable, WEB_EMBEDDED_PLAYER for fallback is good.
+// TVHTML5 is playable 50% of the time, depends on the account'
   async playerRequest(id, reloadPlaybackContext = null) {
-    const activeClient = constants.INNERTUBE_CLIENT_VISION_OS(this.context.client);
-    let headers = {
-      ...constants.INNERTUBE_HEADER_VISION_OS(activeClient),
-    };
+    let url = `${constants.URLS.YT_BASE_API}/player?key=${this.key}`;
+    let clientConfig = this.getYTConfig();
+    let oldYTConfig = clientConfig;
+    let clientName = this.isAuthedUser() ? "TVHTML5" : "WEB_EMBEDDED_PLAYER";
+    let postData = {};
+    let poToken = await getSessionPoToken(id);
 
+    switch (clientName) {
+      case "WEB_EMBEDDED_PLAYER":
+        const html = await Http.get({
+          url: constants.URLS.YT_EMBED + `${id}`,
+          params: { hl: localStorage.getItem("language") || "en" },
+        }).catch((error) => error);
+        clientConfig = this.processYTConfig(html.data);
+        // clientConfig = this.getYTConfig()
+        postData = {
+          url: url,
+          data: constants.WEB_EMBED_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp),
+          headers: constants.CLIENT_HEADER(clientConfig),
+        }
+        break;
+      case "VISION_OS":
+        postData = {
+          url: url,
+          data: constants.VISION_OS_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp),
+          headers: constants.CLIENT_HEADER(clientConfig),
+        }
+        break;
+      case "TVHTML5":
+        postData = {
+          url: url,
+          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken),
+          headers: constants.CLIENT_HEADER(clientConfig),
+        }
+        break;
+    }
+    // postData = {
+    //   url: url,
+    //   data: {
+    //     "videoId": `${id}`,
+    //     "context": {
+    //       "client": {
+    //         "hl": "ru",
+    //         "gl": "LT",
+    //         "remoteHost": "62.80.225.234",
+    //         "deviceMake": "Sony",
+    //         "deviceModel": "BRAVIA 8K UR2",
+    //         "visitorData": clientConfig.INNERTUBE_CONTEXT.client.visitorData,
+    //         "userAgent": "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
+    //         "clientName": "TVHTML5",
+    //         "clientVersion": "7.20260826.15.00",
+    //         "osName": "Andr0id 9",
+    //         "osVersion": "9.0",
+    //         "originalUrl": "https://www.youtube.com/tv",
+    //         "theme": "CLASSIC",
+    //         "screenPixelDensity": 1,
+    //         "platform": "TV",
+    //         "clientFormFactor": "UNKNOWN_FORM_FACTOR",
+    //         "webpSupport": false,
+    //         "configInfo": clientConfig.INNERTUBE_CONTEXT.client.configInfo,
+    //         "screenDensityFloat": 1.1458333730697632,
+    //         "tvAppInfo": {
+    //           "appQuality": "TV_APP_QUALITY_FULL_ANIMATION",
+    //           "voiceCapability": {
+    //             "hasSoftMicSupport": false,
+    //             "hasHardMicSupport": false
+    //           },
+    //           "signedInAccountCount": 2,
+    //           "supportsNativeScrolling": false,
+    //           "watchPageInfo": {
+    //             "watchPageVersion": "WATCH_PAGE_VERSION_V2025",
+    //             "combineChannelSdEntrypoints": false,
+    //             "enableDirectToChannelPage": false
+    //           },
+    //           "livingRoomAppMode": "LIVING_ROOM_APP_MODE_UNSPECIFIED",
+    //           "livingRoomPoTokenId": "jCKcNMaSPOA="
+    //         },
+    //         "timeZone": "Europe/Kiev",
+    //         "browserName": "Opera",
+    //         "browserVersion": "46.0.2207.0",
+    //         "acceptHeader": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    //         // "deviceExperimentId": "ChxOelkzTmpnM01qazRNelk1T1RFeU5qRTBPQT09EJDoqtQGGM72ptQG",
+    //         "rolloutToken": clientConfig.INNERTUBE_CONTEXT.client?.rolloutToken,
+    //         "screenWidthPoints": 759,
+    //         "screenHeightPoints": 781,
+    //         "utcOffsetMinutes": 180,
+    //         "userInterfaceTheme": "USER_INTERFACE_THEME_LIGHT",
+    //         "applicationState": "ACTIVE",
+    //         "connectionType": "CONN_CELLULAR_4G",
+    //         "memoryTotalKbytes": "16000000",
+    //         "playerType": "UNIPLAYER",
+    //         "clientScreen": "WATCH"
+    //       },
+    //       "user": {
+    //         "lockedSafetyMode": false
+    //       },
+    //       "request": {
+    //         "useSsl": true,
+    //         "internalExperimentFlags": [],
+    //         "consistencyTokenJars": []
+    //       },
+    //       "clientScreenNonce": "QDgPYIfrJj4HlAJY",
+    //       "adSignalsInfo": {
+    //         "params": []
+    //       },
+    //       "clickTracking": {
+    //       }
+    //     },
+    //     "playbackContext": {
+    //       "contentPlaybackContext": {
+    //         "html5Preference": "HTML5_PREF_WANTS",
+    //         "lactMilliseconds": "63",
+    //         "referer": `https://www.youtube.com/tv#/watch?v=${id}`,
+    //         "signatureTimestamp": this.signatureTimestamp,
+    //         "autoCaptionsDefaultOn": false,
+    //         "mdxContext": {},
+    //         "playerWidthPixels": 759,
+    //         "playerHeightPixels": 781
+    //       },
+    //       "devicePlaybackCapabilities": {
+    //         "supportsVp9Encoding": true,
+    //         "supportXhr": true
+    //       }
+    //     },
+    //     "cpn": getCpn(),
+    //     "params": "ugUEEgJydQ%3D%3D",
+    //     "captionParams": {},
+    //     "serviceIntegrityDimensions": {
+    //       // Генерировать poToken для TVHTML5 нужно обязательно. Иначе на первой минуте виснет.
+    //       "poToken": "MkrrIbtgkwxlB-sfCEt0rls4nhbUozHwCh15LKKuUWFcsQW_VcM7ppO0omWmdT6BAekyrTPRrx9TtdXqmIiLRh1abpk27dGz8FbV_g"
+    //       // poToken: await getSessionPoToken(id),
+    //     },
+    //     "attestationRequest": {
+    //       "omitBotguardData": true
+    //     }
+    //   },
+    //   headers: {
+    //     ...constants.CLIENT_HEADER(clientConfig),
+    //     "x-youtube-client-version": "7.20260826.15.00",
+    //     "x-youtube-client-name": "7",
+    //     ...(this.isAuthedUser()
+    //       ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
+    //       : {}),
+    //
+    //     "content-type": "application/json",
+    //     "device-memory": "16",
+    //     // "x-client-data": "CKmdygEIlKHLAQiFoM0BCM25zwEIhtOUMAjt35QwGKvflDA=",
+    //     "x-goog-visitor-id": clientConfig.INNERTUBE_CONTEXT.client.visitorData,
+    //   },}
+
+    this.ytConfig = oldYTConfig;
+    // console.warn(this.nfunction);
     return Http.post({
-      url: `${constants.URLS.YT_BASE_API}/player?key=${this.key}`,
-      data: {
-        context: { client: activeClient },
-        videoId: id,
-        contentCheckOk: true,
-        racyCheckOk: true,
-        playbackContext: {
-          ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
-          contentPlaybackContext: {
-            signatureTimestamp: this.signatureTimestamp,
-            html5Preference: "HTML5_PREF_WANTS",
-            lactMilliseconds: "-1",
-          },
-        },
-      },
-      headers: headers,
+      ...postData
     }).catch((error) => error);
   }
 
@@ -462,37 +645,37 @@ class Innertube {
     const isAuthed = this.isAuthedUser();
     let data;
     let response;
-      data = { context: this.context, browseId: url };
-      data.context = {
-        ...data.context,
-        request: constants.INNERTUBE_REQUEST(),
-      };
-      data = {
-        ...data,
-        browseId: url,
-        context: {
-          client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
-        },
-      };
-      data.context.client = {
-        ...data.context.client,
-        clientFormFactor: "LARGE_FORM_FACTOR",
-      };
+    data = { context: this.context, browseId: url };
+    data.context = {
+      ...data.context,
+      request: constants.INNERTUBE_REQUEST(),
+    };
+    data = {
+      ...data,
+      browseId: url,
+      context: {
+        client: constants.INNERTUBE_CLIENT_FOR_CHANNEL(this.context.client),
+      },
+    };
+    data.context.client = {
+      ...data.context.client,
+      clientFormFactor: "LARGE_FORM_FACTOR",
+    };
 
-      // console.warn("DATA" , data);
-      response = await Http.post({
-        // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
-        url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
-        data: data,
-        headers: { ...constants.INNERTUBE_HEADER(this.context.client, false) },
-      }).catch((error) => error);
+    // console.warn("DATA" , data);
+    response = await Http.post({
+      // url: `${constants.URLS.YT_BASE_API}/navigation/resolve_url?key=${this.key}`,
+      url: `${constants.URLS.YT_BASE_API}/browse?key=${this.key}`,
+      data: data,
+      headers: { ...constants.INNERTUBE_HEADER(this.context.client, false) },
+    }).catch((error) => error);
 
-      if (response instanceof Error)
-        return {
-          success: false,
-          status_code: response.status,
-          message: response.message,
-        };
+    if (response instanceof Error)
+      return {
+        success: false,
+        status_code: response.status,
+        message: response.message,
+      };
 
     return {
       success: true,
@@ -596,10 +779,14 @@ class Innertube {
     let ustreamerConfig = responseInfo?.playerConfig?.mediaCommonConfig?.mediaUstreamerRequestConfig?.videoPlaybackUstreamerConfig || null;
     let serverAbrStreamingUrl = responseInfo?.streamingData?.serverAbrStreamingUrl || null;
     if (serverAbrStreamingUrl) {
+      const sabrParams = new URLSearchParams(new URL(serverAbrStreamingUrl).search);
+      const sabrN = sabrParams.get("n");
       try {
-        const sabrParams = new URLSearchParams(new URL(serverAbrStreamingUrl).search);
-        const sabrN = sabrParams.get("n");
-        if (sabrN) {
+        if (sabrN && this.isTcl) {
+          const sabrNDecoded = this.nfunction(serverAbrStreamingUrl);
+          serverAbrStreamingUrl = serverAbrStreamingUrl.replace(/&n=[^&]*/, "&n=" + sabrNDecoded);
+        }
+        else {
           const sabrNDecoded = this.nfunction(sabrN);
           serverAbrStreamingUrl = serverAbrStreamingUrl.replace(/&n=[^&]*/, "&n=" + sabrNDecoded);
         }
@@ -632,63 +819,63 @@ class Innertube {
 
     const vidMetadata = isTVResponse
       ? (() => {
-          const descHeader = mobileNext.engagementPanels
-            ?.find((p) => p.engagementPanelSectionListRenderer?.panelIdentifier === "video-description-ep-identifier")
-            ?.engagementPanelSectionListRenderer?.content?.structuredDescriptionContentRenderer?.items
-            ?.find((i) => i.videoDescriptionHeaderRenderer)
-            ?.videoDescriptionHeaderRenderer;
-          const viewsText = descHeader?.views?.simpleText
-            || tvVidMeta.viewCount?.videoViewCountRenderer?.viewCount?.simpleText
-            || "";
-          const dateText = tvVidMeta.dateText?.accessibility.accessibilityData.label
-            || tvVidMeta.dateText?.simpleText
-            || "";
-          const accessibilityLabel = tvVidMeta.dateText?.accessibility.accessibilityData.label || "";
-          return {
-            contents: [
-              {
-                slimVideoInformationRenderer: {
-                  title: { runs: [{ text: tvVidMeta.title?.runs?.[0]?.text || "" }] },
-                  collapsedSubtitle: {
-                    runs: [
-                      { text: viewsText },
-                      ...(dateText ? [{ text: " • " }, { text: dateText }] : []),
-                    ],
-                  },
-                  expandedSubtitle: { runs: [{ text: accessibilityLabel }] },
+        const descHeader = mobileNext.engagementPanels
+          ?.find((p) => p.engagementPanelSectionListRenderer?.panelIdentifier === "video-description-ep-identifier")
+          ?.engagementPanelSectionListRenderer?.content?.structuredDescriptionContentRenderer?.items
+          ?.find((i) => i.videoDescriptionHeaderRenderer)
+          ?.videoDescriptionHeaderRenderer;
+        const viewsText = descHeader?.views?.simpleText
+          || tvVidMeta.viewCount?.videoViewCountRenderer?.viewCount?.simpleText
+          || "";
+        const dateText = tvVidMeta.dateText?.accessibility.accessibilityData.label
+          || tvVidMeta.dateText?.simpleText
+          || "";
+        const accessibilityLabel = tvVidMeta.dateText?.accessibility.accessibilityData.label || "";
+        return {
+          contents: [
+            {
+              slimVideoInformationRenderer: {
+                title: { runs: [{ text: tvVidMeta.title?.runs?.[0]?.text || "" }] },
+                collapsedSubtitle: {
+                  runs: [
+                    { text: viewsText },
+                    ...(dateText ? [{ text: " • " }, { text: dateText }] : []),
+                  ],
                 },
+                expandedSubtitle: { runs: [{ text: accessibilityLabel }] },
               },
-            ],
-          };
-        })()
+            },
+          ],
+        };
+      })()
       : columnUI.contents.find(
-          (content) => content.slimVideoMetadataSectionRenderer
-        )?.slimVideoMetadataSectionRenderer;
+        (content) => content.slimVideoMetadataSectionRenderer
+      )?.slimVideoMetadataSectionRenderer;
 
     const tvPivotSectionList = responseNext.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer;
     const recommendations = isTVResponse
       ? (() => {
-          const shelves = tvPivotSectionList?.contents || [];
-          const items = shelves
-            .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
-            .flatMap((s) =>
-              (s.shelfRenderer.content.horizontalListRenderer.items || [])
-                .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
-                .map((i) => ({ tileRenderer: i.tileRenderer }))
-            );
-          return { contents: items.slice(1) };
-        })()
+        const shelves = tvPivotSectionList?.contents || [];
+        const items = shelves
+          .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+          .flatMap((s) =>
+            (s.shelfRenderer.content.horizontalListRenderer.items || [])
+              .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+              .map((i) => ({ tileRenderer: i.tileRenderer }))
+          );
+        return { contents: items.slice(1) };
+      })()
       : {
-          contents: columnUI?.contents
-            ?.filter((c) => c.itemSectionRenderer?.contents)
-            ?.flatMap((c) =>
-              c.itemSectionRenderer.contents.filter(
-                (item) =>
-                  !item.videoMetadataCarouselViewModel &&
-                  !item.compactRadioRenderer
-              )
-            ),
-        };
+        contents: columnUI?.contents
+          ?.filter((c) => c.itemSectionRenderer?.contents)
+          ?.flatMap((c) =>
+            c.itemSectionRenderer.contents.filter(
+              (item) =>
+                !item.videoMetadataCarouselViewModel &&
+                !item.compactRadioRenderer
+            )
+          ),
+      };
 
     // console.warn(recommendations);
 
@@ -778,7 +965,7 @@ class Innertube {
       let nValue = "";
       if (n !== null) {
         try {
-            nValue = "&n=" + this.nfunction(n)
+          nValue = "&n=" + this.nfunction(n)
         }
         catch (e) {}
       }
@@ -861,17 +1048,17 @@ class Innertube {
         recommendationsContinuation: isTVResponse
           ? (tvPivotSectionList?.continuations?.[0]?.nextContinuationData?.continuation || null)
           : (recommendations?.contents?.[recommendations.contents.length - 1]
-              ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null),
+            ?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token || null),
       },
       engagementPanels: mobileNext.engagementPanels || [],
       commentData: (() => {
-          const col = isTVResponse
-            ? mobileNext.contents?.singleColumnWatchNextResults?.results?.results
-            : columnUI;
-          return col?.contents
-            ?.find((content) => content.itemSectionRenderer?.contents)
-            ?.itemSectionRenderer?.contents?.[0]?.videoMetadataCarouselViewModel || null;
-        })(),
+        const col = isTVResponse
+          ? mobileNext.contents?.singleColumnWatchNextResults?.results?.results
+          : columnUI;
+        return col?.contents
+          ?.find((content) => content.itemSectionRenderer?.contents)
+          ?.itemSectionRenderer?.contents?.[0]?.videoMetadataCarouselViewModel || null;
+      })(),
       playbackTracking: responseInfo.playbackTracking,
       commentContinuation: mobileNext.engagementPanels
         ?.find(
@@ -900,7 +1087,10 @@ class Innertube {
   }
 
 
-  async makeDecipherFunctionWithAst(baseJs) {
+  async makeDecipherFunctionWithAst(baseJs, isTcl) {
+    if (isTcl) {
+      return null;
+    }
     // let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);[A-z0-9$]+&&\([A-z0-9$]+=([A-z0-9$]+)\(([0-9]+).*decodeURIComponent\([A-z0-9]+\)\),/gm;
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020})
     let decipherFunctionRegex = /;[A-z0-9$]+\.set\("alr","yes"\);.*?([A-z0-9$]+)\(([0-9]+),([0-9]+),([A-z0-9$]+\(.*?([A-z0-9$]+)\))\),/gm;
@@ -921,12 +1111,12 @@ class Innertube {
     let globalArray = findGlobalArray(parsedBaseJs);
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
-   // console.warn("startFunc", startFunc);
+    // console.warn("startFunc", startFunc);
     let additionalCode = collectDependencies(generate(startFunc), decipherFunctionName, parsedBaseJs)
-    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl);
 
     let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n";
-      // "\n newObjectWithUrlObject['set']('n', nValue);\n";
+    // "\n newObjectWithUrlObject['set']('n', nValue);\n";
     let finalPart =
       r +
       gphProtoMethods +
@@ -937,12 +1127,19 @@ class Innertube {
     //console.warn(finalPart);
     let decodeUrlFunction = new Function(finalPart);
     this.decodeUrl = decodeUrlFunction();
+    // localStorage.setItem("decodeUrl", finalPart);
   }
 
 
-  async getNFunctionAst(baseJs) {
+  async getNFunctionAst(baseJs, isTcl) {
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020});
-    let func = /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/.exec(baseJs.data);
+    let func;
+    if (isTcl) {
+      func = /\]\]&&\([A-z0-9$]+\=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);(?:\)|)/.exec(baseJs.data);
+    }
+    else {
+      func = /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/.exec(baseJs.data);
+    }
 
     let funcArgs = func[2] + "," + func[3];
     let funcName = func[1];
@@ -951,27 +1148,51 @@ class Innertube {
     let startFunc = findMethodByName(parsedBaseJs, funcName);
     let additionalCode = collectDependencies(generate(startFunc), funcName, parsedBaseJs)
 
-    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs);
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl);
 
-    let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n" + "\n" +
-      "\n newObjectWithUrlObject['set']('n', nValue);\n";
+    let prePart = "let newObjectWithUrlObject = new " + gph + (url ? `("${url}", true)` : "(nValue, true)") + "; \n" + "\n" +
+      // "\n newObjectWithUrlObject['set']('n', nValue); newObjectWithUrlObject['set']('scheme', 'https');\n";
+      "";
+
+    if (!isTcl) {
+      prePart += "newObjectWithUrlObject['set']('n', nValue);\n \n";
+    }
     let finalPart =
       r +
-      gphProtoMethods +
-      "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9-]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
-      "\nreturn nFunction;";
+      gphProtoMethods;
+    if (isTcl) {
+      finalPart +=
+        "\nvar nFunction=function(nValue) { " + prePart + "; " + funcName + "(" + funcArgs + ", newObjectWithUrlObject); return newObjectWithUrlObject['get']('n') };" +
+        "\nreturn nFunction;";
+    }
+    else {
+      finalPart += "\nvar nFunction=function(nValue) { " + prePart + " return /&n=([A-z0-9-]+)/.exec(" + funcName + "(" + funcArgs + ", newObjectWithUrlObject))[1]; };" +
+        "\nreturn nFunction;";
+    }
+
     // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
-    // console.warn(finalPart);
     let nFunction = new Function(finalPart);
     this.nfunction = nFunction();
+    // localStorage.setItem("nFunctionAst", finalPart);
+    return this.nfunction;
   }
 
-  generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs) {
-    let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + additionalCode + "\n";
-    let url = "https://youtube.com/watch?v=abcd123-";
 
-    let firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
-    let gph = firstPoint[1];
+  generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl) {
+    let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + additionalCode + "\n";
+    let url = null;
+    let firstPoint;
+    let gph;
+    // let url = "";
+    if (isTcl) {
+      firstPoint = /var ([A-z0-9$]+)=new ([A-z0-9$]+)\([A-z0-9]+,[A-z0-9]+\);\1/.exec(baseJs.data);
+      gph = firstPoint[2];
+    }
+    else {
+      url = "https://youtube.com/watch?v=abcd123-";
+      firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
+      gph = firstPoint[1];
+    }
 
     // Explicitly include the constructor definition
     const ctorNode = findMethodByName(parsedBaseJs, gph);

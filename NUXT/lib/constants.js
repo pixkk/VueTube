@@ -1,5 +1,7 @@
 // To  centralize certain values and URLs as for easier debugging and refactoring
 
+import {getCpn} from "./utils";
+
 const url = {
   YT_URL: "https://www.youtube.com",
   YT_MOBILE: "https://m.youtube.com",
@@ -70,7 +72,7 @@ const visionOsClient = {
 const tvApiVal = {
   CLIENTNAME: "TVHTML5",
   clientScreen: "WATCH",
-  VERSION_WEB: "7.20260713.15.00",
+  VERSION_WEB: "7.20260826.15.00",
   deviceModel: "BRAVIA 8K UR2",
   deviceMake: "Sony",
   USER_AGENT: "Mozilla/5.0 (Linux; Android 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
@@ -79,18 +81,9 @@ const tvApiVal = {
   browserName: "Opera",
   browserVersion: "46.0.2207.0",
   platform: "TV",
-  VERSION: "7.20260713.15.00",
+  VERSION: "7.20260826.15.00",
 };
 
-// TODO: fix embedded config
-//  body data - \"serializedThirdPartyEmbedConfig\":\"{\\\"enc\\\":\\\"AXH1ezm6q________________Ag\\\"}\"
-// /next - contents.twoColumnWatchNextResults.results.results.contents[0].videoPrimaryInfoRenderer.videoActions.menuRenderer.topLevelButtons[1].buttonViewModel.trackingParams
-// for  https://www.youtube.com/youtubei/v1/share/get_share_panel?prettyPrint=false (serializedSharedEntity: "Cgt0ZU96VThrSWx0d6ABAQ%3D%3D" after context payload),
-// after that - in get_share_panel -
-// actions[0].openPopupAction.popup.unifiedSharePanelRenderer.contents[0].
-// thirdPartyNetworkSection.shareTargetContainer.thirdPartyShareTargetSectionRenderer.shareTargets[0].
-// shareTargetRenderer.serviceEndpoint.signalServiceEndpoint.actions[2].
-// openPopupAction.popup.sharingEmbedRenderer.encryptedEmbedConfig exists encryptedEmbedConfig. use it in "enc"
 const clientConfigs = [
   webEmbeddedApiVal,
   tvApiVal,
@@ -108,24 +101,242 @@ export default {
   fs: filesystem,
   clientConfigs: clientConfigs,
 
-  getAccessToken: () => {
-    if (typeof localStorage === "undefined") return null;
-    return localStorage.getItem("vt_active_access_token") || null;
-  },
-
   AUTHED_JSON_HEADER: () => {
     const headers = { "Content-Type": "application/json" };
     if (typeof localStorage !== "undefined") {
       const token = localStorage.getItem("vt_active_access_token");
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
-        headers["x-youtube-client-name"] = String(tvApiVal.CLIENT_WEB_M);
+        headers["x-youtube-client-name"] = String(7);
         headers["x-youtube-client-version"] = tvApiVal.VERSION;
       }
     }
     return headers;
   },
 
+  VISION_OS_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp) => {
+    return {
+      context: {
+        client:
+          {
+            gl: config.INNERTUBE_CONTEXT.client.gl,
+            hl: localStorage.getItem("language") || "en",
+            userAgent: visionOsClient.USER_AGENT,
+            clientName: visionOsClient.CLIENTNAME,
+            clientVersion: visionOsClient.VERSION_WEB,
+            osName: visionOsClient.osName,
+            osVersion: visionOsClient.osVersion,
+            platform: visionOsClient.platform,
+            browserName: visionOsClient.browserName,
+            browserVersion: visionOsClient.browserVersion,
+            clientFormFactor: "UNKNOWN_FORM_FACTOR",
+            originalUrl: visionOsClient.REFERER,
+            remoteHost: config.INNERTUBE_CONTEXT.client.remoteHost,
+            visitorData: config.INNERTUBE_CONTEXT.client.visitorData,
+          }
+        },
+      videoId: videoId,
+      contentCheckOk: true,
+      racyCheckOk: true,
+      playbackContext: {
+        ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
+        contentPlaybackContext: {
+          signatureTimestamp: signatureTimestamp * 10000 + 1,
+          html5Preference: "HTML5_PREF_WANTS",
+          lactMilliseconds: "-1",
+        },
+      },
+    }
+  },
+  TVHTML5_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp, poToken) => {
+    return {
+      videoId: `${videoId}`,
+      context: {
+        client: {
+          hl: config.INNERTUBE_CONTEXT.client.hl,
+          gl: config.INNERTUBE_CONTEXT.client.gl,
+          remoteHost: config.INNERTUBE_CONTEXT.client.remoteHost,
+          visitorData: config.INNERTUBE_CONTEXT.client.visitorData,
+          deviceMake: "Sony",
+          deviceModel: "BRAVIA 8K UR2",
+          userAgent: "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
+          clientName: "TVHTML5",
+          clientVersion: "7.20260826.15.00",
+          osName: "Andr0id 9",
+          osVersion: "9.0",
+          originalUrl: "https://www.youtube.com/tv",
+          theme: "CLASSIC",
+          screenPixelDensity: 1,
+          platform: "TV",
+          clientFormFactor: "UNKNOWN_FORM_FACTOR",
+          webpSupport: false,
+          configInfo: config.INNERTUBE_CONTEXT.client.configInfo,
+          screenDensityFloat: 1.1458333730697632,
+          tvAppInfo: {
+            appQuality: "TV_APP_QUALITY_FULL_ANIMATION",
+            voiceCapability: {
+              hasSoftMicSupport: false,
+              hasHardMicSupport: false
+            },
+            signedInAccountCount: 1,
+            supportsNativeScrolling: false,
+            watchPageInfo: {
+              watchPageVersion: "WATCH_PAGE_VERSION_V2025",
+              combineChannelSdEntrypoints: false,
+              enableDirectToChannelPage: false
+            },
+            livingRoomAppMode: "LIVING_ROOM_APP_MODE_UNSPECIFIED",
+          },
+          timeZone: (new Intl.DateTimeFormat).resolvedOptions().timeZone,
+          browserName: "Opera",
+          browserVersion: "46.0.2207.0",
+          acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          rolloutToken: config.INNERTUBE_CONTEXT.client?.rolloutToken,
+          screenWidthPoints: 759,
+          screenHeightPoints: 781,
+          utcOffsetMinutes: -Math.floor((new Date).getTimezoneOffset()),
+          userInterfaceTheme: "USER_INTERFACE_THEME_LIGHT",
+          applicationState: "ACTIVE",
+          connectionType: "CONN_CELLULAR_4G",
+          memoryTotalKbytes: "16000000",
+          playerType: "UNIPLAYER",
+          clientScreen: "WATCH"
+        },
+        user: {
+          lockedSafetyMode: false
+        },
+        request: {
+          useSsl: true,
+          internalExperimentFlags: [],
+          consistencyTokenJars: []
+        },
+        // clientScreenNonce: "",
+        adSignalsInfo: {
+          params: []
+        },
+        clickTracking: {
+        }
+      },
+      playbackContext: {
+        contentPlaybackContext: {
+          html5Preference: "HTML5_PREF_WANTS",
+          lactMilliseconds: "-1",
+          referer: `https://www.youtube.com/tv#/watch?v=${videoId}`,
+          signatureTimestamp: signatureTimestamp,
+          autoCaptionsDefaultOn: false,
+          mdxContext: {},
+          playerWidthPixels: 759,
+          playerHeightPixels: 781
+        },
+        devicePlaybackCapabilities: {
+          supportsVp9Encoding: true,
+          supportXhr: true
+        }
+      },
+      cpn: getCpn(),
+      params: "",
+      captionParams: {},
+      serviceIntegrityDimensions: {
+        poToken: poToken
+      },
+      attestationRequest: {
+        omitBotguardData: true
+      }
+    }
+  },
+  WEB_EMBED_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp) => {
+    console.error(config.WEB_PLAYER_CONTEXT_CONFIGS)
+    return {
+      videoId: videoId,
+      context: {
+        client: {
+          hl: config.INNERTUBE_CONTEXT.client.hl,
+          gl: config.INNERTUBE_CONTEXT.client.gl,
+          remoteHost: config.INNERTUBE_CONTEXT.client.remoteHost,
+          deviceMake: config.INNERTUBE_CONTEXT.client.deviceMake,
+          deviceModel: config.INNERTUBE_CONTEXT.client.deviceModel,
+          visitorData: config.INNERTUBE_CONTEXT.client.visitorData,
+          userAgent: webEmbeddedApiVal.USER_AGENT,
+          clientName: "WEB_EMBEDDED_PLAYER",
+          clientVersion: webEmbeddedApiVal.VERSION_WEB,
+          osName: "Windows",
+          osVersion: "10.0",
+          originalUrl: `https://www.youtube.com/embed/${videoId}`,
+          platform: "DESKTOP",
+          clientFormFactor: "UNKNOWN_FORM_FACTOR",
+          configInfo: config.INNERTUBE_CONTEXT.client.configInfo,
+          browserName: "Chrome",
+          browserVersion: "151.0.0.0",
+          acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          // deviceExperimentId: "",
+          rolloutToken: config.INNERTUBE_CONTEXT.client?.rolloutToken,
+          screenWidthPoints: 560,
+          screenHeightPoints: 315,
+          screenPixelDensity: 1,
+          screenDensityFloat: 1.1458333730697632,
+          utcOffsetMinutes: -Math.floor((new Date).getTimezoneOffset()),
+          userInterfaceTheme: "USER_INTERFACE_THEME_LIGHT",
+          applicationState: "ACTIVE",
+          connectionType: "CONN_CELLULAR_4G",
+          timeZone: (new Intl.DateTimeFormat).resolvedOptions().timeZone,
+          playerType: "UNIPLAYER",
+          tvAppInfo: {
+            livingRoomAppMode: "LIVING_ROOM_APP_MODE_UNSPECIFIED"
+          },
+          clientScreen: "EMBED"
+        },
+        user: {
+          lockedSafetyMode: false
+        },
+        request: {
+          useSsl: true
+        },
+        thirdParty: {
+          embedUrl: `https://www.youtube.com/embed/${videoId}/`,
+          embeddedPlayerContext: {
+            visibilityFraction: 0,
+            visibilityFractionSource: "EMBEDDED_PLAYER_VISIBILITY_FRACTION_SOURCE_INTERSECTION_OBSERVER",
+            autoplayBrowserPolicy: "AUTOPLAY_BROWSER_POLICY_UNSPECIFIED",
+            autoplayIntended: false,
+            autoplayStatus: "AUTOPLAY_STATUS_NOT_ATTEMPTED"
+          }
+        }
+      },
+      playbackContext: {
+        ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
+        contentPlaybackContext: {
+          html5Preference: "HTML5_PREF_WANTS",
+          lactMilliseconds: "-1",
+          referer: `https://www.youtube.com/embed/${videoId}`,
+          signatureTimestamp: signatureTimestamp,
+          autoCaptionsDefaultOn: false,
+          playerWidthPixels: 560,
+          playerHeightPixels: 315,
+          encryptedHostFlags: config.WEB_PLAYER_CONTEXT_CONFIGS?.WEB_PLAYER_CONTEXT_CONFIG_ID_EMBEDDED_PLAYER?.encryptedHostFlags,
+        },
+        devicePlaybackCapabilities: {
+          supportsVp9Encoding: true,
+          supportXhr: true
+        }
+      },
+      cpn: getCpn(),
+      captionParams: {}
+    }
+  },
+  CLIENT_HEADER: (config) => {
+    return {
+      accept: "*/*",
+      "user-agent": config.INNERTUBE_CONTEXT.client.userAgent,
+      "accept-language": `${config.INNERTUBE_CONTEXT.client.hl}-${config.INNERTUBE_CONTEXT.client.gl},${config.INNERTUBE_CONTEXT.client.hl};q=0.9`,
+      "content-type": "application/json",
+      // origin: visionOsClient.REFERER,
+      // referer: visionOsClient.REFERER,
+      "x-goog-authuser": 0,
+      "x-goog-visitor-id": config.INNERTUBE_CONTEXT.client.visitorData || "",
+      "x-youtube-client-name": String(config.INNERTUBE_CONTEXT_CLIENT_NAME),
+      "x-youtube-client-version": config.INNERTUBE_CONTEXT_CLIENT_VERSION,
+    };
+  },
   INNERTUBE_HEADER: (info, isAuthedUser = false) => {
     const token = isAuthedUser
       ? localStorage.getItem("vt_active_access_token")
@@ -137,8 +348,8 @@ export default {
       "content-type": "application/json",
       "x-goog-authuser": isAuthedUser ? 1 : 0,
       "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": isAuthedUser ? tvApiVal.CLIENT_WEB_M : androidApiVal.CLIENTNAME,
-      "x-youtube-client-version": isAuthedUser ? tvApiVal.VERSION : androidApiVal.VERSION,
+      "x-youtube-client-name": isAuthedUser ? tvApiVal.CLIENT_WEB_M : MWEB.CLIENTNAME,
+      "x-youtube-client-version": isAuthedUser ? tvApiVal.VERSION : MWEB.VERSION_WEB,
     };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
@@ -252,8 +463,8 @@ export default {
       clientFormFactor: "LARGE_FORM_FACTOR",
       // screenDensityFloat: "1",
       timeZone: info.timeZone,
-      browserName: info.browserName,
-      browserVersion: info.browserVersion,
+      browserName: "Chrome",
+      browserVersion: "151.0.0.0",
       acceptHeader:
         "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
       deviceExperimentId: info.deviceExperimentId,
@@ -267,40 +478,6 @@ export default {
         webDisplayMode: "WEB_DISPLAY_MODE_BROWSER",
         isWebNativeShareAvailable: true,
       },
-    };
-  },
-
-  INNERTUBE_CLIENT_VISION_OS: (info) => {
-    return {
-      gl: info.gl,
-      hl: localStorage.getItem("language") || "en",
-      userAgent: visionOsClient.USER_AGENT,
-      clientName: visionOsClient.CLIENTNAME,
-      clientVersion: visionOsClient.VERSION_WEB,
-      osName: visionOsClient.osName,
-      osVersion: visionOsClient.osVersion,
-      platform: visionOsClient.platform,
-      browserName: visionOsClient.browserName,
-      browserVersion: visionOsClient.browserVersion,
-      clientFormFactor: "UNKNOWN_FORM_FACTOR",
-      originalUrl: visionOsClient.REFERER,
-      remoteHost: info.remoteHost,
-      visitorData: info.visitorData,
-    };
-  },
-
-  INNERTUBE_HEADER_VISION_OS: (info) => {
-    return {
-      accept: "*/*",
-      "user-agent": visionOsClient.USER_AGENT,
-      "accept-language": `${info.hl}-${info.gl},${info.hl};q=0.9`,
-      "content-type": "application/json",
-      origin: visionOsClient.REFERER,
-      referer: visionOsClient.REFERER,
-      "x-goog-authuser": 0,
-      "x-goog-visitor-id": info.visitorData || "",
-      "x-youtube-client-name": String(visionOsClient.CLIENT_ID),
-      "x-youtube-client-version": visionOsClient.VERSION_WEB,
     };
   },
 };
