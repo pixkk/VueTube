@@ -114,19 +114,18 @@ class Innertube {
         // baseJsUrl = "https://www.youtube.com/s/player/b7457b7c/tv-player-ias-tcl.vflset/tv-player-ias-tcl.js";
 
         if (this.isAuthedUser()) {
-          let f = await fetch("https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl", {
-            "headers": {
+          let tvResp = await Http.get({
+            url: "https://www.youtube.com/tv_config",
+            params: { action_get_config: "true", client: "lb4", theme: "cl" },
+            headers: {
               "device-memory": "16",
               ...(this.isAuthedUser()
                 ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
                 : {}),
             },
-            "body": null,
-            "method": "GET",
-            "mode": "cors",
-            "credentials": "include"
+            webFetchExtra: { credentials: "include" },
           });
-          f = await f.text();
+          let f = typeof tvResp.data === "string" ? tvResp.data : JSON.stringify(tvResp.data);
           f = f.replace(")]}'\n", "");
           f = JSON.parse(f);
           console.log(f)

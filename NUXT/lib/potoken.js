@@ -68,17 +68,16 @@ async function generateIntegrityToken(botguardResponse) {
 }
 
 async function mintIntegrityToken() {
-  let f = await fetch("https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl", {
-    "headers": {
+  let resp = await Http.get({
+    url: "https://www.youtube.com/tv_config",
+    params: { action_get_config: "true", client: "lb4", theme: "cl" },
+    headers: {
       "device-memory": "16",
       "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}`,
     },
-    "body": null,
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "include"
+    webFetchExtra: { credentials: "include" },
   });
-  f = await f.text();
+  let f = typeof resp.data === "string" ? resp.data : JSON.stringify(resp.data);
   f = f.replace(")]}'\n", "");
   f = JSON.parse(f);
   console.log("f", f);
