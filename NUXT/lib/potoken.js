@@ -43,7 +43,8 @@ async function loadInterpreter(challenge) {
   if (!document.getElementById(scriptId)) {
     const el = document.createElement("script");
     el.id = scriptId;
-    let te = await fetch(script).then((r) => r.text());
+    const teResp = await Http.get({ url: "https:" + script });
+    const te = typeof teResp.data === "string" ? teResp.data : String(teResp.data);
     el.textContent = te;
     document.head.appendChild(el);
   }
