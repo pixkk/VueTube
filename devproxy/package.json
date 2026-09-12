@@ -6,6 +6,10 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "install_chromium_windows": "$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=\"120000\"; npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
   }
 }

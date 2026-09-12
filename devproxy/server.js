@@ -1,4 +1,5 @@
 import http from "node:http";
+import { mintSessionPoToken } from "./potokenWeb.js";
 
 const PORT = process.env.PORT || 8787;
 // Origin(s) allowed to call this proxy. Nuxt dev server default port is 3000.
@@ -41,9 +42,23 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.method === "POST" && req.url === "/potoken/session") {
+    try {
+      const raw = await readBody(req);
+      const { livingRoomToken, authToken } = JSON.parse(raw);
+      const result = await mintSessionPoToken(livingRoomToken, authToken);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(502, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: String((err && err.message) || err) }));
+    }
+    return;
+  }
+
   if (req.method !== "POST" || req.url !== "/proxy") {
     res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: "Not found. POST to /proxy with a JSON body." }));
+    res.end(JSON.stringify({ error: "Not found. POST to /proxy or /potoken/session with a JSON body." }));
     return;
   }
 
