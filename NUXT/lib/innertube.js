@@ -100,7 +100,7 @@ class Innertube {
 
   async initAsync() {
     const html = await httpGetText({
-      url: "https://www.youtube.com/tv",
+      url: this.isAuthedUser() ? "https://www.youtube.com/tv" : constants.URLS.YT_URL,
       params: { hl: localStorage.getItem("language") || "en", },
       headers: {
         ...(this.isAuthedUser()
@@ -383,7 +383,8 @@ class Innertube {
     try {
       poToken = await getSessionPoToken(clientConfig.LIVING_ROOM_PO_TOKEN_ID, this.tvConfig);
     }catch (e) {
-      poToken = "MlOfLj4-UoGu758VG0i2NDMjKqEVEZSZG8eIT_hBr7R3vXBI1vw3hFD0cle_iwJ-qCITfvjYs-Y8BvJ5xNnPUoZKBbyWph-GK60di9HJ-QWdo_zTMQ=="
+     // poToken = "MlOfLj4-UoGu758VG0i2NDMjKqEVEZSZG8eIT_hBr7R3vXBI1vw3hFD0cle_iwJ-qCITfvjYs-Y8BvJ5xNnPUoZKBbyWph-GK60di9HJ-QWdo_zTMQ=="
+     // poToken = "MlVvM8xubjHDlW8Oxrtx-7H3VDGQBfwZt5KTfOgQet-g3FgX1u2rdZbNUQkOO3SPaIq_cdjkcp7yNebB90SQ1XFm99mhpO7bpoMEGsN4ZJs_GUL91gqu"
       console.error(e)
     }
 
@@ -411,7 +412,7 @@ class Innertube {
       case "TVHTML5":
         postData = {
           url: url,
-          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken, "d_fVIpaFXUo="),
+          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken, clientConfig.LIVING_ROOM_PO_TOKEN_ID),
           headers: {
             ...constants.CLIENT_HEADER(clientConfig),
             "x-youtube-client-version": clientConfigs.tvApiVal.VERSION_WEB,

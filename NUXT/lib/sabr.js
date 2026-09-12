@@ -588,7 +588,7 @@ const SABR_CLIENT_NAME_IDS = {
     let lastSequenceNumber = -1;
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
-    await sabrPrefetchPoToken(videoId, spsState);
+    // await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -713,7 +713,7 @@ const SABR_CLIENT_NAME_IDS = {
     const allSegments = [];
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
-    await sabrPrefetchPoToken(videoId, spsState);
+    // await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       const body = sabrBuildRequest({
@@ -1270,7 +1270,7 @@ const SABR_CLIENT_NAME_IDS = {
     let lastVideoSeq = -1;
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
-    await sabrPrefetchPoToken(videoId, spsState);
+    // await sabrPrefetchPoToken(videoId, spsState);
 
     for (let i = 0; i < maxRequests; i++) {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');

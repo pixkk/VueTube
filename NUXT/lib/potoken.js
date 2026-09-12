@@ -1,5 +1,27 @@
-import {CapacitorHttp as Http} from "@capacitor/core";
+import {Capacitor, CapacitorHttp as Http} from "@capacitor/core";
 import {httpGetText} from "./utils";
+
+// Web/dev only: BotGuard needs a genuine browser runtime pinned to a real
+// youtube.com page, which this app's own web build doesn't have.
+// devproxy runs a real (Playwright) browser
+// on demand for this. Never used on native platforms.
+const DEV_PROXY_POTOKEN_URL = "http://localhost:8787/potoken/session";
+
+function getStoredAuthToken() {
+  const token = localStorage.getItem("vt_active_access_token");
+  return token || undefined;
+}
+
+async function devProxyGetSessionPoToken(livingRoomToken) {
+  const resp = await fetch(DEV_PROXY_POTOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ livingRoomToken, authToken: getStoredAuthToken() }),
+  });
+  const json = await resp.json();
+  if (json.error) throw new Error(`devproxy: ${json.error}`);
+  return json; // { sessionPoToken, expiresAt }
+}
 
 // Public request key used by YouTube's own BotGuard challenge.
 // Z1elNkAKLpSR3oPOUMSN - for TV, O43z0dpjhgX20SCx4KAo - for WEB
@@ -80,7 +102,7 @@ async function mintIntegrityToken(ytTvConfig = null) {
       url: "https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl",
       headers: {
         "device-memory": "16",
-        ...(this.isAuthedUser()
+        ...(isAuthedUser()
           ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
           : {}),
       },
@@ -130,27 +152,17 @@ async function mintIntegrityToken(ytTvConfig = null) {
   return { token: integrityTokenResponse.integrityToken, expiresAt };
 }
 
-let cache = null; // { token, expiresAt }
-let creating = null;
-
-// Returns the raw integrityToken from GenerateIT, cached until it's close to expiry.
+// NOTE: integrityToken caching used to live here (cache/creating around
+// ensureIntegrityToken), but it was removed on purpose: only the final
+// session poToken is cached now. The mobile (native WebView) mint
+// chain below is re-run from scratch on any cache
+// miss/expiry/error. The web variant may end up with a different
+// integrity-token lifecycle/caching strategy of its own once implemented,
+// so don't reintroduce a shared integrity-token cache here without
+// checking that plan first.
 async function ensureIntegrityToken(ytTvConfig) {
-  if (cache && Date.now() < cache.expiresAt && cache.token?.length > 0) {
-    return cache.token;
-  }
-  if (!creating) {
-    creating = mintIntegrityToken(ytTvConfig)
-      .then((result) => {
-        cache = result;
-        creating = null;
-        return result.token;
-      })
-      .catch((err) => {
-        creating = null;
-        throw err;
-      });
-  }
-  return creating;
+  const result = await mintIntegrityToken(ytTvConfig);
+  return result.token;
 }
 
 export async function getPoToken() {
@@ -171,9 +183,35 @@ export async function getContentPoToken(videoId) {
   return token;
 }
 
-// Session-bound token, bound to livingRoomToken.
+let sessionCache = null; // { livingRoomToken, token, expiresAt }
+
+// Session-bound token, bound to livingRoomToken. This is the only token
+// that gets cached — see the note above ensureIntegrityToken. On any
+// miss/expiry the whole mint chain (tv_config -> BotGuard VM -> GenerateIT
+// -> tokenMinter -> this) is re-run from scratch.
 export async function getSessionPoToken(livingRoomToken, ytTvConfig = null) {
   if (typeof window === "undefined" || !livingRoomToken) return null;
+
+  if (
+    sessionCache &&
+    sessionCache.livingRoomToken === livingRoomToken &&
+    Date.now() < sessionCache.expiresAt &&
+    sessionCache.token?.length > 0
+  ) {
+    return sessionCache.token;
+  }
+
+
+  if (!Capacitor.isNativePlatform()) {
+    const result = await devProxyGetSessionPoToken(livingRoomToken);
+    sessionCache = {
+      livingRoomToken,
+      token: result.sessionPoToken,
+      expiresAt: result.expiresAt,
+    };
+    return result.sessionPoToken;
+  }
+
   let token = await ensureIntegrityToken(ytTvConfig);
 
   let decodedString = atob(token)
@@ -184,6 +222,14 @@ export async function getSessionPoToken(livingRoomToken, ytTvConfig = null) {
   const contentBindingBytes = new TextEncoder().encode(livingRoomToken);
   let createdToken = tokenMinter(tokenMinterParam)(contentBindingBytes);
   // console.warn(createdToken);
-  console.log("createdToken", createdToken.toBase64({ alphabet: "base64url" }));
-  return createdToken.toBase64({ alphabet: "base64url" });
+  const sessionPoToken = createdToken.toBase64({ alphabet: "base64url" });
+  console.log("createdToken", sessionPoToken);
+
+  sessionCache = {
+    livingRoomToken,
+    token: sessionPoToken,
+    expiresAt: Date.now() + 43200 * 1000,
+  };
+
+  return sessionPoToken;
 }
