@@ -517,6 +517,34 @@ export function collectPrototypeMethods(parsed, constructorName, globalArrayData
   return results;
 }
 
+
+/**
+ *  Removes duplicate top-level statements from generated code, keeping only
+ *  the first occurrence of each exact source text. Needed because separate
+ *  collectDependencies() calls don't share a codeMap, so the same helper can end
+ *  up emitted twice when their outputs are concatenated. Comparing by exact
+ *  text (rather than by declared name) is deliberate: a variable can be
+ *  legitimately reassigned to a different value/function later on, and that
+ *  must survive — only truly identical chunks are dropped.
+ * @param code is a function body (may contain a top-level `return`), not a
+ * standalone script, hence allowReturnOutsideFunction.
+ * @returns {string}
+ */
+export function dedupeDeclarations(code) {
+  const parsed = acorn.parse(code, { ecmaVersion: 2020, allowReturnOutsideFunction: true });
+  const seen = new Set();
+  const body = [];
+
+  for (const node of parsed.body) {
+    const text = generate(node);
+    if (seen.has(text)) continue;
+    seen.add(text);
+    body.push(node);
+  }
+
+  return generate({ type: "Program", sourceType: "script", body });
+}
+
 export function getUndeclaredMethods(funcCode, nFunctionName) {
   let declared = new Set();
   let unDeclared = new Set();
