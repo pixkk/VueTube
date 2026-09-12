@@ -1,0 +1,11 @@
+{
+  "name": "vuetube-devproxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dev-only HTTP proxy that lets the web build of VueTube send requests with headers browsers refuse to set (User-Agent, etc.), mirroring what CapacitorHttp does natively.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
