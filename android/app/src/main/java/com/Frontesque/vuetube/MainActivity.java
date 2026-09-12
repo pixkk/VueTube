@@ -12,6 +12,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NavigationBarVisibilityPlugin.class);
+        registerPlugin(PoTokenPlugin.class);
         super.onCreate(savedInstanceState);
     }
 
