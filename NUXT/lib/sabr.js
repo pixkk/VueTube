@@ -1,6 +1,7 @@
 // SABR (Server Adaptive Bitrate) library
 
 import {getContentPoToken, getPoToken} from "./potoken";
+import {Capacitor, CapacitorHttp} from "@capacitor/core";
 
 // --- SABR helper constants ---
 const SABR_CLIENT_NAME_IDS = {
@@ -250,9 +251,47 @@ const SABR_CLIENT_NAME_IDS = {
     return sabrConcat([clientAbrState, formatIdsBytes, bufferedRangesBytes, playerTime, ustreamerField, preferredFormat, streamerContext]);
   }
 
+  function sabrBytesToBase64(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  }
+
+  function sabrBase64ToBytes(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
   async function sabrFetch(sabrUrl, body, requestNumber = 1, signal) {
     const url = new URL(sabrUrl);
     url.searchParams.set('rn', String(requestNumber));
+
+    // googlevideo.com doesn't send Access-Control-Allow-Origin for this
+    // app's origin, so a plain browser fetch gets blocked by CORS on native
+    // platforms too (the app's WebView enforces it same as any browser).
+    // CapacitorHttp bypasses that - it's a native HTTP client, not a
+    // browser fetch - at the cost of needing to base64 the binary body/response.
+    if (Capacitor.isNativePlatform()) {
+      const resp = await CapacitorHttp.post({
+        url: url.toString(),
+        headers: {
+          'content-type': 'application/x-protobuf',
+          'accept': 'application/vnd.yt-ump',
+          'accept-encoding': 'identity',
+        },
+        data: sabrBytesToBase64(body),
+        dataType: 'file',
+        responseType: 'arraybuffer',
+      });
+      if (resp.status < 200 || resp.status >= 300) throw new Error(`SABR HTTP ${resp.status}`);
+      return sabrBase64ToBytes(resp.data);
+    }
+
     const response = await fetch(url.toString(), {
       method: 'POST',
       body: body,
