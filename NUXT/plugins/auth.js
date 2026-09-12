@@ -5,6 +5,7 @@
 import { CapacitorHttp as Http } from "@capacitor/core";
 import { useAuthStore } from "~/stores/auth";
 import {delay} from "../lib/utils";
+import {clientConfigs} from "../lib/constants";
 
 // Scope used by YouTube TV clients
 const SCOPE = "http://gdata.youtube.com https://www.googleapis.com/auth/youtube-paid-content";
@@ -99,14 +100,14 @@ function buildTvContext() {
     client: {
       hl,
       gl: "US",
-      deviceMake: "Sony",
-      deviceModel: "BRAVIA 8K UR2",
-      userAgent: "Mozilla/5.0 (Linux; Android 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
-      clientName: "TVHTML5",
-      clientVersion: "7.20260713.15.00",
-      platform: "TV",
-      browserName: "Opera",
-      browserVersion: "46.0.2207.0",
+      deviceMake: clientConfigs.tvApiVal.deviceMake,
+      deviceModel: clientConfigs.tvApiVal.deviceModel,
+      userAgent: clientConfigs.tvApiVal.USER_AGENT,
+      clientName: clientConfigs.tvApiVal.CLIENTNAME,
+      clientVersion: clientConfigs.tvApiVal.VERSION_WEB,
+      platform: clientConfigs.tvApiVal.platform,
+      browserName: clientConfigs.tvApiVal.browserName,
+      browserVersion: clientConfigs.tvApiVal.browserVersion,
     },
     user: { enableSafetyMode: false },
     request: { internalExperimentFlags: [], consistencyTokenJars: [] },
@@ -121,12 +122,12 @@ export async function getAccountInfoFromGuide(accessToken) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
         "x-youtube-client-name": "7",
-        "x-youtube-client-version": "7.20260125.19.00",
+        "x-youtube-client-version": clientConfigs.tvApiVal.VERSION_WEB,
       },
       data: JSON.stringify({ context: buildTvContext() }),
     });
     const json = typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
-    const accountEntry = json?.items?.[0]?.guideSectionRenderer?.items?.[0]?.guideAccountEntryRenderer;
+    const accountEntry = json?.topbar?.guideSectionRenderer?.items?.[0]?.guideAccountEntryRenderer;
     if (!accountEntry) return null;
     const name = accountEntry.title?.simpleText || accountEntry.title?.accessibility?.accessibilityData?.label || null;
     const avatar = accountEntry.thumbnail?.thumbnails?.slice(-1)[0]?.url || null;

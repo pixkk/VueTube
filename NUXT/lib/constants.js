@@ -84,12 +84,12 @@ const tvApiVal = {
   VERSION: "7.20260826.15.00",
 };
 
-const clientConfigs = [
+export const clientConfigs = {
   webEmbeddedApiVal,
   tvApiVal,
   androidVrApiVal,
   MWEB
-];
+};
 const filesystem = {
   plugins: "plugins/",
 };
@@ -148,7 +148,7 @@ export default {
       },
     }
   },
-  TVHTML5_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp, poToken) => {
+  TVHTML5_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp, poToken, livingRoomPoTokenId) => {
     return {
       videoId: `${videoId}`,
       context: {
@@ -170,6 +170,8 @@ export default {
           platform: "TV",
           clientFormFactor: "UNKNOWN_FORM_FACTOR",
           webpSupport: false,
+          windowHeightPoints: 781,
+          windowWidthPoints: 562,
           configInfo: config.INNERTUBE_CONTEXT.client.configInfo,
           screenDensityFloat: 1.1458333730697632,
           tvAppInfo: {
@@ -186,6 +188,7 @@ export default {
               enableDirectToChannelPage: false
             },
             livingRoomAppMode: "LIVING_ROOM_APP_MODE_UNSPECIFIED",
+            livingRoomPoTokenId: livingRoomPoTokenId
           },
           timeZone: (new Intl.DateTimeFormat).resolvedOptions().timeZone,
           browserName: "Opera",
@@ -234,7 +237,6 @@ export default {
         }
       },
       cpn: getCpn(),
-      params: "",
       captionParams: {},
       serviceIntegrityDimensions: {
         poToken: poToken
@@ -281,7 +283,7 @@ export default {
           timeZone: (new Intl.DateTimeFormat).resolvedOptions().timeZone,
           playerType: "UNIPLAYER",
           tvAppInfo: {
-            livingRoomAppMode: "LIVING_ROOM_APP_MODE_UNSPECIFIED"
+            livingRoomAppMode: "LIVING_ROOM_APP_MODE_UNSPECIFIED",
           },
           clientScreen: "EMBED"
         },
@@ -323,7 +325,11 @@ export default {
       captionParams: {}
     }
   },
-  CLIENT_HEADER: (config) => {
+  CLIENT_HEADER: (config, isAuthed = false) => {
+    let additions = {}
+    if (isAuthed) {
+      additions.Authorization = `Bearer ${localStorage.getItem("vt_active_access_token")}`;
+    }
     return {
       accept: "*/*",
       "user-agent": config.INNERTUBE_CONTEXT.client.userAgent,
@@ -335,6 +341,7 @@ export default {
       "x-goog-visitor-id": config.INNERTUBE_CONTEXT.client.visitorData || "",
       "x-youtube-client-name": String(config.INNERTUBE_CONTEXT_CLIENT_NAME),
       "x-youtube-client-version": config.INNERTUBE_CONTEXT_CLIENT_VERSION,
+      ...additions
     };
   },
   INNERTUBE_HEADER: (info, isAuthedUser = false) => {
