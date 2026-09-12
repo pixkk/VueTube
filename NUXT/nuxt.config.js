@@ -10,6 +10,9 @@ export default defineNuxtConfig({
   experimental: {
     payloadExtraction: 'client'
   },
+  nitro: {
+    preset: "static",
+  },
   ssr: false,
 
   plugins: [
