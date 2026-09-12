@@ -1,5 +1,6 @@
 import {Capacitor, CapacitorHttp as Http} from "@capacitor/core";
 import {httpGetText} from "./utils";
+import {PoToken} from "~/plugins/vuetube";
 
 // Web/dev only: BotGuard needs a genuine browser runtime pinned to a real
 // youtube.com page, which this app's own web build doesn't have.
@@ -212,24 +213,16 @@ export async function getSessionPoToken(livingRoomToken, ytTvConfig = null) {
     return result.sessionPoToken;
   }
 
-  let token = await ensureIntegrityToken(ytTvConfig);
-
-  let decodedString = atob(token)
-  console.warn(tokenMinter)
-  for (var tokenMinterParam = new Uint8Array(decodedString.length), i = 0; i < decodedString.length; i++)
-    tokenMinterParam[i] = decodedString.charCodeAt(i);
-
-  const contentBindingBytes = new TextEncoder().encode(livingRoomToken);
-  let createdToken = tokenMinter(tokenMinterParam)(contentBindingBytes);
-  // console.warn(createdToken);
-  const sessionPoToken = createdToken.toBase64({ alphabet: "base64url" });
-  console.log("createdToken", sessionPoToken);
+  const result = await PoToken.mintSessionPoToken({
+    livingRoomToken,
+    authToken: getStoredAuthToken(),
+  });
 
   sessionCache = {
     livingRoomToken,
-    token: sessionPoToken,
-    expiresAt: Date.now() + 43200 * 1000,
+    token: result.sessionPoToken,
+    expiresAt: result.expiresAt,
   };
 
-  return sessionPoToken;
+  return result.sessionPoToken;
 }

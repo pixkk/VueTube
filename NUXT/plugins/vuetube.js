@@ -9,6 +9,7 @@ import {defineNuxtPlugin} from "nuxt/app";
 import {NavigationBar} from "@capgo/capacitor-navigation-bar";
 
 const NavigationBarVisibility = registerPlugin("NavigationBarVisibility");
+export const PoToken = registerPlugin("PoToken");
 
 let backActions;
 
