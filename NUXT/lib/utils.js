@@ -231,6 +231,62 @@ function linkParser(url) {
 }
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
+const DEV_PROXY_URL = "http://localhost:8787/proxy";
+
+/**
+ * Routes a request through the local devproxy (see /devproxy in the repo root)
+ * so headers the browser refuses to set (User-Agent, etc.) actually reach the
+ * upstream server. Only meant for `nuxt dev` — never used on native platforms.
+ * @param {import("@capacitor/core").HttpOptions} options
+ * @returns {Promise<{data: *}>}
+ */
+async function devProxyGetText(options) {
+  const resp = await fetch(DEV_PROXY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: options.url,
+      headers: options.headers || {},
+      params: options.params,
+    }),
+  });
+  const json = await resp.json();
+  if (json.error) throw new Error(`devproxy: ${json.error}`);
+  return {
+    data: json.data,
+  };
+}
+
+/** *
+ * @param {import("@capacitor/core").HttpOptions & { useDevProxy?: boolean }} options
+ * @returns {Promise<{data: string}>}
+ */
+async function httpGetText(options) {
+  const { Capacitor, CapacitorHttp } = await import("@capacitor/core");
+
+  if (!Capacitor.isNativePlatform()) {
+    if (options.useDevProxy) return devProxyGetText(options);
+
+    const resp = await fetch(options.url, {
+      method: "GET",
+      headers: options.headers || {},
+      credentials: "include",
+      ...options.webFetchExtra,
+    });
+    let res = await resp.text();
+    return {
+      data: res,
+    };
+  }
+
+  const resp = await CapacitorHttp.get({
+    responseType: "text",
+    webFetchExtra: { credentials: "include" },
+    ...options,
+  });
+  return typeof resp.data === "string" ? resp : JSON.stringify(resp.data);
+}
+
 function humanFileSize(size) {
   var i = Math.floor( Math.log(size) / Math.log(1024) );
   return ( size / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
@@ -245,6 +301,7 @@ export {
   getMutationByKey,
   linkParser,
   delay,
+  httpGetText,
   parseEmoji,
   humanFileSize,
   convertTranscriptToVTT,
