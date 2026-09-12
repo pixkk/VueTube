@@ -19,7 +19,11 @@ public class PoTokenPlugin: CAPPlugin, CAPBridgedPlugin, WKScriptMessageHandler,
     private static let sonyBraviaUserAgent =
         "Mozilla/5.0 (Linux; Android 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)"
 
-    private var webView: WKWebView?
+    // Named hiddenWebView, not webView - CAPPlugin already declares an
+    // `open var webView: WKWebView?` of its own (for plugins that attach to
+    // the app's main WebView), and redeclaring that name as a stored
+    // property is an invalid override.
+    private var hiddenWebView: WKWebView?
     private var pendingCall: CAPPluginCall?
     private var livingRoomToken: String = ""
     private var authToken: String?
@@ -79,7 +83,7 @@ public class PoTokenPlugin: CAPPlugin, CAPBridgedPlugin, WKScriptMessageHandler,
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
         rootView.insertSubview(webView, at: 0)
-        self.webView = webView
+        self.hiddenWebView = webView
 
         webView.load(URLRequest(url: URL(string: "https://www.youtube.com/tv")!))
     }
@@ -129,8 +133,8 @@ public class PoTokenPlugin: CAPPlugin, CAPBridgedPlugin, WKScriptMessageHandler,
     }
 
     private func cleanup() {
-        webView?.removeFromSuperview()
-        webView = nil
+        hiddenWebView?.removeFromSuperview()
+        hiddenWebView = nil
         pendingCall = nil
     }
 
