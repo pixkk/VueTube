@@ -1,18 +1,10 @@
-// PoToken (Proof of Origin) generation via BotGuard.
-// 1. Fetch a BotGuard challenge from the Create endpoint (api/jnn/v1/Create), keyed by the
-//    fixed WEB-family REQUEST_KEY.
-// 2. Run the challenge through BotGuard to get a snapshot response.
-// 3. Exchange the snapshot for an integrity token via GenerateIT, and use that token directly
-//    as the poToken (serviceIntegrityDimensions.poToken) — no WebPoMinter/minting involved.
-// Library: bgutils-js
-
-import { CapacitorHttp as Http } from "@capacitor/core";
-import { BotGuardClient, getChallenge } from "bgutils-js/botguard";
-import { buildURL } from "bgutils-js/utils";
+import {CapacitorHttp as Http} from "@capacitor/core";
+import {httpGetText} from "./utils";
 
 // Public request key used by YouTube's own BotGuard challenge.
 // Z1elNkAKLpSR3oPOUMSN - for TV, O43z0dpjhgX20SCx4KAo - for WEB
-const REQUEST_KEY = "Z1elNkAKLpSR3oPOUMSN";
+let REQUEST_KEY = "O43z0dpjhgX20SCx4KAo";
+let tokenMinter = null;
 
 async function capacitorFetch(url, options = {}) {
   const resp = await Http.post({
@@ -44,12 +36,13 @@ async function loadInterpreter(challenge) {
     const el = document.createElement("script");
     el.id = scriptId;
     const teResp = await Http.get({ url: "https:" + script });
-    const te = typeof teResp.data === "string" ? teResp.data : String(teResp.data);
-    el.textContent = te;
+    el.textContent = typeof teResp.data === "string" ? teResp.data : String(teResp.data);
     document.head.appendChild(el);
   }
 }
-
+function buildURL(endpointName, useYouTubeAPI) {
+  return `${useYouTubeAPI ? 'https://www.youtube.com' : 'https://jnn-pa.googleapis.com'}/${useYouTubeAPI ? 'api/jnn/v1' : '$rpc/google.internal.waa.v1.Waa'}/${endpointName}`;
+}
 async function generateIntegrityToken(botguardResponse) {
   const headers = {
     'content-type': 'application/json+protobuf',
@@ -63,54 +56,77 @@ async function generateIntegrityToken(botguardResponse) {
     throw new Error(`potoken: GenerateIT failed with status ${resp.status}`);
   }
   // Response shape is [null, estimatedTtlSecs, mintRefreshThreshold, integrityToken].
-  // const [integrityToken, estimatedTtlSecs, mintRefreshThreshold] = await resp.json();
-  const [emptyVal, estimatedTtlSecs, mintRefreshThreshold = 100, integrityToken] = await resp.json();
+  // or [integrityToken, estimatedTtlSecs, mintRefreshThreshold].
+  let respJson = await resp.json();
+  let integrityToken, estimatedTtlSecs, mintRefreshThreshold;
+  if (respJson[0]) {
+    integrityToken = respJson[0];
+    estimatedTtlSecs = respJson[1];
+    mintRefreshThreshold = respJson[2];
+  }
+  else {
+    integrityToken = respJson[3];
+    estimatedTtlSecs = respJson[1];
+    mintRefreshThreshold = respJson[2];
+  }
   return { integrityToken, estimatedTtlSecs, mintRefreshThreshold };
 }
+function isAuthedUser() {
+  return !!localStorage.getItem("vt_active_access_token") || false;
+}
+async function mintIntegrityToken(ytTvConfig = null) {
+  if (!ytTvConfig)  {
+    ytTvConfig = await httpGetText({
+      url: "https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl",
+      headers: {
+        "device-memory": "16",
+        ...(this.isAuthedUser()
+          ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
+          : {}),
+      },
+    });
+    ytTvConfig = JSON.parse(ytTvConfig.data.replace(/^[)\]}'\s]+/, ""));
+  }
+  console.log("ytTvConfig", ytTvConfig);
+  let ch = JSON.parse(ytTvConfig.challengeParams.R)
+  // console.log("challengeParams", f.challengeParams.R);
+  // console.log("challengeResponse", ch);
 
-async function mintIntegrityToken() {
-  let resp = await Http.get({
-    url: "https://www.youtube.com/tv_config",
-    params: { action_get_config: "true", client: "lb4", theme: "cl" },
-    headers: {
-      "device-memory": "16",
-      "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}`,
-    },
-    webFetchExtra: { credentials: "include" },
-  });
-  let f = typeof resp.data === "string" ? resp.data : JSON.stringify(resp.data);
-  f = f.replace(")]}'\n", "");
-  f = JSON.parse(f);
-  console.log("f", f);
-  let ch = JSON.parse(f.challengeParams.R)
-  // console.log("ch1", f.challengeParams.R);
-  console.log("ch", ch);
-  // const challenge = await getChallenge({
-  //   requestKey: REQUEST_KEY,
-  //   fetchFunction: capacitorFetch,
-  //   interpreterHash: ch.bgChallenge.interpreterHash,
-  //   useYouTubeAPI: false,
-  // });
-
+  REQUEST_KEY = ytTvConfig.challengeRequestKey;
   await loadInterpreter(ch.bgChallenge);
-  console.log("globalName", ch.bgChallenge.globalName)
-  console.log("program", ch.bgChallenge.program)
+  let globalName = ch.bgChallenge.globalName;
+  let programKey = ch.bgChallenge.program;
+  console.log("globalName", globalName)
+  console.log("programKey", programKey)
 
-  const botguardClient = await BotGuardClient.create({
-    globalObject: window,
-    globalName: ch.bgChallenge.globalName,
-    program: ch.bgChallenge.program,
+  let D = function (y, z, C, F) {}
+  let v = [function (y, z) {}, function (y) {}, function (y) {}, function (y, z) {}];
+  let callbackHolder = function (y, z, C, F) {
+    Promise.resolve().then(function () {
+      callbackHolder.minter = y;
+      callbackHolder.unknownOne = z;
+      callbackHolder.unknownTwo = C;
+      callbackHolder.unknownThree = F;
+    });
+  };
+
+  window[globalName]?.a(programKey, callbackHolder, true, undefined, D, [[], []], "", false, v, undefined);
+  while (typeof callbackHolder.minter !== "function") {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+
+  let poOutput =  [{}, undefined, [], undefined];
+  let tokenPromise = new Promise((resolve, reject) => {
+    callbackHolder.minter((response) => resolve(response), poOutput);
+    tokenMinter = poOutput[2][0];
   });
 
-  const webPoSignalOutput = [];
-  const botguardResponse = await botguardClient.snapshot({ webPoSignalOutput });
+  let token = await tokenPromise;
+  const integrityTokenResponse = await generateIntegrityToken(token);
 
-  const integrityTokenResponse = await generateIntegrityToken(botguardResponse);
-
-  const ttlSecs = integrityTokenResponse.estimatedTtlSecs || 21600;
+  const ttlSecs = integrityTokenResponse.estimatedTtlSecs || 43200;
   const refreshThresholdSecs = integrityTokenResponse.mintRefreshThreshold || 0;
   const expiresAt = Date.now() + (ttlSecs - refreshThresholdSecs) * 1000;
-
   return { token: integrityTokenResponse.integrityToken, expiresAt };
 }
 
@@ -118,12 +134,12 @@ let cache = null; // { token, expiresAt }
 let creating = null;
 
 // Returns the raw integrityToken from GenerateIT, cached until it's close to expiry.
-async function ensureIntegrityToken() {
+async function ensureIntegrityToken(ytTvConfig) {
   if (cache && Date.now() < cache.expiresAt && cache.token?.length > 0) {
     return cache.token;
   }
   if (!creating) {
-    creating = mintIntegrityToken()
+    creating = mintIntegrityToken(ytTvConfig)
       .then((result) => {
         cache = result;
         creating = null;
@@ -139,6 +155,8 @@ async function ensureIntegrityToken() {
 
 export async function getPoToken() {
   let token = await ensureIntegrityToken();
+  // token = tokenMinter(Uint8Array.from(atob(token), char => char.charCodeAt(0))).toBase64()
+  // token = "MlMSMhfhwSgU5RIJjtpcJQmJ-VsZyP5dYpRUrMMAnE9DdzL3XQDjawMe3N4weLtU3inPjVBPZ5vaB_6hZ4L_lAbgOGfeF1S-0TQCNrerCLJ8RXqsdQ==";
   console.log("token", token);
   return token;
 }
@@ -146,21 +164,26 @@ export async function getPoToken() {
 // Content-bound token for a /player request, bound to the videoId.
 export async function getContentPoToken(videoId) {
   if (typeof window === "undefined" || !videoId) return null;
-  try {
-    return await ensureIntegrityToken();
-  } catch (err) {
-    console.warn("[potoken] Failed to generate content poToken", err);
-    return null;
-  }
+  let token = await ensureIntegrityToken();
+  // token = tokenMinter(Uint8Array.from(atob(token), char => char.charCodeAt(0))).toBase64()
+  // token = "MlTMVHZqFblEwcxpaIOiKWbEZ1hvS0IruoOyivXO+Br20krvOa8vbALLyQa2PFcxvQG/6gXiWxbaH4qlQBJ3lR2hEvq3kciuIYUlhaiY2Vk4ybUHBzU=";
+  console.log("token", token);
+  return token;
 }
 
-// Session-bound token, bound to visitorData.
-export async function getSessionPoToken(visitorData) {
-  if (typeof window === "undefined" || !visitorData) return null;
-  try {
-    return await ensureIntegrityToken();
-  } catch (err) {
-    console.warn("[potoken] Failed to generate session poToken", err);
-    return null;
-  }
+// Session-bound token, bound to livingRoomToken.
+export async function getSessionPoToken(livingRoomToken, ytTvConfig = null) {
+  if (typeof window === "undefined" || !livingRoomToken) return null;
+  let token = await ensureIntegrityToken(ytTvConfig);
+
+  let decodedString = atob(token)
+  console.warn(tokenMinter)
+  for (var tokenMinterParam = new Uint8Array(decodedString.length), i = 0; i < decodedString.length; i++)
+    tokenMinterParam[i] = decodedString.charCodeAt(i);
+
+  const contentBindingBytes = new TextEncoder().encode(livingRoomToken);
+  let createdToken = tokenMinter(tokenMinterParam)(contentBindingBytes);
+  // console.warn(createdToken);
+  console.log("createdToken", createdToken.toBase64({ alphabet: "base64url" }));
+  return createdToken.toBase64({ alphabet: "base64url" });
 }

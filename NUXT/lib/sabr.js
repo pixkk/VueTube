@@ -387,7 +387,7 @@ const SABR_CLIENT_NAME_IDS = {
   // Reacts to a StreamProtectionStatus part (id 58) inside a parsed UMP response.
   // Our /player requests currently use the ANDROID client (no poToken attached), but the
   // SABR stream session itself can still demand one. On status >= 2 we mint a content-bound
-  // poToken (bgutils-js, see lib/potoken.js) once and hand it back so the caller can stash it
+  // poToken (see lib/potoken.js) once and hand it back so the caller can stash it
   // in `state.poToken` and thread it into StreamerContext (field 2) on subsequent
   // sabrBuildRequest calls, matching how YouTube's own web client authorizes SABR requests.
   //

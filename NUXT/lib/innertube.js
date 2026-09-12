@@ -6,14 +6,15 @@
 // https://www.youtube.com/youtubei/v1
 
 import {CapacitorHttp as Http} from "@capacitor/core";
-import {delay, getBetweenStrings, getCpn, getThumbnailUtil} from "./utils";
+import {delay, getBetweenStrings, getCpn, getThumbnailUtil, httpGetText} from "./utils";
 import rendererUtils from "./renderers";
-import constants from "./constants";
+import constants, {clientConfigs} from "./constants";
 import * as acorn from "acorn";
 import {generate} from "astring";
 import {
   collectDependencies,
   collectPrototypeMethods,
+  dedupeDeclarations,
   ensureVarDeclaration,
   findDecipherFunction,
   findGlobalArray,
@@ -35,6 +36,7 @@ class Innertube {
     this.ytConfig = null;
     this.pot = "";
     this.isTcl = false;
+    this.tvConfig = null;
     this.secretArrayName = "";
     this.recommendationsFix = !(JSON.parse(localStorage.getItem("recommendationsFix")) === false);
   }
@@ -97,9 +99,16 @@ class Innertube {
   }
 
   async initAsync() {
-    const html = await Http.get({
-      url: constants.URLS.YT_MOBILE,
+    const html = await httpGetText({
+      url: "https://www.youtube.com/tv",
       params: { hl: localStorage.getItem("language") || "en", },
+      headers: {
+        ...(this.isAuthedUser()
+          ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
+          : {}),
+        "user-agent": clientConfigs.tvApiVal.USER_AGENT,
+      },
+      useDevProxy: true,
     }).catch((error) => error);
 
     try {
@@ -110,31 +119,31 @@ class Innertube {
         const ytClient = this.processYTConfig(html.data);
         // Get url of base.js file
         console.warn(ytClient)
-        let baseJsUrl = this.processBaseJSUrl(ytClient.PLAYER_JS_URL || ytClient.WEB_PLAYER_CONTEXT_CONFIGS?.WEB_PLAYER_CONTEXT_CONFIG_ID_EMBEDDED_PLAYER.jsUrl);
+        let baseJsUrl = this.processBaseJSUrl(ytClient.PLAYER_JS_URL || ytClient.WEB_PLAYER_CONTEXT_CONFIGS?.WEB_PLAYER_CONTEXT_CONFIG_ID_EMBEDDED_PLAYER?.jsUrl || ytClient.WEB_PLAYER_CONTEXT_CONFIGS?.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH?.jsUrl);
         // baseJsUrl = "https://www.youtube.com/s/player/b7457b7c/tv-player-ias-tcl.vflset/tv-player-ias-tcl.js";
 
         if (this.isAuthedUser()) {
-          let tvResp = await Http.get({
-            url: "https://www.youtube.com/tv_config",
-            params: { action_get_config: "true", client: "lb4", theme: "cl" },
+          let ytTvConfig = await httpGetText({
+            url: "https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl",
             headers: {
               "device-memory": "16",
               ...(this.isAuthedUser()
                 ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
                 : {}),
             },
-            webFetchExtra: { credentials: "include" },
           });
-          let f = typeof tvResp.data === "string" ? tvResp.data : JSON.stringify(tvResp.data);
-          f = f.replace(")]}'\n", "");
-          f = JSON.parse(f);
-          console.log(f)
-          if (f.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl.indexOf("-tcl.js") > -1) {
-            baseJsUrl = this.processBaseJSUrl(f.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl);
+          ytTvConfig = JSON.parse(ytTvConfig.data.replace(/^[)\]}'\s]+/, ""));
+          console.log(ytTvConfig)
+          this.tvConfig = ytTvConfig;
+          if (ytTvConfig.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl.indexOf("-tcl.js") > -1) {
+            baseJsUrl = this.processBaseJSUrl(ytTvConfig.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl);
             this.isTcl = true;
           }
+          else {
+            // Use web base.js
+            baseJsUrl = this.processBaseJSUrl(ytTvConfig.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.jsUrl.replace("tv-player-ias.vflset/tv-player-ias.js", "player-plasma-ias-phone-"+ ytTvConfig.webPlayerContextConfig.WEB_PLAYER_CONTEXT_CONFIG_ID_LIVING_ROOM_WATCH.hl + ".vflset/base.js"));
+          }
         }
-
         this.saveBaseJSVersion(baseJsUrl);
 
         // Get base.js content
@@ -144,9 +153,11 @@ class Innertube {
 
         await this.initTimeStamp(baseJsContent);
         // if (lastBaseJSVersion !== this.getBaseJSVersion() || (localStorage.getItem("nFunctionAst") === "undefined" || localStorage.getItem("nFunctionAst") === undefined || localStorage.getItem("nFunctionAst") === null)) {
+
+        // TODO: cache nFunction, decipherFunction and refresh when base.js is updated (commit hash and "tcl" part)
         if (true) {
-          // TODO: cache nFunction, decipherFunction and refresh when base.js is updated (commit hash and "tcl" part)
-          await this.makeDecipherFunctionWithAst(baseJsContent, this.isTcl);
+          // Decipher function creation disabled - SABR doesn't require it
+          await this.makeDecipherFunctionWithAst(baseJsContent, true);
           console.warn("Decipher function created");
           await this.getNFunctionAst(baseJsContent, this.isTcl);
           console.warn("N-function created");
@@ -172,7 +183,7 @@ class Innertube {
           this.header = constants.INNERTUBE_HEADER(this.context.client);
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
         if (this.checkErrorCallback) {
           this.ErrorCallback(html.data, true);
           this.ErrorCallback(err, true);
@@ -368,7 +379,13 @@ class Innertube {
     let oldYTConfig = clientConfig;
     let clientName = this.isAuthedUser() ? "TVHTML5" : "WEB_EMBEDDED_PLAYER";
     let postData = {};
-    let poToken = await getSessionPoToken(id);
+    let poToken;
+    try {
+      poToken = await getSessionPoToken(clientConfig.LIVING_ROOM_PO_TOKEN_ID, this.tvConfig);
+    }catch (e) {
+      poToken = "MlOfLj4-UoGu758VG0i2NDMjKqEVEZSZG8eIT_hBr7R3vXBI1vw3hFD0cle_iwJ-qCITfvjYs-Y8BvJ5xNnPUoZKBbyWph-GK60di9HJ-QWdo_zTMQ=="
+      console.error(e)
+    }
 
     switch (clientName) {
       case "WEB_EMBEDDED_PLAYER":
@@ -394,125 +411,22 @@ class Innertube {
       case "TVHTML5":
         postData = {
           url: url,
-          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken),
-          headers: constants.CLIENT_HEADER(clientConfig),
+          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken, "d_fVIpaFXUo="),
+          headers: {
+            ...constants.CLIENT_HEADER(clientConfig),
+            "x-youtube-client-version": clientConfigs.tvApiVal.VERSION_WEB,
+            "x-youtube-client-name": "7",
+            ...(this.isAuthedUser()
+              ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
+              : {}),
+
+            "content-type": "application/json",
+            "device-memory": "16",
+            "x-goog-visitor-id": clientConfig.INNERTUBE_CONTEXT.client.visitorData,
+          },
         }
         break;
     }
-    // postData = {
-    //   url: url,
-    //   data: {
-    //     "videoId": `${id}`,
-    //     "context": {
-    //       "client": {
-    //         "hl": "ru",
-    //         "gl": "LT",
-    //         "remoteHost": "62.80.225.234",
-    //         "deviceMake": "Sony",
-    //         "deviceModel": "BRAVIA 8K UR2",
-    //         "visitorData": clientConfig.INNERTUBE_CONTEXT.client.visitorData,
-    //         "userAgent": "Mozilla/5.0 (Linux; Andr0id 9; BRAVIA 8K UR2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36 OPR/46.0.2207.0 OMI/4.21.0.273.DIA6.149 Model/Sony-BRAVIA-8K-UR2,gzip(gfe)",
-    //         "clientName": "TVHTML5",
-    //         "clientVersion": "7.20260826.15.00",
-    //         "osName": "Andr0id 9",
-    //         "osVersion": "9.0",
-    //         "originalUrl": "https://www.youtube.com/tv",
-    //         "theme": "CLASSIC",
-    //         "screenPixelDensity": 1,
-    //         "platform": "TV",
-    //         "clientFormFactor": "UNKNOWN_FORM_FACTOR",
-    //         "webpSupport": false,
-    //         "configInfo": clientConfig.INNERTUBE_CONTEXT.client.configInfo,
-    //         "screenDensityFloat": 1.1458333730697632,
-    //         "tvAppInfo": {
-    //           "appQuality": "TV_APP_QUALITY_FULL_ANIMATION",
-    //           "voiceCapability": {
-    //             "hasSoftMicSupport": false,
-    //             "hasHardMicSupport": false
-    //           },
-    //           "signedInAccountCount": 2,
-    //           "supportsNativeScrolling": false,
-    //           "watchPageInfo": {
-    //             "watchPageVersion": "WATCH_PAGE_VERSION_V2025",
-    //             "combineChannelSdEntrypoints": false,
-    //             "enableDirectToChannelPage": false
-    //           },
-    //           "livingRoomAppMode": "LIVING_ROOM_APP_MODE_UNSPECIFIED",
-    //           "livingRoomPoTokenId": "jCKcNMaSPOA="
-    //         },
-    //         "timeZone": "Europe/Kiev",
-    //         "browserName": "Opera",
-    //         "browserVersion": "46.0.2207.0",
-    //         "acceptHeader": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-    //         // "deviceExperimentId": "ChxOelkzTmpnM01qazRNelk1T1RFeU5qRTBPQT09EJDoqtQGGM72ptQG",
-    //         "rolloutToken": clientConfig.INNERTUBE_CONTEXT.client?.rolloutToken,
-    //         "screenWidthPoints": 759,
-    //         "screenHeightPoints": 781,
-    //         "utcOffsetMinutes": 180,
-    //         "userInterfaceTheme": "USER_INTERFACE_THEME_LIGHT",
-    //         "applicationState": "ACTIVE",
-    //         "connectionType": "CONN_CELLULAR_4G",
-    //         "memoryTotalKbytes": "16000000",
-    //         "playerType": "UNIPLAYER",
-    //         "clientScreen": "WATCH"
-    //       },
-    //       "user": {
-    //         "lockedSafetyMode": false
-    //       },
-    //       "request": {
-    //         "useSsl": true,
-    //         "internalExperimentFlags": [],
-    //         "consistencyTokenJars": []
-    //       },
-    //       "clientScreenNonce": "QDgPYIfrJj4HlAJY",
-    //       "adSignalsInfo": {
-    //         "params": []
-    //       },
-    //       "clickTracking": {
-    //       }
-    //     },
-    //     "playbackContext": {
-    //       "contentPlaybackContext": {
-    //         "html5Preference": "HTML5_PREF_WANTS",
-    //         "lactMilliseconds": "63",
-    //         "referer": `https://www.youtube.com/tv#/watch?v=${id}`,
-    //         "signatureTimestamp": this.signatureTimestamp,
-    //         "autoCaptionsDefaultOn": false,
-    //         "mdxContext": {},
-    //         "playerWidthPixels": 759,
-    //         "playerHeightPixels": 781
-    //       },
-    //       "devicePlaybackCapabilities": {
-    //         "supportsVp9Encoding": true,
-    //         "supportXhr": true
-    //       }
-    //     },
-    //     "cpn": getCpn(),
-    //     "params": "ugUEEgJydQ%3D%3D",
-    //     "captionParams": {},
-    //     "serviceIntegrityDimensions": {
-    //       // Генерировать poToken для TVHTML5 нужно обязательно. Иначе на первой минуте виснет.
-    //       "poToken": "MkrrIbtgkwxlB-sfCEt0rls4nhbUozHwCh15LKKuUWFcsQW_VcM7ppO0omWmdT6BAekyrTPRrx9TtdXqmIiLRh1abpk27dGz8FbV_g"
-    //       // poToken: await getSessionPoToken(id),
-    //     },
-    //     "attestationRequest": {
-    //       "omitBotguardData": true
-    //     }
-    //   },
-    //   headers: {
-    //     ...constants.CLIENT_HEADER(clientConfig),
-    //     "x-youtube-client-version": "7.20260826.15.00",
-    //     "x-youtube-client-name": "7",
-    //     ...(this.isAuthedUser()
-    //       ? { "authorization": `Bearer ${localStorage.getItem("vt_active_access_token")}` }
-    //       : {}),
-    //
-    //     "content-type": "application/json",
-    //     "device-memory": "16",
-    //     // "x-client-data": "CKmdygEIlKHLAQiFoM0BCM25zwEIhtOUMAjt35QwGKvflDA=",
-    //     "x-goog-visitor-id": clientConfig.INNERTUBE_CONTEXT.client.visitorData,
-    //   },}
-
     this.ytConfig = oldYTConfig;
     // console.warn(this.nfunction);
     return Http.post({
@@ -1131,6 +1045,12 @@ class Innertube {
 
 
   async getNFunctionAst(baseJs, isTcl) {
+  // TEMP caching
+    if (localStorage.getItem("nFunctionAst")) {
+      let nFunction = new Function(localStorage.getItem("nFunctionAst"));
+      this.nfunction = nFunction();
+      return this.nfunction;
+    }
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020});
     let func;
     if (isTcl) {
@@ -1170,9 +1090,17 @@ class Innertube {
     }
 
     // finalPart = finalPart.replaceAll(/throw .*;/g, "1===1");
+    finalPart = dedupeDeclarations(finalPart);
+    //console.warn(finalPart)
     let nFunction = new Function(finalPart);
     this.nfunction = nFunction();
-    // localStorage.setItem("nFunctionAst", finalPart);
+    try {
+    // TEMP caching
+      localStorage.setItem("nFunctionAst", finalPart);
+    }
+    catch (e) {
+      console.error(e)
+    }
     return this.nfunction;
   }
 
@@ -1184,7 +1112,7 @@ class Innertube {
     let gph;
     // let url = "";
     if (isTcl) {
-      firstPoint = /var ([A-z0-9$]+)=new ([A-z0-9$]+)\([A-z0-9]+,[A-z0-9]+\);\1/.exec(baseJs.data);
+      firstPoint = /;var ([A-z0-9$]+)=new ([A-z0-9$]+)\([A-z0-9]+,[A-z0-9]+\);\1/.exec(baseJs.data);
       gph = firstPoint[2];
     }
     else {
