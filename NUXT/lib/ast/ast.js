@@ -2,14 +2,18 @@ import * as walk from "acorn-walk";
 import {generate} from "astring";
 import {parse} from "acorn";
 import * as acorn from "acorn";
-export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
+// Collects and topo-sorts all dependencies for one or more entry points
+// (entryCode/ownNames may be a single value or an array), sharing one
+// visited-set so a dependency reachable from multiple entries is emitted once.
+export function collectDependencies(entryCode, ownNames, parsedBaseJs) {
+  const ownNameSet = new Set(Array.isArray(ownNames) ? ownNames : [ownNames]);
   const processed = new Set();
   const codeMap = new Map();
   const depsMap = new Map();
   const { globalArrayName, globalArrayData } = findGlobalArray(parsedBaseJs);
 
   function collect(name) {
-    if (name === challengeName || processed.has(name)) return;
+    if (ownNameSet.has(name) || processed.has(name)) return;
     processed.add(name);
 
     const node = findMethodByName(parsedBaseJs, name);
@@ -20,16 +24,10 @@ export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
     codeMap.set(name, code);
 
     const parsed = acorn.parse(code, { ecmaVersion: 2020 });
-    const deps = new Set(getUndeclaredMethods(parsed, challengeName));
+    const deps = new Set(getUndeclaredMethods(parsed, ownNameSet));
 
-    // `name` may be a constructor used only via `new name(...)` — its
-    // prototype methods (toString, clone, set, ...) are attached via
-    // separate statements elsewhere in the file (either literal
-    // `name.prototype.method = ...` or the `alias = name.prototype;
-    // alias.method = ...` idiom) and are never referenced by the
-    // identifier "name" itself, so the walk above can't find them.
-    // Pull them in explicitly so a dependency's prototype API isn't
-    // silently dropped from the extracted output.
+    // `name` may be a constructor whose prototype methods live in
+    // separate statements not referenced by the identifier itself.
     const protoMethods = collectPrototypeMethods(parsedBaseJs, name, globalArrayData, globalArrayName);
     if (protoMethods.length) {
       const protoKey = name + "$$proto";
@@ -40,7 +38,7 @@ export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
       codeMap.set(protoKey, protoRawCode);
 
       const protoParsed = acorn.parse(protoRawCode, { ecmaVersion: 2020 });
-      const protoDeps = getUndeclaredMethods(protoParsed, challengeName);
+      const protoDeps = getUndeclaredMethods(protoParsed, ownNameSet);
       for (const dep of protoDeps) deps.add(dep);
       // proto methods must be emitted after the constructor itself
       depsMap.set(protoKey, new Set([...protoDeps, name]));
@@ -53,12 +51,15 @@ export function collectDependencies(entryCode, challengeName, parsedBaseJs) {
     }
   }
 
-  const initialDeps = getUndeclaredMethods(
-    acorn.parse(entryCode, { ecmaVersion: 2020 }),
-    challengeName
-  );
-  for (const name of initialDeps) {
-    collect(name);
+  const entries = Array.isArray(entryCode) ? entryCode : [entryCode];
+  for (const entry of entries) {
+    const initialDeps = getUndeclaredMethods(
+      acorn.parse(entry, { ecmaVersion: 2020 }),
+      ownNameSet
+    );
+    for (const name of initialDeps) {
+      collect(name);
+    }
   }
 
   const sorted = [];
@@ -128,6 +129,204 @@ export function findDecipherFunction(parsed, functionName) {
   });
   return funcNode;
 }
+
+// AST equivalents of the old locator regexes:
+//   TCL: /\]\]&&\([A-z0-9$]+\=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);(?:\)|)/
+//   web: /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/
+// Finds the n-function call site (a `]]`-shaped double-computed member on the
+// left, feeding a call with two numeric literal args).
+export function findNFunctionCallSite(parsedBaseJs, isTcl) {
+  return isTcl ? findNFunctionCallSiteTcl(parsedBaseJs) : findNFunctionCallSiteWeb(parsedBaseJs);
+}
+
+// `obj[expr[literal]]` — nested inside `.property`, not `.object` — is what
+// both locator regexes were actually matching via their literal `]]`.
+function isDoubleComputedMember(node) {
+  return (
+    node?.type === "MemberExpression" &&
+    node.computed &&
+    node.property?.type === "MemberExpression" &&
+    node.property.computed
+  );
+}
+
+function isNumericLiteral(node) {
+  return node?.type === "Literal" && typeof node.value === "number";
+}
+
+// The call's third argument is the URL-builder object being threaded
+// through — regex-wise just another identifier-shaped token, so accept
+// either an Identifier or a bare `this`.
+function isThreadedRef(node) {
+  return node?.type === "Identifier" || node?.type === "ThisExpression";
+}
+
+function findNFunctionCallSiteTcl(parsedBaseJs) {
+  // `A && B && (assign)` is left-associative; unwrap to the operand
+  // immediately before the final `&&`.
+  function rightmostOperand(node) {
+    while (node?.type === "LogicalExpression" && node.operator === "&&") {
+      node = node.right;
+    }
+    return node;
+  }
+
+  let best = null;
+  walk.simple(parsedBaseJs, {
+    LogicalExpression(node) {
+      if (node.operator !== "&&") return;
+      if (!isDoubleComputedMember(rightmostOperand(node.left))) return;
+
+      const right = node.right;
+      if (right?.type !== "AssignmentExpression" || right.operator !== "=") return;
+      if (right.left?.type !== "Identifier") return;
+
+      const call = right.right;
+      if (call?.type !== "CallExpression" || call.callee?.type !== "Identifier") return;
+      if (call.arguments.length !== 3) return;
+      const [a0, a1, a2] = call.arguments;
+      if (!isNumericLiteral(a0) || !isNumericLiteral(a1) || !isThreadedRef(a2)) return;
+
+      if (!best || node.start < best.node.start) {
+        best = {
+          node,
+          funcName: call.callee.name,
+          funcArgs: String(a0.value) + "," + String(a1.value),
+        };
+      }
+    }
+  });
+  return best;
+}
+
+function findNFunctionCallSiteWeb(parsedBaseJs) {
+  let best = null;
+  walk.simple(parsedBaseJs, {
+    AssignmentExpression(node) {
+      if (node.operator !== "=") return;
+      if (!isDoubleComputedMember(node.left)) return;
+
+      const call = node.right;
+      if (call?.type !== "CallExpression" || call.callee?.type !== "Identifier") return;
+      if (call.arguments.length !== 3) return;
+      const [a0, a1, a2] = call.arguments;
+      if (!isNumericLiteral(a0) || !isNumericLiteral(a1) || !isThreadedRef(a2)) return;
+
+      if (!best || node.start < best.node.start) {
+        best = {
+          node,
+          funcName: call.callee.name,
+          funcArgs: String(a0.value) + "," + String(a1.value),
+        };
+      }
+    }
+  });
+  return best;
+}
+
+// AST equivalents of the old locator regexes:
+//   TCL: /;var ([A-z0-9$]+)=new ([A-z0-9$]+)\([A-z0-9]+,[A-z0-9]+\);\1/
+//   web: /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/
+// Finds the URL-builder ctor: TCL is `var X = new Y(a, b)` immediately
+// followed by a statement starting with X (args must be identifiers/`this`/
+// property chains, never a literal); web is `Y = new g.X(...)` (anywhere,
+// often inside a helper function) immediately followed by `Y.set("alr","yes")`.
+export function findUrlBuilderCtorSite(parsedBaseJs, isTcl) {
+  return isTcl ? findUrlBuilderCtorSiteTcl(parsedBaseJs) : findUrlBuilderCtorSiteWeb(parsedBaseJs);
+}
+
+function findUrlBuilderCtorSiteTcl(parsedBaseJs) {
+  function isThreadedArg(node) {
+    if (!node) return false;
+    if (node.type === "Identifier" || node.type === "ThisExpression") return true;
+    if (node.type === "MemberExpression") return isThreadedArg(node.object);
+    return false;
+  }
+  function startsWithIdentifier(node, name) {
+    if (!node) return false;
+    switch (node.type) {
+      case "Identifier": return node.name === name;
+      case "ExpressionStatement": return startsWithIdentifier(node.expression, name);
+      case "MemberExpression": return startsWithIdentifier(node.object, name);
+      case "CallExpression": return startsWithIdentifier(node.callee, name);
+      case "NewExpression": return startsWithIdentifier(node.callee, name);
+      case "AssignmentExpression": return startsWithIdentifier(node.left, name);
+      default: return false;
+    }
+  }
+
+  let best = null;
+  walk.ancestor(parsedBaseJs, {
+    VariableDeclaration(node, ancestors) {
+      if (node.declarations.length !== 1) return;
+      const decl = node.declarations[0];
+      if (decl.id?.type !== "Identifier" || !decl.init) return;
+      if (decl.init.type !== "NewExpression") return;
+      if (decl.init.callee?.type !== "Identifier") return;
+      if (decl.init.arguments.length !== 2 || !decl.init.arguments.every(isThreadedArg)) return;
+
+      const parent = ancestors[ancestors.length - 2];
+      const bodyArr = parent?.body;
+      if (!Array.isArray(bodyArr)) return;
+      const idx = bodyArr.indexOf(node);
+      if (idx === -1 || idx + 1 >= bodyArr.length) return;
+      if (!startsWithIdentifier(bodyArr[idx + 1], decl.id.name)) return;
+
+      if (!best || node.start < best.node.start) {
+        best = {node, varName: decl.id.name, ctorName: decl.init.callee.name};
+      }
+    }
+  });
+  return best;
+}
+
+function findUrlBuilderCtorSiteWeb(parsedBaseJs) {
+  let best = null;
+  walk.ancestor(parsedBaseJs, {
+    AssignmentExpression(node, ancestors) {
+      if (node.operator !== "=" || node.left?.type !== "Identifier") return;
+      const varName = node.left.name;
+
+      const init = node.right;
+      if (
+        init?.type !== "NewExpression" ||
+        init.callee?.type !== "MemberExpression" ||
+        init.callee.computed ||
+        init.callee.object?.type !== "Identifier" ||
+        init.callee.object.name !== "g" ||
+        init.callee.property?.type !== "Identifier"
+      ) return;
+
+      // ancestors: [..., containingBlock, ExpressionStatement, AssignmentExpression(this node)]
+      const statementNode = ancestors[ancestors.length - 2];
+      const block = ancestors[ancestors.length - 3];
+      const bodyArr = block?.body;
+      if (!Array.isArray(bodyArr)) return;
+      const idx = bodyArr.indexOf(statementNode);
+      if (idx === -1 || idx + 1 >= bodyArr.length) return;
+
+      const next = bodyArr[idx + 1];
+      const call = next?.type === "ExpressionStatement" ? next.expression : null;
+      if (
+        call?.type !== "CallExpression" ||
+        call.callee?.type !== "MemberExpression" ||
+        call.callee.computed ||
+        call.callee.object?.type !== "Identifier" ||
+        call.callee.object.name !== varName ||
+        call.callee.property?.name !== "set" ||
+        call.arguments.length !== 2 ||
+        call.arguments[0]?.value !== "alr" ||
+        call.arguments[1]?.value !== "yes"
+      ) return;
+
+      if (!best || node.start < best.node.start) {
+        best = {node, varName, ctorName: generate(init.callee).trim()};
+      }
+    }
+  });
+  return best;
+}
+
 export function collectMethodsOrdered(code) {
   const ast = parse(code, {
     ecmaVersion: "latest",
@@ -189,6 +388,89 @@ export function ensureVarDeclaration(node, code) {
   }
   return code;
 }
+// WeakMap-cached lookup indexes, keyed by the top-level `body` array.
+const topLevelIndexCache = new WeakMap();
+const assigningStatementIndexCache = new WeakMap();
+const protoMethodsIndexCache = new WeakMap();
+
+function buildTopLevelIndex(body) {
+  let cached = topLevelIndexCache.get(body);
+  if (cached) return cached;
+
+  const index = new Map();
+  for (let node of body) {
+    if (node?.type === "FunctionDeclaration" && node.id?.name) {
+      if (!index.has(node.id.name)) index.set(node.id.name, node);
+      continue;
+    }
+    if (node?.type === "VariableDeclaration") {
+      for (let v of node.declarations) {
+        const name = v.id?.name;
+        if (!name) continue;
+        const existing = index.get(name);
+        // Keep exact original semantics: a bare (no-init) declaration is
+        // remembered but a *later* declaration with an initializer wins.
+        if (!v.init) {
+          if (!existing) index.set(name, {bareDeclaration: true, node, v});
+        } else {
+          index.set(name, {node, v});
+        }
+      }
+      continue;
+    }
+    if (node?.type === "ExpressionStatement" && node.expression?.left?.name && node.expression?.right) {
+      const name = node.expression.left.name;
+      if (!index.has(name)) index.set(name, {statementNode: node});
+      continue;
+    }
+    if (node?.type === "AssignmentExpression" && node.left?.name && node.right) {
+      const name = node.left.name;
+      if (!index.has(name)) index.set(name, {statementNode: node});
+    }
+  }
+
+  topLevelIndexCache.set(body, index);
+  return index;
+}
+
+function buildAssigningStatementIndex(body) {
+  let cached = assigningStatementIndexCache.get(body);
+  if (cached) return cached;
+
+  const index = new Map();
+
+  function assignsInto(node, targets) {
+    if (!node || typeof node !== "object") return;
+    if (node.type === "AssignmentExpression" && node.left?.type === "Identifier") {
+      if (!targets.has(node.left.name)) targets.set(node.left.name, true);
+    }
+    if (node.type.includes("Function")) return;
+    for (const key in node) {
+      if (key === "start" || key === "end" || key === "loc" || key === "range") continue;
+      const value = node[key];
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item.type === "string") assignsInto(item, targets);
+        }
+      } else if (value && typeof value.type === "string") {
+        assignsInto(value, targets);
+      }
+    }
+  }
+
+  for (const node of body) {
+    if (!node) continue;
+    const targets = new Map();
+    assignsInto(node, targets);
+    for (const name of targets.keys()) {
+      if (!index.has(name)) index.set(name, node);
+    }
+  }
+
+  assigningStatementIndexCache.set(body, index);
+  return index;
+}
+
 export function findMethodByName(parsed, funcNode) {
   if (!funcNode) return null;
   let n = null;
@@ -214,74 +496,50 @@ export function findMethodByName(parsed, funcNode) {
     }
     return null;
   }
+  const indexed = buildTopLevelIndex(body).get(funcNode);
   let bareDeclarationFound = false;
-  for (let node of body) {
-    if (node?.type === "FunctionDeclaration" && node.id?.name === funcNode) {
-      return node;
-    }
-    if (node?.type === "VariableDeclaration") {
-      for (let v of node.declarations) {
-        if (v.id.name === funcNode) {
-          if (!v.init) bareDeclarationFound = true;
-          if (v.init) {
-            const wasEmptyArrayLiteral = v.init.type === "ArrayExpression" && v.init.elements.length === 0;
-            // Only arrays of bare function-name references (e.g. `var x = [helperFn]`)
-            // need their element resolved to that function's own definition — an
-            // array of literals (e.g. `var rates = [.25, .5, .75]`) must be left
-            // untouched, otherwise this used to blindly resolve the first element's
-            // (nonexistent) `.name` to null and clobber the whole array with `null`.
-            if (v.init.type === "ArrayExpression" && v.init.elements.every(el => el?.type === "Identifier")) {
-              for (let i = 0; i < v.init.elements.length; i++) {
-                v.init = findMethodByName(parsed, v.init.elements[i].name);
-              }
-            }
-            const declNode = {
-              type: "VariableDeclaration",
-              kind: node.kind,
-              declarations: [v],
-              start: node.start,
-              end: node.end,
-            };
 
-            // A mutable shared-state array (e.g. `var H=[]`) is populated at
-            // module load time via scattered top-level `H[<literal>]=<literal>;`
-            // statements (not inside any function). Functions that close over
-            // it later read those slots, so they must run too.
-            if (wasEmptyArrayLiteral) {
-              const indexAssignments = findTopLevelLiteralIndexAssignments(body, funcNode);
-              if (indexAssignments.length) {
-                return {
-                  type: "Program",
-                  sourceType: "script",
-                  body: [declNode, ...indexAssignments],
-                  start: node.start,
-                  end: indexAssignments[indexAssignments.length - 1].end,
-                };
-              }
-            }
-            return declNode;
-          }
+  if (indexed) {
+    if (indexed.type === "FunctionDeclaration") return indexed;
+    if (indexed.statementNode) return indexed.statementNode;
+    if (indexed.bareDeclaration) {
+      bareDeclarationFound = true;
+    } else {
+      const {node, v} = indexed;
+      const wasEmptyArrayLiteral = v.init.type === "ArrayExpression" && v.init.elements.length === 0;
+      // Only resolve arrays of bare function-name references, not literals.
+      if (v.init.type === "ArrayExpression" && v.init.elements.every(el => el?.type === "Identifier")) {
+        for (let i = 0; i < v.init.elements.length; i++) {
+          v.init = findMethodByName(parsed, v.init.elements[i].name);
         }
       }
-    }
-    if (node?.type === "ExpressionStatement") {
-      if (node?.expression?.left?.name === funcNode) {
-        if (node?.expression?.right) {
-          return node;
+      const declNode = {
+        type: "VariableDeclaration",
+        kind: node.kind,
+        declarations: [v],
+        start: node.start,
+        end: node.end,
+      };
+
+      // Empty array populated by scattered top-level `H[i]=v;` statements.
+      if (wasEmptyArrayLiteral) {
+        const indexAssignments = findTopLevelLiteralIndexAssignments(body, funcNode);
+        if (indexAssignments.length) {
+          return {
+            type: "Program",
+            sourceType: "script",
+            body: [declNode, ...indexAssignments],
+            start: node.start,
+            end: indexAssignments[indexAssignments.length - 1].end,
+          };
         }
       }
-    }
-    if(node?.type === "AssignmentExpression" && node.left.name === funcNode) {
-      if (node.right) {
-        return node;
-      }
+      return declNode;
     }
   }
 
-  // Fallback: a bare `var ..., name;` (no initializer) whose value is actually
-  // assigned inside a top-level control-flow statement (e.g. a labeled block
-  // doing browser/UA sniffing: `a:{ ... name = x; break a } name = y`).
-  const assigningStatement = findAssigningStatement(body, funcNode);
+  // Fallback: bare declaration assigned inside a control-flow statement.
+  const assigningStatement = buildAssigningStatementIndex(body).get(funcNode);
   if (assigningStatement) {
     return {
       type: "Program",
@@ -299,9 +557,7 @@ export function findMethodByName(parsed, funcNode) {
     };
   }
 
-  // Bare `var ..., name;` with no top-level assignment found — the value is
-  // set lazily inside a function's closure (e.g. memoization: `name===void 0&&(name=f())`).
-  // A plain `var name;` (initially undefined) is correct in that case.
+  // Bare declaration, value set lazily inside a closure.
   if (bareDeclarationFound) {
     return {
       type: "VariableDeclaration",
@@ -313,10 +569,7 @@ export function findMethodByName(parsed, funcNode) {
   return n;
 }
 
-// Finds top-level `name[<literal index>] = <literal>;` statements — the pattern
-// used to seed a shared-state array/object with constants that closures read later.
-// Only literal keys/values are collected: anything referencing another identifier
-// is a side effect local to whatever function it lives in, not module-load state.
+// Finds top-level `name[<literal index>] = <literal>;` statements.
 function findTopLevelLiteralIndexAssignments(body, name) {
   const results = [];
   for (const node of body) {
@@ -338,74 +591,27 @@ function findTopLevelLiteralIndexAssignments(body, name) {
   return results;
 }
 
-const CONTROL_FLOW_CONTAINER_TYPES = new Set([
-  "BlockStatement", "IfStatement", "LabeledStatement", "ForStatement", "ForInStatement",
-  "ForOfStatement", "WhileStatement", "DoWhileStatement", "TryStatement", "CatchClause",
-  "SwitchStatement", "SwitchCase",
-]);
-
-// Finds a top-level statement whose control-flow subtree (ignoring nested
-// function bodies) contains an assignment to `funcNode`, without descending
-// into nested functions where an identically-named local could false-match.
-function findAssigningStatement(body, funcNode) {
-  function assignsTarget(node) {
-    if (!node || typeof node !== "object") return false;
-    if (node.type === "AssignmentExpression" && node.left?.type === "Identifier" && node.left.name === funcNode) {
-      return true;
-    }
-    if (!CONTROL_FLOW_CONTAINER_TYPES.has(node.type) && node.type !== "ExpressionStatement" && node.type !== "VariableDeclaration" && node.type !== "VariableDeclarator") {
-      if (node.type.includes("Function") || node.type === "ClassDeclaration" || node.type === "ClassExpression") return false;
-    }
-    if (node.type.includes("Function")) return false;
-    for (const key in node) {
-      if (key === "start" || key === "end" || key === "loc" || key === "range") continue;
-      const value = node[key];
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          if (item && typeof item.type === "string" && assignsTarget(item)) return true;
-        }
-      } else if (value && typeof value.type === "string") {
-        if (assignsTarget(value)) return true;
-      }
-    }
-    return false;
-  }
-
-  for (const node of body) {
-    if (node && assignsTarget(node)) {
-      return node;
-    }
-  }
-  return null;
+// Collects prototype method assignments for a constructor (encoded
+// `ctor[*[*]][*[*]] = fn` or literal `ctor.prototype.method = fn`).
+export function collectPrototypeMethods(parsed, constructorName, globalArrayData, globalArrayName) {
+  const ctorNorm = constructorName.trim();
+  const body = parsed.body[1]?.expression.callee.body.body || parsed.body[0]?.expression.callee.object.body.body;
+  const index = buildProtoMethodsIndex(body, globalArrayData, globalArrayName);
+  return index.get(ctorNorm) || [];
 }
 
-/**
- * Collects all prototype method assignment nodes for a given constructor.
- *
- * Handles two patterns:
- *   1. Encoded:  ctor[*[**]][*[**]] = function(...)  where *[**] === 'prototype'
- *   2. Literal:  ctor.prototype.methodName = function(...)
- *
- * @param {object} parsed       - acorn-parsed AST of the full script
- * @param {string} constructorName - e.g. "g.**" or "**"
- * @param {Array}  globalArrayData - decoded * array (may be null for literal-only search)
- * @param {string} globalArrayName - name of the * array variable in the source
- * @returns {Array<object>}  array of ExpressionStatement AST nodes
- */
-export function collectPrototypeMethods(parsed, constructorName, globalArrayData, globalArrayName) {
-  const results = [];
-  const body = parsed.body[1]?.expression.callee.body.body || parsed.body[0]?.expression.callee.object.body.body;
+function buildProtoMethodsIndex(body, globalArrayData, globalArrayName) {
+  let cached = protoMethodsIndexCache.get(body);
+  if (cached) return cached;
 
-  // Normalise constructorName for comparison: generate() output of the left-most object
-  // e.g. "g.**" or "**"
-  const ctorNorm = constructorName.trim();
+  const index = new Map();
+  function addResult(ctorNorm, node) {
+    let arr = index.get(ctorNorm);
+    if (!arr) index.set(ctorNorm, arr = []);
+    arr.push(node);
+  }
 
-  // Tracks the "u = X.prototype; u.method = ...;" idiom, where a single alias
-  // identifier (e.g. "u") is repeatedly reassigned to different constructors'
-  // prototypes throughout the file, and later statements attach methods to
-  // whichever prototype the alias currently points to. Since the alias is
-  // reused for many unrelated classes, we must resolve it based on source
-  // order rather than treating it as a stable reference to one constructor.
+  // Tracks the "u = X.prototype; u.method = ...;" idiom by source order.
   const aliasMap = new Map();
 
   function protoTargetOf(node) {
@@ -457,20 +663,14 @@ export function collectPrototypeMethods(parsed, constructorName, globalArrayData
     const left = expr.left;
     if (left.type !== "MemberExpression") continue;
 
-    // --- Pattern 3: aliased  u.method = function(...)  where u currently
-    // aliases ctorNorm's prototype ---
+    // --- Pattern 3: aliased  u.method = function(...) ---
     if (!left.computed && left.object?.type === "Identifier") {
       const aliasTarget = aliasMap.get(left.object.name);
-      if (aliasTarget && aliasTarget === ctorNorm) {
-        // The alias identifier (e.g. "u") only resolves to this
-        // prototype at this specific point in the original source's
-        // execution order — we don't carry that assignment over into
-        // the extracted snippet, so referencing the bare alias here
-        // would be a ReferenceError. Rewrite the statement to target
-        // the constructor's prototype directly instead.
+      if (aliasTarget) {
+        // Rewrite the alias to the real prototype (alias isn't carried over).
         const rewritten = JSON.parse(JSON.stringify(node));
-        rewritten.expression.left.object = acorn.parse(ctorNorm + ".prototype", {ecmaVersion: 2020}).body[0].expression;
-        results.push(rewritten);
+        rewritten.expression.left.object = acorn.parse(aliasTarget + ".prototype", {ecmaVersion: 2020}).body[0].expression;
+        addResult(aliasTarget, rewritten);
         continue;
       }
     }
@@ -494,10 +694,8 @@ export function collectPrototypeMethods(parsed, constructorName, globalArrayData
         const protoIdx = protoExpr.property.value;
         if (globalArrayData[protoIdx] === "prototype") {
           const ctorGenerated = generate(obj.object).trim();
-          if (ctorGenerated === ctorNorm) {
-            results.push(node);
-            continue;
-          }
+          addResult(ctorGenerated, node);
+          continue;
         }
       }
     }
@@ -508,28 +706,17 @@ export function collectPrototypeMethods(parsed, constructorName, globalArrayData
       (obj.property?.name === "prototype" || obj.property?.value === "prototype")
     ) {
       const ctorGenerated = generate(obj.object).trim();
-      if (ctorGenerated === ctorNorm) {
-        results.push(node);
-      }
+      addResult(ctorGenerated, node);
     }
   }
 
-  return results;
+  protoMethodsIndexCache.set(body, index);
+  return index;
 }
 
 
-/**
- *  Removes duplicate top-level statements from generated code, keeping only
- *  the first occurrence of each exact source text. Needed because separate
- *  collectDependencies() calls don't share a codeMap, so the same helper can end
- *  up emitted twice when their outputs are concatenated. Comparing by exact
- *  text (rather than by declared name) is deliberate: a variable can be
- *  legitimately reassigned to a different value/function later on, and that
- *  must survive — only truly identical chunks are dropped.
- * @param code is a function body (may contain a top-level `return`), not a
- * standalone script, hence allowReturnOutsideFunction.
- * @returns {string}
- */
+// Removes duplicate top-level statements, keeping the first occurrence of
+// each exact source text. Safety net for leftover duplicate emissions.
 export function dedupeDeclarations(code) {
   const parsed = acorn.parse(code, { ecmaVersion: 2020, allowReturnOutsideFunction: true });
   const seen = new Set();
@@ -545,7 +732,8 @@ export function dedupeDeclarations(code) {
   return generate({ type: "Program", sourceType: "script", body });
 }
 
-export function getUndeclaredMethods(funcCode, nFunctionName) {
+export function getUndeclaredMethods(funcCode, ownNames) {
+  const ownNameSet = ownNames instanceof Set ? ownNames : new Set([ownNames]);
   let declared = new Set();
   let unDeclared = new Set();
 
@@ -572,7 +760,7 @@ export function getUndeclaredMethods(funcCode, nFunctionName) {
     MemberExpression(node, ancestors) {
       if (!node.computed && node.object.type === "Identifier") {
         const fullName = node.object.name + "." + node.property.name;
-        if (node.object.name !== nFunctionName) {
+        if (!ownNameSet.has(node.object.name)) {
           unDeclared.add(fullName);
         }
       }
@@ -580,7 +768,7 @@ export function getUndeclaredMethods(funcCode, nFunctionName) {
     Identifier(node, ancestors) {
       if (!ancestors || ancestors.length === 0) return;
       const parent = ancestors[ancestors.length - 1];
-      if (node.name === nFunctionName) return;
+      if (ownNameSet.has(node.name)) return;
 
       // skip property keys (foo.BAR — BAR is not a reference)
       if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;

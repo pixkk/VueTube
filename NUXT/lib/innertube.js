@@ -18,7 +18,9 @@ import {
   ensureVarDeclaration,
   findDecipherFunction,
   findGlobalArray,
-  findMethodByName
+  findMethodByName,
+  findNFunctionCallSite,
+  findUrlBuilderCtorSite
 } from "~/lib/ast/ast";
 import {getContentPoToken, getPoToken, getSessionPoToken} from "./potoken";
 
@@ -1026,8 +1028,7 @@ class Innertube {
 
     let startFunc = findDecipherFunction(parsedBaseJs, decipherFunctionName)
     // console.warn("startFunc", startFunc);
-    let additionalCode = collectDependencies(generate(startFunc), decipherFunctionName, parsedBaseJs)
-    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl);
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, decipherFunctionName, baseJs, parsedBaseJs, isTcl);
 
     let prePart = "let newObjectWithUrlObject = new " + gph + "('"+url + "', true); \n";
     // "\n newObjectWithUrlObject['set']('n', nValue);\n";
@@ -1053,22 +1054,15 @@ class Innertube {
       return this.nfunction;
     }
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020});
-    let func;
-    if (isTcl) {
-      func = /\]\]&&\([A-z0-9$]+\=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);(?:\)|)/.exec(baseJs.data);
-    }
-    else {
-      func = /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/.exec(baseJs.data);
-    }
+    let site = findNFunctionCallSite(parsedBaseJs, isTcl);
 
-    let funcArgs = func[2] + "," + func[3];
-    let funcName = func[1];
+    let funcArgs = site.funcArgs;
+    let funcName = site.funcName;
 
     let globalArray = findGlobalArray(parsedBaseJs);
     let startFunc = findMethodByName(parsedBaseJs, funcName);
-    let additionalCode = collectDependencies(generate(startFunc), funcName, parsedBaseJs)
 
-    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl);
+    let {r, url, gph, gphProtoMethods} = this.generateResultString(globalArray, startFunc, funcName, baseJs, parsedBaseJs, isTcl);
 
     let prePart = "let newObjectWithUrlObject = new " + gph + (url ? `("${url}", true)` : "(nValue, true)") + "; \n" + "\n" +
       // "\n newObjectWithUrlObject['set']('n', nValue); newObjectWithUrlObject['set']('scheme', 'https');\n";
@@ -1106,21 +1100,11 @@ class Innertube {
   }
 
 
-  generateResultString(globalArray, startFunc, additionalCode, baseJs, parsedBaseJs, isTcl) {
-    let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + additionalCode + "\n";
-    let url = null;
-    let firstPoint;
-    let gph;
-    // let url = "";
-    if (isTcl) {
-      firstPoint = /;var ([A-z0-9$]+)=new ([A-z0-9$]+)\([A-z0-9]+,[A-z0-9]+\);\1/.exec(baseJs.data);
-      gph = firstPoint[2];
-    }
-    else {
-      url = "https://youtube.com/watch?v=abcd123-";
-      firstPoint = /=new (g.[A-z0-9$]+)\([A-z0-9$]+,.*?\);[A-z0-9$]+\.set\("alr","yes"\);/.exec(baseJs.data);
-      gph = firstPoint[1];
-    }
+  generateResultString(globalArray, startFunc, entryName, baseJs, parsedBaseJs, isTcl) {
+    let url = isTcl ? null : "https://youtube.com/watch?v=abcd123-";
+
+    const ctorSite = findUrlBuilderCtorSite(parsedBaseJs, isTcl);
+    const gph = ctorSite.ctorName;
 
     // Explicitly include the constructor definition
     const ctorNode = findMethodByName(parsedBaseJs, gph);
@@ -1138,11 +1122,15 @@ class Innertube {
       return ensureVarDeclaration(n, rawCode);
     }).join("\n");
 
-    // Collect deps for constructor + prototype methods (e.g. g.** used in clone())
-    // These may not be in **'s dep chain and would otherwise be missing at runtime
-    const gphDeps = collectDependencies(ctorCode + "\n" + protoMethodsCode, gph, parsedBaseJs);
+    // Shared call so deps common to both entry points are emitted once.
+    const mergedDeps = collectDependencies(
+      [generate(startFunc), ctorCode + "\n" + protoMethodsCode],
+      [entryName, gph],
+      parsedBaseJs
+    );
 
-    let gphProtoMethods = gphDeps + "\n" + ctorCode + "\n" + protoMethodsCode;
+    let r = "var g = {}; \n var " + globalArray.globalArrayName + "=" + JSON.stringify(globalArray.globalArrayData) + ";\n" + generate(startFunc) + "\n" + mergedDeps + "\n";
+    let gphProtoMethods = ctorCode + "\n" + protoMethodsCode;
     return {r, url, gph, gphProtoMethods};
   }
 }
