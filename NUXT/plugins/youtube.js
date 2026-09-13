@@ -244,20 +244,25 @@ const innertubeModule = {
       }
     }
 
-    let final;
+    let final = [];
     // TV client response: tvBrowseRenderer
     const tvBrowse = response.data.contents?.tvBrowseRenderer;
     if (tvBrowse) {
       const sectionList = tvBrowse.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer;
+      // const shelves = sectionList?.contents || [];
+      // final = shelves
+      //   .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+      //   .map((s) => ({
+      //     items: s.shelfRenderer.content.horizontalListRenderer.items
+      //       .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+      //       .map((i) => ({ tileRenderer: i.tileRenderer })),
+      //   }));
       const shelves = sectionList?.contents || [];
-      final = shelves
-        .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
-        .map((s) => ({
-          items: s.shelfRenderer.content.horizontalListRenderer.items
-            .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
-            .map((i) => ({ tileRenderer: i.tileRenderer })),
-        }));
-      const continuations = sectionList?.continuations || null;
+      // final = shelves[0].shelfRenderer.content.horizontalListRenderer.continuations[0].nextContinuationData.continuation
+      final = shelves[0].shelfRenderer.content.horizontalListRenderer.items.filter((i) =>
+        i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+        .map((i) => ({ tileRenderer: i.tileRenderer }));
+      const continuations = shelves[0].shelfRenderer.content.horizontalListRenderer?.continuations || null;
       return { continuations, contents: final };
     }
 
