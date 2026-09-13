@@ -233,6 +233,9 @@ const innertubeModule = {
   // It just works™
   // Front page recommendation
   async recommend() {
+    if (!InnertubeAPI) {
+      await this.getAPI();
+    }
     let response = await InnertubeAPI.getRecommendationsAsync();
     if (!response.success) {
       if (response.status_code === 401) {
