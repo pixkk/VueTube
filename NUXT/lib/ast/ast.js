@@ -134,9 +134,108 @@ export function findDecipherFunction(parsed, functionName) {
 //   TCL: /\]\]&&\([A-z0-9$]+\=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);(?:\)|)/
 //   web: /\]\]=([A-z0-9$]+)\(([0-9]+),([0-9]+),[A-z0-9$]+\)\);/
 // Finds the n-function call site (a `]]`-shaped double-computed member on the
-// left, feeding a call with two numeric literal args).
+// left, feeding a call with two numeric literal args). Ambiguous on its own —
+// unrelated helpers can share this exact shape — so it is only a fallback.
+//
+// The real n-transform always throws on failure. AST equivalent of:
+// /throw new [A-z0-9$]+\([A-z]\[/ (where [A-z] is the global array name) is
+// searched for across every function in the file. When found directly inside
+// a function's body (not a nested function), that function is used as the
+// required one, and its call arguments are re-derived from a plain call
+// elsewhere in the code, AST equivalent of:
+// /Ne\([0-9]+,[0-9]+,[A-z0-9$]+\);/ (where `Ne` is that function's name),
+// rather than trusting args from the `]]`-shaped structural match.
 export function findNFunctionCallSite(parsedBaseJs, isTcl) {
+  const confirmed = confirmNFunctionByThrow(parsedBaseJs);
+  if (confirmed) return confirmed;
   return isTcl ? findNFunctionCallSiteTcl(parsedBaseJs) : findNFunctionCallSiteWeb(parsedBaseJs);
+}
+
+function confirmNFunctionByThrow(parsedBaseJs) {
+  const { globalArrayName } = findGlobalArray(parsedBaseJs);
+  if (!globalArrayName) return null;
+
+  // A throw whose constructor's argument indexes into the global array:
+  // `throw new Err(globalArray[...])`. Only throws that are direct
+  // descendants of `funcNode` count - a throw belonging to a nested
+  // function does not implicate the outer one.
+  function throwsFromGlobalArrayDirect(funcNode) {
+    if (!funcNode) return false;
+    let found = false;
+    (function visit(node) {
+      if (found || !node || typeof node !== "object") return;
+      if (node.type?.includes("Function") && node !== funcNode) return;
+      if (node.type === "ThrowStatement") {
+        const arg = node.argument;
+        if (arg?.type === "NewExpression" && arg.callee?.type === "Identifier") {
+          for (const a of arg.arguments || []) {
+            if (
+              a.type === "MemberExpression" &&
+              a.computed &&
+              a.object?.type === "Identifier" &&
+              a.object.name === globalArrayName
+            ) {
+              found = true;
+              return;
+            }
+          }
+        }
+      }
+      for (const key in node) {
+        if (key === "start" || key === "end" || key === "loc" || key === "range") continue;
+        const value = node[key];
+        if (Array.isArray(value)) {
+          for (const item of value) if (item && typeof item.type === "string") visit(item);
+        } else if (value && typeof value.type === "string") {
+          visit(value);
+        }
+      }
+    })(funcNode.body);
+    return found;
+  }
+
+  // A bare call `funcName(a, b, ident);` elsewhere in the code - matching
+  // literal, literal, identifier arguments, regardless of whether the call
+  // itself sits in an expression statement or feeds a `var`/assignment.
+  function findCallArgs(funcName) {
+    let result = null;
+    walk.simple(parsedBaseJs, {
+      CallExpression(node) {
+        if (result) return;
+        if (node.callee?.type !== "Identifier" || node.callee.name !== funcName) return;
+        if (node.arguments.length !== 3) return;
+        const [a0, a1, a2] = node.arguments;
+        if (!isNumericLiteral(a0) || !isNumericLiteral(a1) || a2.type !== "Identifier") return;
+        result = String(a0.value) + "," + String(a1.value);
+      }
+    });
+    return result;
+  }
+
+  // Search every named function in the file for the confirming throw,
+  // earliest by source position.
+  let confirmed = null;
+  walk.simple(parsedBaseJs, {
+    VariableDeclarator(node) {
+      if (confirmed && node.start >= confirmed.node.start) return;
+      if (node.id?.type !== "Identifier" || node.init?.type !== "FunctionExpression") return;
+      if (throwsFromGlobalArrayDirect(node.init)) {
+        confirmed = { node, funcName: node.id.name };
+      }
+    },
+    FunctionDeclaration(node) {
+      if (confirmed && node.start >= confirmed.node.start) return;
+      if (!node.id?.name) return;
+      if (throwsFromGlobalArrayDirect(node)) {
+        confirmed = { node, funcName: node.id.name };
+      }
+    }
+  });
+
+  if (!confirmed) return null;
+  const funcArgs = findCallArgs(confirmed.funcName);
+  if (!funcArgs) return null;
+  return { node: confirmed.node, funcName: confirmed.funcName, funcArgs };
 }
 
 // `obj[expr[literal]]` — nested inside `.property`, not `.object` — is what
