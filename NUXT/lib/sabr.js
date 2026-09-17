@@ -456,22 +456,20 @@ const SABR_CLIENT_NAME_IDS = {
     const spsPart = parts.find(p => p.partId === 58);
     if (!spsPart) return { retry: false };
     const sps = sabrParseStreamProtectionStatus(spsPart.data);
-    // TEMP: always attach poToken regardless of status
-    // if (sps.status < 2) return { retry: false };
 
     console.warn('[SABR] StreamProtectionStatus', sps.status, 'maxRetries:', sps.maxRetries);
-    if (state.poTokenAttempted || !videoId) return { retry: false };
-    state.poTokenAttempted = true;
-    try {
-      const poToken = await getContentPoToken(videoId);
-      if (poToken) {
-        state.poToken = poToken.replaceAll("_", "/").replaceAll("-", "+");
-        console.warn('[SABR] Attached poToken to StreamerContext after StreamProtectionStatus', sps.status);
-        return { retry: sps.status >= 3 };
-      }
-    } catch (e) {
-      console.warn('[SABR] Failed to generate poToken for StreamProtectionStatus', e);
-    }
+    // if (state.poTokenAttempted || !videoId) return { retry: false };
+    // state.poTokenAttempted = true;
+    // try {
+    //   const poToken = await getContentPoToken(videoId);
+    //   if (poToken) {
+    //     state.poToken = poToken.replaceAll("_", "/").replaceAll("-", "+");
+    //     console.warn('[SABR] Attached poToken to StreamerContext after StreamProtectionStatus', sps.status);
+    //     return { retry: sps.status >= 3 };
+    //   }
+    // } catch (e) {
+    //   console.warn('[SABR] Failed to generate poToken for StreamProtectionStatus', e);
+    // }
     return { retry: false };
   }
 
