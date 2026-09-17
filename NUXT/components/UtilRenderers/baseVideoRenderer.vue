@@ -163,6 +163,9 @@ export default {
 .videoRuntimeFloat.style-UPCOMING {
   background: rgba(0, 0, 0, 0.5);
 }
+.videoRuntimeFloat.style-MIX {
+  background: rgba(0, 0, 0, 0.5);
+}
 
 .vid-title {
   display: -webkit-box;
