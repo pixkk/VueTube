@@ -185,7 +185,6 @@ const innertubeModule = {
   },
 
   async getThumbnail(id, resolution, backupThumbnail) {
-    // 19.08.2024 - backupThumbnail temporary unused
     if (resolution === "max" || resolution === "resmax") {
       let maxResUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
       try {
@@ -197,7 +196,7 @@ const innertubeModule = {
             if (xhr.status === 200) {
               resolve(URL.createObjectURL(xhr.response));
             } else {
-              resolve(`https://img.youtube.com/vi/${id}/mqdefault.jpg`);
+              resolve(backupThumbnail[0].url);
             }
           };
           xhr.send();
