@@ -2,6 +2,12 @@
   <v-card style="display: flex" class="rounded-0 topNav background">
     <!-- opacity with vue 😉 -->
     <!-- :style="{ background: $vuetify.theme.current.primary + '55' }" -->
+    <img
+      v-if="!search"
+      src="/vuetube/icons/vuetube_light_icon.svg"
+      style="height: 30px; width: auto"
+      class="my-auto ml-4"
+    />
     <h3
       v-show="!search"
       class="my-auto ml-4"
