@@ -607,17 +607,17 @@ class Innertube {
       ...params,
       ...{
         ver: 2,
-        c: constants.YT_API_VALUES.CLIENTNAME.toLowerCase(),
-        cbrver: constants.YT_API_VALUES.VERSION,
-        cver: constants.YT_API_VALUES.VERSION,
+        c: constants.clientConfigs.tvApiVal.CLIENTNAME,
+        cbrver: constants.clientConfigs.tvApiVal.VERSION,
+        cver: constants.clientConfigs.tvApiVal.VERSION,
       },
     };
     const queryParams = new URLSearchParams(params);
     const urlWithParams = url + "&" + queryParams.toString();
 
-    await Http.get({
+    await Http.post({
       url: urlWithParams,
-      headers: this.header,
+      headers: constants.INNERTUBE_HEADER(this.context.client, this.isAuthedUser()),
     });
   }
 

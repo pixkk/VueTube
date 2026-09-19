@@ -455,7 +455,9 @@ export default {
           this.cpn = getCpn();
           this.initWatchTime().then(() => {
             this.sendWatchTime();
-            this.interval = setInterval(this.sendWatchTime, 60000);
+            this.interval = setInterval(this.sendWatchTime, 30000);
+          }).catch((err) => {
+            console.error("initWatchTime failed:", err);
           });
         }
       });
@@ -496,6 +498,9 @@ export default {
       const player = this.$refs.player.getPlayer();
       const rt = Math.floor(Date.now() / 1000) - this.startTime;
       const params = {
+        ns: "yt",
+        el: "leanback",
+        ver: 2,
         cpn: this.cpn,
         rt: rt,
         rti: rt,
@@ -507,6 +512,8 @@ export default {
         volume: 100,
         muted: 0,
         fmt: 396,
+        cl: "982145520",
+        docid: this.$route.query.v
       };
       this.st = player.currentTime;
       let watchStatsUrl = this.playbackTracking.videostatsWatchtimeUrl.baseUrl;
@@ -526,15 +533,33 @@ export default {
     },
 
     async initWatchTime() {
-
+      console.warn("initWatchTime")
+      if (!this.$refs.player) {
+        console.error("initWatchTime: player ref not ready yet");
+        return;
+      }
+      const player = this.$refs.player.getPlayer();
+      const rt = Math.floor(Date.now() / 1000) - this.startTime;
+      const params = {
+        ns: "yt",
+        el: "leanback",
+        ver: 2,
+        cpn: this.cpn,
+        rt: rt,
+        rti: rt,
+        rtn: rt,
+        cmt: player.currentTime,
+        et: player.currentTime,
+        st: this.st,
+        state: player.paused ? "paused" : "playing",
+        volume: 100,
+        muted: 0,
+        fmt: 396,
+        cl: "982145520",
+        docid: this.$route.query.v
+      };
       await this.$youtube.saveApiStats(
-        {
-          cpn: this.cpn,
-          fmt: 243,
-          rtn: Math.floor(Date.now() / 1000) - this.startTime,
-          rt: Math.floor(Date.now() / 1000) - this.startTime,
-          muted: 0,
-        },
+        params,
         this.playbackTracking.videostatsPlaybackUrl.baseUrl
       );
     },
