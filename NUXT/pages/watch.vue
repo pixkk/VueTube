@@ -11,6 +11,7 @@
         :sources="sources"
         :recommends="recommends"
         :disabled="saveDialog"
+        @ready="startWatchTime"
       />
     </div>
 
@@ -449,16 +450,9 @@ export default {
         );
 
         //---   API WatchTime call   ---//
-        if (this.$store.state.watchTelemetry) {
+        if (this.$store.state.watchTelemetry || true) {
           this.playbackTracking = result.playbackTracking;
-          this.st = 0;
           this.cpn = getCpn();
-          this.initWatchTime().then(() => {
-            this.sendWatchTime();
-            this.interval = setInterval(this.sendWatchTime, 30000);
-          }).catch((err) => {
-            console.error("initWatchTime failed:", err);
-          });
         }
       });
 
@@ -494,73 +488,60 @@ export default {
         dialogTitle: "Share video",
       });
     },
-    sendWatchTime() {
+    // Port of TrackingService/TrackingApi from MediaServiceCore.
+    startWatchTime() {
+      this.watchLengthSec = parseFloat(this.video.lengthSeconds) || 0;
+      this.watchOldPositionSec = 0; // mPosition - last known position of the open record
+      this.watchRecordOpen = false; // containsRecord()
+      this.watchRecordUpdatedAt = 0;
+      this.updateWatchTime();
+      clearInterval(this.interval);
+      this.interval = setInterval(this.updateWatchTime, 10000);
+    },
+
+    // TrackingService.updateWatchTimeFull
+    updateWatchTime() {
       const player = this.$refs.player.getPlayer();
-      const rt = Math.floor(Date.now() / 1000) - this.startTime;
-      const params = {
-        ns: "yt",
-        el: "leanback",
-        ver: 2,
-        cpn: this.cpn,
-        rt: rt,
-        rti: rt,
-        rtn: rt,
-        cmt: player.currentTime,
-        et: player.currentTime,
-        st: this.st,
-        state: player.paused ? "paused" : "playing",
-        volume: 100,
-        muted: 0,
-        fmt: 396,
-        cl: "982145520",
-        docid: this.$route.query.v
-      };
-      this.st = player.currentTime;
-      let watchStatsUrl = this.playbackTracking.videostatsWatchtimeUrl.baseUrl;
-      watchStatsUrl = watchStatsUrl.replace("embedded", "detailpage")
-      watchStatsUrl = watchStatsUrl.replace("paused", "playing")
+      const positionSec = player.currentTime;
+      const lengthSec = this.watchLengthSec;
+
+      const startPointTime = 30; // start watching after 0.5 minute
+      const outdatedRecordTime = 30 * 60 * 1000; // create new history record if last watchtime request was 30 minutes ago
+      const endRecordTime = lengthSec * 0.02; // if video is almost watched (more than 98% watched),
+
+      const oldPositionSec = this.watchRecordOpen
+        ? this.watchOldPositionSec
+        : (positionSec < startPointTime ? 0 : positionSec);
+
+      const isVideoAlmostWatched = lengthSec > 0 && lengthSec - positionSec < endRecordTime;
+
+      if (isVideoAlmostWatched) {
+        this.sendPlaybackStats({ cpn: this.cpn, final: 1 });
+        this.sendWatchtimeStats({ cpn: this.cpn, final: 1, st: lengthSec, et: lengthSec, cmt: lengthSec });
+        this.watchOldPositionSec = lengthSec;
+      } else {
+        const needNewRecord = !this.watchRecordOpen || Date.now() - this.watchRecordUpdatedAt > outdatedRecordTime;
+        if (needNewRecord) {
+          this.sendPlaybackStats({ cpn: this.cpn, len: lengthSec, cmt: oldPositionSec });
+        }
+        this.sendWatchtimeStats({ cpn: this.cpn, len: lengthSec, st: oldPositionSec, et: positionSec, cmt: positionSec });
+        this.watchOldPositionSec = positionSec;
+      }
+      this.watchRecordOpen = true;
+      this.watchRecordUpdatedAt = Date.now();
+    },
+
+    sendPlaybackStats(params) {
       this.$youtube.saveApiStats(
-        params,
-        watchStatsUrl,
-      );
-      let playbackStats = this.playbackTracking.videostatsPlaybackUrl.baseUrl;
-      playbackStats = playbackStats.replace("embedded", "detailpage")
-      playbackStats = playbackStats.replace("paused", "playing")
-      this.$youtube.saveApiStats(
-        params,
-        playbackStats,
+        { ver: 2, ...params },
+        this.playbackTracking.videostatsPlaybackUrl.baseUrl,
       );
     },
 
-    async initWatchTime() {
-      console.warn("initWatchTime")
-      if (!this.$refs.player) {
-        console.error("initWatchTime: player ref not ready yet");
-        return;
-      }
-      const player = this.$refs.player.getPlayer();
-      const rt = Math.floor(Date.now() / 1000) - this.startTime;
-      const params = {
-        ns: "yt",
-        el: "leanback",
-        ver: 2,
-        cpn: this.cpn,
-        rt: rt,
-        rti: rt,
-        rtn: rt,
-        cmt: player.currentTime,
-        et: player.currentTime,
-        st: this.st,
-        state: player.paused ? "paused" : "playing",
-        volume: 100,
-        muted: 0,
-        fmt: 396,
-        cl: "982145520",
-        docid: this.$route.query.v
-      };
-      await this.$youtube.saveApiStats(
-        params,
-        this.playbackTracking.videostatsPlaybackUrl.baseUrl
+    sendWatchtimeStats(params) {
+      this.$youtube.saveApiStats(
+        { ver: 2, ...params },
+        this.playbackTracking.videostatsWatchtimeUrl.baseUrl,
       );
     },
 

@@ -497,6 +497,7 @@ export default {
     };
   },
   async mounted() {
+    this.$emit("ready");
     screen.orientation.addEventListener('change', (e)=> {
 
       if (e.currentTarget.type === 'landscape-primary') {
