@@ -370,6 +370,11 @@ export default {
           clearInterval(this.interval);
           Object.assign(this.$data, this.initializeState());
           this.mountedInit();
+          // Switching videos inside /watch reuses this component instance
+          // (same route), so stale back-actions from the previous video
+          // (fullscreen exit, comment dismiss, etc.) would otherwise linger
+          // in the shared back-stack and get consumed by the next back press.
+          this.$vuetube.resetBackActions();
         }
       },
     },

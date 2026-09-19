@@ -150,16 +150,12 @@ const module = {
       return await NavigationBar.setNavigationBarColor({ color: "transparent" });
     },
   },
-
-  hexToRgb(hex) {
-    return hexToRgb(hex);
-  },
-  rgbToHex(r, g, b) {
-    return rgbToHex(r, g, b);
-  },
-
   async launchBackHandling() {
-    backActions = new backHandler();
+    // backHandler's constructor registers a native CapacitorApp
+    // "backButton" listener that is never removed. Re-creating it on every
+    // call stacked up multiple native listeners, so a single hardware
+    // back press fired the JS handler multiple times and silently skipped history entries.
+    if (!backActions) backActions = new backHandler();
     return true;
   },
 
