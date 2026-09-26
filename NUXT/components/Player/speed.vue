@@ -7,7 +7,7 @@
       <template #activator="{ props: activatorProps }">
         <v-btn
       elevation="0"
-          icon
+      class="pa-0"
           variant="text"
           size="small"
           :color="$route.name === 'watch' ? 'white' : ''"

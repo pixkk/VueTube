@@ -298,7 +298,7 @@
         />
         <speed
           v-if="$refs.player"
-          class="mx-2"
+          class=""
           :current-speed="$refs.player.playbackRate"
           @speed="
             ($refs.player.playbackRate = $event),
