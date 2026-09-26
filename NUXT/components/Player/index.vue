@@ -1312,6 +1312,7 @@ export default {
         let html = await Http.get({
           url: (constants.URLS.YT_MOBILE + q.baseUrl + "&fmt=vtt").replace("https://www.youtube.com", ""),
           params: {},
+          headers: {},
         }).catch((error) => error);
 
         let captions;
@@ -1328,6 +1329,7 @@ export default {
               html = await Http.get({
                 url: (constants.URLS.YT_MOBILE + this.video.captions[i].baseUrl).replace("https://www.youtube.com", ""),
                 params: {},
+                headers: {},
               }).catch((error) => error);
 
               // captions = convertTranscriptToVTT(html.data);
