@@ -49,7 +49,9 @@
                 class="searchButton text-left text-none no-spacing"
                 @click="youtubeSearch(item)"
               >
-                <v-icon class="mr-5">mdi-magnify</v-icon>
+                <v-icon class="mr-5">{{
+                  item[1] && item[1].isHistory ? "mdi-history" : "mdi-magnify"
+                }}</v-icon>
                 {{ item[0] }}
               </v-btn>
             </v-list-item>
@@ -147,6 +149,11 @@ export default {
   },
 
   mounted() {
+    const searchHistory = this.getSearchHistory();
+    this.response = searchHistory
+      .slice()
+      .reverse()
+      .map((entry) => [entry, { isHistory: true }]);
     this.$vuetube.resetBackActions();
 
     const lang = this.$lang("pages");
@@ -187,30 +194,57 @@ export default {
   },
 
   methods: {
+    getSearchHistory() {
+      let searchHistory;
+      try {
+        searchHistory = JSON.parse(localStorage.getItem("searchHistory"));
+      } catch (e) {
+        searchHistory = [];
+      }
+      return Array.isArray(searchHistory) ? searchHistory : [];
+    },
+
     textChanged(text) {
+      const searchHistory = this.getSearchHistory();
       if (text.length <= 0) {
-        this.response = [];
+        // Show full history, most recent first, marked as history entries
+        this.response = searchHistory
+          .slice()
+          .reverse()
+          .map((entry) => [entry, { isHistory: true }]);
         return;
       } // No text found, no point in calling API
-
       const isLink = linkParser(text);
       if (!isLink) {
         //---   Auto Suggest   ---//
+        const lowerText = text.toLowerCase();
+        const matchingHistory = searchHistory
+          .filter((entry) => entry.toLowerCase().startsWith(lowerText))
+          .reverse()
+          .map((entry) => [entry, { isHistory: true }]);
+
         this.$youtube.autoComplete(text, (res) => {
           // console.log(res);
+          let suggestions;
           try {
             const data = res.replace(/^.*?\(/, "").replace(/\)$/, ""); //Format Response
-            this.response = JSON.parse(data)[1];
+            suggestions = JSON.parse(data)[1];
           } catch (e) {
             const data = Buffer.from(fromBinary(res), "utf-8")
               .toString()
               .replace(/^.*?\(/, "")
               .replace(/\)$/, ""); //Format Response
             // console.warn(data);
-            this.response = JSON.parse(data)[1];
+            suggestions = JSON.parse(data)[1];
           }
-          // this.response = res;
-          // console.log(this.response);
+          // Prepend matching history entries, avoiding duplicates
+          const historyTerms = new Set(
+            matchingHistory.map(([term]) => term.toLowerCase())
+          );
+          const filteredSuggestions = suggestions.filter(
+            ([term]) => !historyTerms.has(term.toLowerCase())
+          );
+          this.response = [...matchingHistory, ...filteredSuggestions];
         });
       } else {
         //---   User Pastes Link, Direct Them To Video   ---//
@@ -226,10 +260,21 @@ export default {
       }
     },
 
+    saveToHistory(term) {
+      if (!term) return;
+      const searchHistory = this.getSearchHistory().filter(
+        (entry) => entry.toLowerCase() !== term.toLowerCase()
+      );
+      searchHistory.push(term);
+      if (searchHistory.length > 50) searchHistory.shift();
+      localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+    },
+
     youtubeSearch(item) {
       const link = item[1].id
         ? `/watch?v=${item[1].id}` // link pasted
         : `/search?q=${item[0]}`; // regular suggestion
+      if (!item[1].id) this.saveToHistory(item[0]);
       this.$router.push(link);
       this.search = false;
     },
@@ -239,12 +284,14 @@ export default {
 
       if (this.search === true) {
         if (query) {
+          this.saveToHistory(query);
           this.$store.commit("search/setLoading", true);
           this.$router.push(`/search?q=${query}`);
           this.search = false;
         }
       } else {
         this.search = true;
+        this.textChanged("");
 
         // Adds to the back stack
         const closeSearch = new backType(
