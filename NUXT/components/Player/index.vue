@@ -271,7 +271,7 @@
 
       <!-- combined bottom row: time · quality · speed · fullscreen
            In non-fullscreen is raised so seekbar stays below it.
-           In fullscreen rises above the seekbar wrapper (seekbar bottom=55px + height=3rem ≈ 6.4rem). -->
+           In fullscreen rises above the seekbar wrapper -->
       <div
         :style="isFullscreen ? 'bottom: 5rem' : 'bottom: 0.5rem'"
         class="d-flex justify-between align-center pl-4 pr-2"

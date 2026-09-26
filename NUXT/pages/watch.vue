@@ -28,77 +28,52 @@
           class="d-flex justify-space-between align-start px-4 pt-4"
           @click="showMore = !showMore"
         >
-          <div class="d-flex flex-column">
-            <v-card-title
+          <div
+            style="
+              min-width: 0;
+              white-space: normal;
+              overflow-wrap: break-word;
+              word-break: break-word;
+            "
+          >
+            <span
               v-emoji
-              class="pa-0 text-wrap"
-              style="font-size: 0.95rem; line-height: 1.15rem"
+              class="text-wrap"
+              style="font-size: 0.95rem; line-height: 1.15rem; font-weight: bold"
               v-text="video.title"
             />
-            <v-card-text
-              style="font-size: 0.75rem"
-              class="background--text pa-0"
-              :class="
-                theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
-              "
-            >
-              <div>
-                <template
-                  v-for="text in video.metadata.contents.find(
-                    (content) => content.slimVideoInformationRenderer
-                  ).slimVideoInformationRenderer.collapsedSubtitle.runs"
-                  >{{ text.text }}
-                </template>
-              </div>
-            </v-card-text>
           </div>
           <v-icon v-if="showMore" class="ml-4">mdi-chevron-up</v-icon>
           <v-icon v-else class="ml-4">mdi-chevron-down</v-icon>
         </div>
-        <div
-          class="d-flex justify-space-around"
-          :class="
-            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
-              ? theme.global.current.value.dark
-                ? 'background lighten-1'
-                : 'background darken-1'
-              : ''
-          "
-          :style="{
-            borderRadius: $store.state.tweaks.roundWatch
-              ? `${$store.state.tweaks.roundTweak / 2}rem`
-              : '0',
-            margin:
-              $store.state.tweaks.roundWatch &&
-              $store.state.tweaks.roundTweak > 0
-                ? '1rem'
-                : '0',
-          }"
-        >
-          <v-btn
-            elevation="0"
-            v-for="(item, index) in interactions"
-            :key="index"
-            variant="text"
-            icon
-            class="vertical-button"
-            style="
-              width: 4.2rem !important;
-              height: 4.2rem !important;
-              text-transform: none !important;
-            "
-            :disabled="item.disabled"
-            @click="callMethodByName(item.actionName)"
-          >
-            <v-icon :icon="item.icon" />
+
+        <div class="d-flex flex-column px-4">
+          <div class="d-flex justify-space-between" style="gap: 8px">
+            <div class="d-flex flex-column">
+              <div class="caption background--text" v-text="video.channelName" />
+            </div>
             <div
-              class="mt-1"
-              style="font-size: 0.6rem"
-              v-text="item.value || item.name"
+              class="caption background--text"
+              :class="
+                  theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
+                "
+              v-text="video.channelSubs + ''"
             />
-          </v-btn>
-          <!--   End Scrolling Div For Interactions   --->
-          <!-- <hr /> -->
+            <div
+              style="font-size: 0.75rem"
+              class="background--text"
+              :class="
+                theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
+              "
+            >
+              <template
+                v-for="text in video.metadata.contents.find(
+                  (content) => content.slimVideoInformationRenderer
+                ).slimVideoInformationRenderer.collapsedSubtitle.runs"
+              >{{ text.text }}</template
+              >
+            </div>
+          </div>
         </div>
         <!-- <v-bottom-sheet
           v-model="showMore"
@@ -127,11 +102,11 @@
         </v-bottom-sheet> -->
       </v-card>
 
-      <v-divider
-        v-if="
-          !$store.state.tweaks.roundTweak || !$store.state.tweaks.roundWatch
-        "
-      />
+<!--      <v-divider-->
+<!--        v-if="-->
+<!--          !$store.state.tweaks.roundTweak || !$store.state.tweaks.roundWatch-->
+<!--        "-->
+<!--      />-->
 
       <!--   Channel Bar   -->
       <div v-if="loaded">
@@ -145,7 +120,6 @@
                 : 'background darken-1'
               : ''
           "
-          to="/channel"
           :style="{
             borderRadius: $store.state.tweaks.roundWatch
               ? `${$store.state.tweaks.roundTweak / 2}rem`
@@ -157,24 +131,106 @@
                 : '0',
           }"
         >
-          <div id="details"
-               @click="$store.dispatch('channel/fetchChannel', video.channelUrl)">
-            <div class="avatar-link mr-3">
+          <div id="details">
+            <NuxtLink
+              to="/channel"
+              class="avatar-link"
+              @click="$store.dispatch('channel/fetchChannel', video.channelUrl)"
+            >
               <v-img class="avatar-thumbnail" :src="video.channelImg" />
-            </div>
-            <div v-emoji class="channel-byline">
-              <div class="channel-name" v-text="video.channelName" />
-              <div
-                class="caption background--text"
-                :class="
-                  theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
-                "
-                v-text="video.channelSubs + ' subscribers'"
-              />
-            </div>
+            </NuxtLink>
+
+            <v-btn style="text-transform: uppercase; font-size: 0.8rem;" class="pa-0" color="primary">
+              subscribe
+            </v-btn>
           </div>
-          <div class="primary--text" style="text-transform: uppercase">
-            subscribe
+          <div
+            class="d-flex justify-space-between flex-grow-1"
+            :class="
+            $store.state.tweaks.roundWatch && $store.state.tweaks.roundTweak > 0
+              ? theme.global.current.value.dark
+                ? 'background lighten-1'
+                : 'background darken-1'
+              : ''
+          "
+            :style="{
+            borderRadius: $store.state.tweaks.roundWatch
+              ? `${$store.state.tweaks.roundTweak / 2}rem`
+              : '0',
+            margin:
+              $store.state.tweaks.roundWatch &&
+              $store.state.tweaks.roundTweak > 0
+                ? '1rem'
+                : '0',
+          }"
+          >
+            <v-btn
+              elevation="0"
+              v-for="(item, index) in interactions"
+              :key="index"
+              variant="text"
+              class="vertical-button"
+              style="
+              padding: 8px;
+              /*width: 4.2rem !important;*/
+              /*height: 4.2rem !important;*/
+              min-width: auto;
+              text-transform: none !important;
+            "
+              :disabled="item.disabled"
+              @click="callMethodByName(item.actionName)"
+            >
+              <v-icon :icon="item.icon" />
+              <div
+                class="mt-1"
+                style="font-size: 0.6rem"
+                v-text="item.value || item.name"
+              />
+            </v-btn>
+            <!--   End Scrolling Div For Interactions   --->
+            <!-- <hr /> -->
+
+            <v-bottom-sheet
+              v-model="moreMenu"
+              style="z-index: 777777"
+            >
+              <template #activator="{ props: activatorProps }">
+                <v-btn
+                  elevation="0"
+                  variant="text"
+                  class="vertical-button"
+                  style="
+                    padding: 8px;
+                    min-width: auto;
+                    text-transform: none !important;
+                  "
+                  v-bind="activatorProps"
+                >
+                  <v-icon icon="mdi-dots-vertical" />
+                </v-btn>
+              </template>
+
+              <v-card class="bg-background">
+                <div class="d-flex align-center px-4 py-2">
+                  <span class="text-subtitle-2">More</span>
+                  <v-spacer />
+                  <v-btn
+                    elevation="0" icon variant="text" size="small" @click="moreMenu = false">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </div>
+                <v-divider />
+
+                <v-card-text style="max-height: 50vh; overflow-y: auto; height: 50vh" class="pa-0 d-flex flex-column">
+                  <v-list-item @click="moreMenu = false; pip()">
+                    <template #prepend>
+                      <v-icon icon="mdi-picture-in-picture-bottom-right" />
+                    </template>
+                    <v-list-item-title>PiP</v-list-item-title>
+                  </v-list-item>
+                </v-card-text>
+              </v-card>
+            </v-bottom-sheet>
           </div>
         </v-card>
       </div>
@@ -426,7 +482,7 @@ export default {
         //---   Content Stuff   ---//
         // this.interactions[0].value = result.metadata.likes.toLocaleString();
         this.$youtube.getReturnYoutubeDislike(this.$route.query.v, (data) => {
-          this.likes = result.metadata.likes || data.likes;
+          this.likes = result.metadata.likesShort || result.metadata.likes || data.likes;
           this.dislikes = data.dislikes;
           this.interactions[0].value = this.likes?.toLocaleString();
           this.interactions[1].value = this.dislikes?.toLocaleString();
@@ -547,6 +603,7 @@ export default {
 
     initializeState() {
       return {
+        moreMenu: false,
         interactions: [
           {
             name: "Likes",
@@ -577,12 +634,6 @@ export default {
             // action: this.save()
             actionName: "save",
             disabled: false,
-          },
-          {
-            name: "PiP",
-            icon: "mdi-picture-in-picture-bottom-right",
-            actionName: "pip",
-            disabled: true,
           },
           // {
           //   name: "Speed",
@@ -694,19 +745,21 @@ export default {
 .vertical-button span.v-btn__content {
   flex-direction: column;
   justify-content: space-around;
+  flex: 1 1 0;
 }
 
 .channel-section,
 .comment-renderer {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .channel-section #details,
 .comment-renderer .comment-count {
-  flex-grow: 1;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   min-width: 0;
 }
 

@@ -807,6 +807,7 @@ class Innertube {
           ?.button?.likeButtonRenderer;
         if (likeBtn) {
           metadata.likes = likeBtn.likeCount.toLocaleString();
+          metadata.likesShort = likeBtn?.likeCountWithLikeText?.simpleText || metadata.likes;
         }
       } catch (e) {}
     } else {
@@ -906,7 +907,7 @@ class Innertube {
       ? (tvOwner?.title?.simpleText || "")
       : (ownerData?.title?.runs?.[0]?.text || "");
     const channelSubs = isTVResponse
-      ? (tvOwner?.subscriberCountText?.simpleText.split(" ")[0] || "")
+      ? (tvOwner?.subscriberCountText?.simpleText || "")
       : (ownerData?.collapsedSubtitle?.runs?.[0]?.text || "");
     const channelUrl = isTVResponse
       ? (tvOwner?.navigationEndpoint?.browseEndpoint?.browseId || "")
@@ -956,7 +957,7 @@ class Innertube {
           : details.viewCount,
         lengthSeconds: details.lengthSeconds,
         isLive: isLive,
-        likes: metadata.likes,
+        ...metadata,
       },
       renderedData: {
         description: descriptionRenderer,
