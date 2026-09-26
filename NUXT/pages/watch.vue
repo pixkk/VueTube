@@ -25,15 +25,16 @@
       <v-card v-if="loaded" class="background rounded-0" variant="flat">
         <div
           v-ripple
-          class="d-flex justify-space-between align-start px-4 pt-4"
+          class="d-flex justify-space-between align-start px-4 pt-4 w-100"
           @click="showMore = !showMore"
         >
           <div
-            :class="{ 'title-fade': !showMore }"
+            class="w-100"
+            :class="{ 'title-fade': !showMore, }"
             :style="
               showMore
-                ? 'min-width: 0; white-space: normal; overflow-wrap: break-word; word-break: break-word;'
-                : 'min-width: 0; overflow: hidden; white-space: nowrap;'
+                ? 'white-space: normal; overflow-wrap: break-word; word-break: break-word;'
+                : 'overflow: hidden; white-space: nowrap;'
             "
           >
             <span
@@ -47,7 +48,7 @@
           <v-icon v-else class="ml-4">mdi-chevron-down</v-icon>
         </div>
 
-        <div class="d-flex flex-column px-4">
+        <div class="d-flex flex-column px-4 mb-1">
           <div class="d-flex" style="gap: 8px">
             <div class="d-flex flex-column">
               <div class="caption background--text" v-text="video.channelName" style=" width: max-content;" />
@@ -64,7 +65,7 @@
             <div
               v-if="!showMore"
               style="font-size: 0.75rem; overflow: hidden; white-space: nowrap; width: 100%;"
-              class="background--text title-fade w-100"
+              class="background--text title-fade"
               :class="
                 theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
@@ -228,11 +229,16 @@
                 <v-divider />
 
                 <v-card-text style="max-height: 50vh; overflow-y: auto; height: 50vh" class="pa-0 d-flex flex-column">
-                  <v-list-item @click="moreMenu = false; pip()">
+                  <v-list-item
+                    v-for="(item, index) in moreMenuItems"
+                    :key="index"
+                    :disabled="item.disabled"
+                    @click="moreMenu = false; callMethodByName(item.actionName)"
+                  >
                     <template #prepend>
-                      <v-icon icon="mdi-picture-in-picture-bottom-right" />
+                      <v-icon :icon="item.icon" />
                     </template>
-                    <v-list-item-title>PiP</v-list-item-title>
+                    <v-list-item-title v-text="item.name" />
                   </v-list-item>
                 </v-card-text>
               </v-card>
@@ -657,6 +663,14 @@ export default {
           //   actionName: "speed",
           //   disabled: false,
           // },
+        ],
+        moreMenuItems: [
+          {
+            name: "PiP",
+            icon: "mdi-picture-in-picture-bottom-right",
+            actionName: "pip",
+            disabled: true,
+          },
         ],
         showMore: false,
         showComments: false,
