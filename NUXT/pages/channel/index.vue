@@ -19,19 +19,6 @@
     </div>
 
     <div style="padding-top: calc(3rem + env(safe-area-inset-top)); left: 0; right: 0; ">
-      <GeneralPage
-                   v-if="getDataChannel()"
-                   :avatar-url="getDataChannel().avatar"
-                   :banner-url="getDataChannel().banner"
-                   :description-preview="getDataChannel().descriptionPreview"
-                   :subscribe-text="getDataChannel().subscribe"
-                   :subscribers-count="getDataChannel().subscribers"
-                   :title="getDataChannel().title"
-                   :video-example="null"
-                   :videos-count="getDataChannel().videosCount"
-                   :subscribe-alt="getDataChannel().subscribeAlt"
-                   :isLoading="isLoading"
-      />
       <v-window v-model="activeTab">
         <v-window-item
           v-for="(tab, index) in tabs"
@@ -39,6 +26,18 @@
         >
           <v-card>
             <v-card-text>
+              <GeneralPage v-if="index === 0 && getDataChannel()"
+                           :avatar-url="getDataChannel().avatar"
+                           :banner-url="getDataChannel().banner"
+                           :description-preview="getDataChannel().descriptionPreview"
+                           :subscribe-text="getDataChannel().subscribe"
+                           :subscribers-count="getDataChannel().subscribers"
+                           :title="getDataChannel().title"
+                           :video-example="null"
+                           :videos-count="getDataChannel().videosCount"
+                           :subscribe-alt="getDataChannel().subscribeAlt"
+                           :isLoading="isLoading"
+              />
               <component
                 v-if="tabComponents[tabTypes[index]]"
                 :is="tabComponents[tabTypes[index]]"
