@@ -2,8 +2,8 @@
   <v-btn
       elevation="0"
     icon
+      size="3.5rem"
     variant="text"
-    size="large"
     color="white"
     :loading="Boolean(buffering)"
     @click="

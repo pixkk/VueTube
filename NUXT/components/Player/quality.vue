@@ -6,7 +6,7 @@
     >
       <template #activator="{ props: activatorProps }">
         <v-btn
-      elevation="0" icon variant="text" size="small" color="white" v-bind="activatorProps">
+      elevation="0" icon variant="text" style="min-width: auto" size="small" color="white" v-bind="activatorProps">
           {{
             currentVideoFormat
               ? (currentVideoFormat.qualityLabel || currentVideoFormat.quality)
