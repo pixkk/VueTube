@@ -1,5 +1,11 @@
 import http from "node:http";
+import { Agent } from "undici";
 import { mintSessionPoToken } from "./potokenWeb.js";
+
+// Node's global fetch (undici) defaults to a small max header size and blows
+// up with HeadersOverflowError on upstream responses carrying a lot of
+// Set-Cookie/other headers.
+const upstreamAgent = new Agent({ maxHeaderSize: 2048 * 1024 });
 
 const PORT = process.env.PORT || 8787;
 // Origin(s) allowed to call this proxy. Nuxt dev server default port is 3000.
@@ -78,6 +84,7 @@ const server = http.createServer(async (req, res) => {
       method,
       headers,
       body: method === "GET" || method === "HEAD" ? undefined : body,
+      dispatcher: upstreamAgent,
     });
 
     const text = await upstream.text();
@@ -93,7 +100,7 @@ const server = http.createServer(async (req, res) => {
     );
   } catch (err) {
     res.writeHead(502, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: String(err && err.message || err) }));
+    res.end(JSON.stringify({ error: String(err && (err.message + "" + err.cause) || err) }));
   }
 });
 
