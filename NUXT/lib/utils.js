@@ -47,6 +47,12 @@ function randomByteGenerator(t) {
       return f
     } catch (N) {}
 }
+function fixUrl(src) {
+  if (src.startsWith("//")) {
+    src = "https:" + src;
+  }
+  return src;
+}
 function getThumbnailUtil(id, resolution = "maxresdefault", backupThumbnail) {
   // 19.08.2024 - backupThumbnail temporary unused
   if (resolution === "max" || resolution === "resmax") {
@@ -295,6 +301,7 @@ function humanFileSize(size) {
 export {
   getBetweenStrings,
   getThumbnailUtil,
+  fixUrl,
   hexToRgb,
   rgbToHex,
   getCpn,

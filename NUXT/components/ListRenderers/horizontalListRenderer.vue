@@ -19,7 +19,7 @@
 import compactVideoRenderer from "~/components/CompactRenderers/compactVideoRenderer.vue";
 import gridVideoRenderer from "~/components/gridRenderers/gridVideoRenderer.vue";
 import tileRenderer from "~/components/gridRenderers/tileRenderer.vue";
-import lockupViewModel from "~/components/viewModels/lockupViewModel.vue";
+import lockupViewModel from "~/components/viewModels/lockupViewModel/lockupViewModel.vue";
 
 export default {
   components: {
