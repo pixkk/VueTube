@@ -64,7 +64,7 @@
             <div
               v-if="!showMore"
               style="font-size: 0.75rem; overflow: hidden; white-space: nowrap; width: 100%;"
-              class="background--text title-fade"
+              class="background--text title-fade w-100"
               :class="
                 theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
@@ -134,7 +134,7 @@
                 : '0',
           }"
         >
-          <div class="d-flex flex-column" style="flex: 4;">
+          <div class="d-flex flex-column" style="flex: 3;">
             <div id="details" class="w-100">
               <NuxtLink
                 to="/channel"
@@ -158,7 +158,7 @@
                 : 'background darken-1'
               : ''
           "
-            style="flex: 5;"
+            style="flex: 7;"
             :style="{
             borderRadius: $store.state.tweaks.roundWatch
               ? `${$store.state.tweaks.roundTweak / 2}rem`
@@ -186,7 +186,7 @@
               :disabled="item.disabled"
               @click="callMethodByName(item.actionName)"
             >
-              <v-icon :icon="item.icon" />
+              <v-icon :icon="item.icon" size="x-large" />
               <div
                 class="mt-1"
                 style="font-size: 0.6rem"
