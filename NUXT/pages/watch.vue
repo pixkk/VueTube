@@ -29,16 +29,16 @@
           @click="showMore = !showMore"
         >
           <div
-            style="
-              min-width: 0;
-              white-space: normal;
-              overflow-wrap: break-word;
-              word-break: break-word;
+            :class="{ 'title-fade': !showMore }"
+            :style="
+              showMore
+                ? 'min-width: 0; white-space: normal; overflow-wrap: break-word; word-break: break-word;'
+                : 'min-width: 0; overflow: hidden; white-space: nowrap;'
             "
           >
             <span
               v-emoji
-              class="text-wrap"
+              :class="{ 'text-wrap': showMore }"
               style="font-size: 0.95rem; line-height: 1.15rem; font-weight: bold"
               v-text="video.title"
             />
@@ -48,20 +48,23 @@
         </div>
 
         <div class="d-flex flex-column px-4">
-          <div class="d-flex justify-space-between" style="gap: 8px">
+          <div class="d-flex" style="gap: 8px">
             <div class="d-flex flex-column">
-              <div class="caption background--text" v-text="video.channelName" />
+              <div class="caption background--text" v-text="video.channelName" style=" width: max-content;" />
             </div>
+
             <div
               class="caption background--text"
+              style="text-align: justify; width: max-content; flex-shrink: 0; white-space: nowrap;"
               :class="
                   theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
                 "
               v-text="video.channelSubs + ''"
             />
             <div
-              style="font-size: 0.75rem"
-              class="background--text"
+              v-if="!showMore"
+              style="font-size: 0.75rem; overflow: hidden; white-space: nowrap; width: 100%;"
+              class="background--text title-fade"
               :class="
                 theme.global.current.value.dark ? 'text--lighten-4' : 'text--darken-4'
               "
@@ -131,18 +134,20 @@
                 : '0',
           }"
         >
-          <div id="details">
-            <NuxtLink
-              to="/channel"
-              class="avatar-link"
-              @click="$store.dispatch('channel/fetchChannel', video.channelUrl)"
-            >
-              <v-img class="avatar-thumbnail" :src="video.channelImg" />
-            </NuxtLink>
+          <div class="d-flex flex-column" style="flex: 4;">
+            <div id="details" class="w-100">
+              <NuxtLink
+                to="/channel"
+                class="avatar-link"
+                @click="$store.dispatch('channel/fetchChannel', video.channelUrl)"
+              >
+                <v-img class="avatar-thumbnail" :src="video.channelImg" />
+              </NuxtLink>
 
-            <v-btn style="text-transform: uppercase; font-size: 0.8rem;" class="pa-0" color="primary">
-              subscribe
-            </v-btn>
+              <v-btn style="text-transform: uppercase; font-size: 0.8rem;" class="" color="primary">
+                subscribe
+              </v-btn>
+            </div>
           </div>
           <div
             class="d-flex justify-space-between flex-grow-1"
@@ -153,6 +158,7 @@
                 : 'background darken-1'
               : ''
           "
+            style="flex: 5;"
             :style="{
             borderRadius: $store.state.tweaks.roundWatch
               ? `${$store.state.tweaks.roundTweak / 2}rem`
@@ -244,6 +250,16 @@
       <!-- Description -->
       <div v-if="showMore">
         <div class="scroll-y ma-4 pt-1">
+          <div
+            class="mb-4">
+            <template
+              v-for="text in video.metadata.contents.find(
+                  (content) => content.slimVideoInformationRenderer
+                ).slimVideoInformationRenderer.collapsedSubtitle.runs"
+            >{{ text.text }}</template
+            >
+          </div>
+
           <slim-video-description-renderer
             :render="video.renderedData.description"
             :additionalInfo="video.metadata"
@@ -711,6 +727,10 @@ export default {
 </script>
 
 <style>
+.title-fade {
+  -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  mask-image: linear-gradient(to right, black 85%, transparent 100%);
+}
 .comments {
   left: 0;
   right: 0;
