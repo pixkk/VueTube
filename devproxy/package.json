@@ -10,6 +10,7 @@
     "install_chromium_windows": "$env:PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=\"120000\"; npx playwright install chromium"
   },
   "dependencies": {
-    "playwright": "^1.63.0"
+    "playwright": "^1.63.0",
+    "undici": "^6.28.1"
   }
 }

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev -p 3001",
+    "rundevproxy": "cd ../devproxy && npm run start",
     "start": "nuxt generate",
     "build": "nuxi build",
     "generate": "nuxt generate",
