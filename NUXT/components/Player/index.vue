@@ -66,6 +66,29 @@
       >
         <track default kind="captions" id="captions" src=""/>
       </video>
+
+      <!-- Custom captions overlay -->
+      <div
+        v-if="customCaptionHtml"
+        class="custom-captions-overlay"
+        style="
+          position: absolute;
+          left: 50%;
+          bottom: 3.5rem;
+          transform: translateX(-50%);
+          z-index: 10;
+          max-width: 90%;
+          text-align: center;
+          pointer-events: none;
+          color: white;
+          background-color: rgba(0, 0, 0, 0.7);
+          padding: 0.1rem 0.4rem;
+          font-size: 1rem;
+          line-height: 1.4;
+        "
+        v-html="customCaptionHtml"
+      ></div>
+
       <endscreen
         v-if="$refs.player?.videoHeight && isFullscreen"
         ref="endscrn"
@@ -459,6 +482,7 @@ export default {
       verticalFullscreen: false,
       controls: false,
       seeking: false,
+      customCaptionHtml: "",
       contain: true,
       skipping: 0,
       progress: 0,
@@ -1351,13 +1375,44 @@ export default {
         }
         textToDataURL(captions).then((dataurl) => {
           document.getElementById("captions").src = dataurl;
+          this.setupCustomCaptionsTrack();
         })
       }
       else {
         document.getElementById("captions").src = "";
+        this.customCaptionHtml = "";
       }
       const rootElement = document.getElementById('__nuxt');
       rootElement.className += "web chrome";
+    },
+    setupCustomCaptionsTrack() {
+      const trackEl = document.getElementById("captions");
+      const textTrack = trackEl?.track;
+      if (!textTrack) return;
+
+      // Hide the browser's own cue rendering — we render cues ourselves in a
+      // custom, statically-positioned overlay instead of relying on native
+      // track placement (which YouTube's own cue position/align/line
+      // settings can push off-center or under the controls).
+      textTrack.mode = "hidden";
+
+      if (this._captionsCueChangeHandler) {
+        textTrack.removeEventListener("cuechange", this._captionsCueChangeHandler);
+      }
+      this._captionsCueChangeHandler = () => {
+        const activeCues = textTrack.activeCues;
+        this.customCaptionHtml = activeCues && activeCues.length
+          ? Array.from(activeCues)
+              // getCueAsHTML() is the browser's own WebVTT cue-payload parser
+              .map((cue) => {
+                const container = document.createElement("div");
+                container.appendChild(cue.getCueAsHTML());
+                return container.innerHTML;
+              })
+              .join("<br>")
+          : "";
+      };
+      textTrack.addEventListener("cuechange", this._captionsCueChangeHandler);
     },
     volumeHandler(q) {
 
@@ -1588,15 +1643,9 @@ export default {
   color: white !important;
 }
 
-.chrome {
-  video::cue {
-    /* font-size: 13.4px; */
-    opacity: 1;
-    background-color: black;
-    -webkit-transform: translateY(10%) !important;
-    transform: translateY(10%) !important;
-  }
-}
+/* Native cue rendering is disabled (track.mode = "hidden") in favor of the
+   custom-captions-overlay div, which is always centered and statically
+   positioned relative to the controls/seekbar. */
 .skip-button {
   background-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-on-primary));

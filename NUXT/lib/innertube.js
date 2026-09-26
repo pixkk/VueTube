@@ -373,8 +373,7 @@ class Innertube {
     return response.data;
   }
 
-// Currently, VISION_OS is fully playable, WEB_EMBEDDED_PLAYER for fallback is good.
-// TVHTML5 is playable 50% of the time, depends on the account'
+// Currently, VISION_OS and TVHTML5 are fully playable, WEB_EMBEDDED_PLAYER for fallback is good.
   async playerRequest(id, reloadPlaybackContext = null) {
     let url = `${constants.URLS.YT_BASE_API}/player?key=${this.key}`;
     let clientConfig = this.getYTConfig();
@@ -395,6 +394,7 @@ class Innertube {
         const html = await Http.get({
           url: constants.URLS.YT_EMBED + `${id}`,
           params: { hl: localStorage.getItem("language") || "en" },
+          headers: {}
         }).catch((error) => error);
         clientConfig = this.processYTConfig(html.data);
         // clientConfig = this.getYTConfig()
