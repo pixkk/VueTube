@@ -17,6 +17,7 @@
           : '0',
     }"
   >
+      <div style="position: relative; width: 100%;">
       <video
         :autoplay="true"
         playsinline
@@ -74,11 +75,13 @@
         style="
           position: absolute;
           left: 50%;
-          bottom: 3.5rem;
+          top: auto;
+          bottom: 20%;
           transform: translateX(-50%);
           z-index: 10;
-          max-width: 90%;
+          width: max-content;
           text-align: center;
+          white-space: nowrap;
           pointer-events: none;
           color: white;
           background-color: rgba(0, 0, 0, 0.7);
@@ -88,6 +91,7 @@
         "
         v-html="customCaptionHtml"
       ></div>
+      </div>
 
       <endscreen
         v-if="$refs.player?.videoHeight && isFullscreen"
