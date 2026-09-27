@@ -374,7 +374,7 @@ class Innertube {
   }
 
 // Currently, VISION_OS and TVHTML5 are fully playable, WEB_EMBEDDED_PLAYER for fallback is good.
-  async playerRequest(id, reloadPlaybackContext = null) {
+  async playerRequest(id, playlistID = null, reloadPlaybackContext = null) {
     let url = `${constants.URLS.YT_BASE_API}/player?key=${this.key}`;
     let clientConfig = this.getYTConfig();
     let oldYTConfig = clientConfig;
@@ -414,7 +414,7 @@ class Innertube {
       case "TVHTML5":
         postData = {
           url: url,
-          data: constants.TVHTML5_CLIENT(clientConfig, id, reloadPlaybackContext, this.signatureTimestamp, poToken, clientConfig.LIVING_ROOM_PO_TOKEN_ID),
+          data: constants.TVHTML5_CLIENT(clientConfig, id, playlistID, reloadPlaybackContext, this.signatureTimestamp, poToken, clientConfig.LIVING_ROOM_PO_TOKEN_ID),
           headers: {
             ...constants.CLIENT_HEADER(clientConfig),
             "x-youtube-client-version": clientConfigs.tvApiVal.VERSION_WEB,
@@ -437,7 +437,7 @@ class Innertube {
     }).catch((error) => error);
   }
 
-  async getVidAsync(id, reloadPlaybackContext = null, tvParams = null) {
+  async getVidAsync(id, reloadPlaybackContext = null, playlistID = null, tvParams = null) {
     const isAuthed = this.isAuthedUser();
     let responseNext;
     let response;
@@ -454,7 +454,7 @@ class Innertube {
         data: {
           context: tvContext,
           videoId: id,
-          playlistId: `RD${id}`,
+          playlistId: playlistID || `RD${id}`,
           playlistIndex: 0,
           racyCheckOk: true,
           contentCheckOk: true,
@@ -466,7 +466,7 @@ class Innertube {
       }).catch((error) => error);
 
       const [responsePlayer, responseNextMobile] = await Promise.all([
-        this.playerRequest(id, reloadPlaybackContext),
+        this.playerRequest(id, playlistID, reloadPlaybackContext),
         Http.post({
           url: `${constants.URLS.YT_BASE_API}/next?key=${this.key}`,
           data: {
@@ -668,9 +668,9 @@ class Innertube {
     }
   }
 
-  async VidInfoAsync(id, tvParams = null) {
+  async VidInfoAsync(id, playlistID = null, tvParams = null) {
     // TODO: OPTIMIZE IT !!!
-    let response = await this.getVidAsync(id, null, tvParams);
+    let response = await this.getVidAsync(id, null, playlistID, tvParams);
 
     if (
       response.success == false ||

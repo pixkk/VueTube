@@ -149,7 +149,7 @@ export default {
       },
     }
   },
-  TVHTML5_CLIENT: (config, videoId = null, reloadPlaybackContext = null, signatureTimestamp, poToken, livingRoomPoTokenId) => {
+  TVHTML5_CLIENT: (config, videoId = null, playlistID = null, reloadPlaybackContext = null, signatureTimestamp, poToken, livingRoomPoTokenId) => {
     return {
       videoId: `${videoId}`,
       context: {
@@ -239,6 +239,7 @@ export default {
       },
       cpn: getCpn(),
       captionParams: {},
+      ...(playlistID ? { playlistId: playlistID } : {}),
       serviceIntegrityDimensions: {
         poToken: poToken
       },

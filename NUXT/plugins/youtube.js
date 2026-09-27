@@ -175,12 +175,12 @@ const innertubeModule = {
     return InnertubeAPI;
   },
 
-  async getVid(id, tvParams = null) {
+  async getVid(id, playlistID = null, tvParams = null) {
     try {
-      return await InnertubeAPI.VidInfoAsync(id, tvParams);
+      return await InnertubeAPI.VidInfoAsync(id, playlistID, tvParams);
     } catch (error) {
       await this.getAPI();
-      return await InnertubeAPI.VidInfoAsync(id, tvParams);
+      return await InnertubeAPI.VidInfoAsync(id, playlistID, tvParams);
     }
   },
 
@@ -196,16 +196,16 @@ const innertubeModule = {
             if (xhr.status === 200) {
               resolve(URL.createObjectURL(xhr.response));
             } else {
-              resolve(backupThumbnail[0]?.url);
+              resolve(backupThumbnail[backupThumbnail.length - 1]?.url);
             }
           };
           xhr.send();
         });
       } catch (error) {
-        return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+        return backupThumbnail[backupThumbnail.length - 1]?.url;
       }
     }
-    return `https://img.youtube.com/vi/${id}/mqdefault.jpg`;
+    return backupThumbnail[backupThumbnail.length - 1]?.url;
   },
 
 
