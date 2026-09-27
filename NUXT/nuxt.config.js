@@ -1,6 +1,9 @@
 // https://nuxt.com/docs/api/nuxt-config
 export default defineNuxtConfig({
   //---   VueTube Stuff   ---//
+  devtools: {
+    enabled: false
+  },
   runtimeConfig: {
     public: {
       channel: "Unstable",
@@ -117,7 +120,5 @@ export default defineNuxtConfig({
       ],
     },
   },
-
-
   compatibilityDate: "2025-01-01",
 });
