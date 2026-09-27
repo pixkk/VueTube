@@ -484,7 +484,7 @@ export default {
       this.loaded = false;
 
       const tvParams = this.$store.state.pendingTvParams;
-      this.$youtube.getVid(this.$route.query.v, tvParams).then((result) => {
+      this.$youtube.getVid(this.$route.query.v,this.$route.query.list, tvParams).then((result) => {
         // TODO: sourt "tiny" (no qualityLabel) as audio and rest as video
         // Drop premium/alt-track (xtags) variants from the video candidates, and keep
         // the audio filter on its own line so no video-only or duplicate formats leak in.
