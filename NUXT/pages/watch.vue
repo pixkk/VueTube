@@ -136,7 +136,7 @@
           }"
         >
           <div class="d-flex flex-column" style="flex: 3;">
-            <div id="details" class="w-100">
+            <div id="details" class="w-100" style="flex-direction: row !important">
               <NuxtLink
                 to="/channel"
                 class="avatar-link"
