@@ -82,6 +82,7 @@ class Innertube {
       /player_embed\.vflset\/([a-zA-Z_-]+)\/base\.js$/,
       'player-plasma-ias-phone-$1.vflset/base.js'
     )
+    baseJSUrl = baseJSUrl.replaceAll("-es6-", "-ias-")
     return baseJSUrl;
   }
   /**
@@ -1049,11 +1050,11 @@ class Innertube {
 
   async getNFunctionAst(baseJs, isTcl) {
   // TEMP caching
-    if (localStorage.getItem("nFunctionAst")) {
-      let nFunction = new Function(localStorage.getItem("nFunctionAst"));
-      this.nfunction = nFunction();
-      return this.nfunction;
-    }
+  //   if (localStorage.getItem("nFunctionAst")) {
+  //     let nFunction = new Function(localStorage.getItem("nFunctionAst"));
+  //     this.nfunction = nFunction();
+  //     return this.nfunction;
+  //   }
     let parsedBaseJs = acorn.parse(baseJs.data, {ecmaVersion: 2020});
     let site = findNFunctionCallSite(parsedBaseJs, isTcl);
 
