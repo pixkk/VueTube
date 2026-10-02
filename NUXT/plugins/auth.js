@@ -43,7 +43,11 @@ async function postJson(url, body) {
     headers: { "Content-Type": "application/json" },
     data: JSON.stringify(body),
   });
-  return typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+  const data = typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+  if (resp.status >= 400 && !["authorization_pending", "slow_down", "access_denied"].includes(data?.error)) {
+    throw new Error(JSON.stringify({ status: resp.status, data: resp.data, headers: resp.headers }));
+  }
+  return data;
 }
 
 export async function requestDeviceCode() {

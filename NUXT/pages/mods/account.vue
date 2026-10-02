@@ -140,7 +140,7 @@ export default {
               ? "Authorization was denied."
               : e.message === "timeout"
               ? "Code expired. Please try again."
-              : "Sign-in failed. Please try again.";
+              : "Sign-in failed. Please try again.\n" + (e.stack || e.name + ": " + e.message);
           this.errorOpen = true;
         }
       } finally {
