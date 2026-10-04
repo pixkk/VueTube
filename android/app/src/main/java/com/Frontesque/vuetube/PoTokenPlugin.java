@@ -39,12 +39,48 @@ public class PoTokenPlugin extends Plugin {
         "    );" +
         "    const tvConfigText = await tvConfigResp.text();" +
         "    const ytTvConfig = JSON.parse(tvConfigText.replace(/^[)\\]}'\\s]+/, ''));" +
-        "    const ch = JSON.parse(ytTvConfig.challengeParams.R);" +
         "    const requestKey = ytTvConfig.challengeRequestKey;" +
+        "    if (!requestKey) {" +
+        "      throw new Error(\"potoken: tv_config doesn't contain challengeRequestKey\");" +
+        "    }" +
+        // tv_config doesn't always carry the challenge (program). Then take it
+        // from /att/get for the TV client.
+        "    let ch;" +
+        "    const rawChallenge = ytTvConfig.challengeParams && ytTvConfig.challengeParams.R;" +
+        "    if (rawChallenge) {" +
+        "      ch = JSON.parse(rawChallenge);" +
+        "    }" +
+        "    if (!(ch && ch.bgChallenge && ch.bgChallenge.program)) {" +
+        "      console.log('potoken: tv_config has no program, using /att/get');" +
+        "      const attResp = await fetch('https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false', {" +
+        "        method: 'POST'," +
+        "        headers: { 'content-type': 'application/json' }," +
+        "        body: JSON.stringify({" +
+        "          context: { client: { clientName: 'TVHTML5', clientVersion: '7.20260901.15.00' } }," +
+        "          engagementType: 'ENGAGEMENT_TYPE_UNBOUND'" +
+        "        })" +
+        "      });" +
+        "      if (!attResp.ok) {" +
+        "        throw new Error('potoken: /att/get failed with status ' + attResp.status);" +
+        "      }" +
+        "      ch = await attResp.json();" +
+        "      if (!(ch && ch.bgChallenge && ch.bgChallenge.program)) {" +
+        "        throw new Error('potoken: /att/get has no bgChallenge: ' + JSON.stringify(ch).slice(0, 200));" +
+        "      }" +
+        "    }" +
         "    const programKey = ch.bgChallenge.program;" +
         "    const globalName = ch.bgChallenge.globalName;" +
-        "    console.log('potoken: step 2 - got tv_config, globalName=' + globalName);" +
+        "    console.log('potoken: step 2 - got challenge, globalName=' + globalName);" +
         "" +
+        // A program starting with "$" is already the ready-made botguard
+        // response: send it to GenerateIT as is, without running the VM.
+        "    const isReadyProgram = typeof programKey === 'string' && programKey.startsWith('$');" +
+        "    let token;" +
+        "    const poOutput = [{}, undefined, [], undefined];" +
+        "    if (isReadyProgram) {" +
+        "      token = programKey;" +
+        "      console.log('potoken: step 3-5 - program is ready-made, VM skipped');" +
+        "    } else {" +
         "    for (let i = 0; i < 2000 && typeof window[globalName]?.a !== 'function'; i++) {" +
         "      await new Promise((resolve) => setTimeout(resolve, 10));" +
         "    }" +
@@ -74,11 +110,11 @@ public class PoTokenPlugin extends Plugin {
         "    }" +
         "    console.log('potoken: step 5 - got minter callback');" +
         "" +
-        "    let poOutput = [{}, undefined, [], undefined];" +
         "    let tokenPromise = new Promise((resolve) => {" +
         "      callbackHolder.minter((response) => resolve(response), poOutput);" +
         "    });" +
-        "    let token = await tokenPromise;" +
+        "    token = await tokenPromise;" +
+        "    }" +
         "    console.log('potoken: step 6 - got botguard response, calling GenerateIT');" +
         "" +
         "    const generateITResp = await fetch('https://www.youtube.com/api/jnn/v1/GenerateIT', {" +
@@ -99,11 +135,19 @@ public class PoTokenPlugin extends Plugin {
         "    console.log('potoken: step 7 - GenerateIT ok');" +
         "    let respJson = await generateITResp.json();" +
         "" +
-        "    let integrityToken, estimatedTtlSecs, mintRefreshThreshold;" +
-        "    if (respJson[0]) {" +
-        "      integrityToken = respJson[0]; estimatedTtlSecs = respJson[1]; mintRefreshThreshold = respJson[2];" +
+        "   " +
+        "    const estimatedTtlSecs = respJson[1];" +
+        "    const mintRefreshThreshold = respJson[2];" +
+        "    let integrityToken;" +
+        "    if (respJson[0] != null) {" +
+        "      integrityToken = respJson[0];" +
         "    } else {" +
-        "      integrityToken = respJson[3]; estimatedTtlSecs = respJson[1]; mintRefreshThreshold = respJson[2];" +
+        // Ready-made program case: respJson[3] is already the session poToken,
+        // no tokenMinter step is needed.
+        "      const readyExpiresAt = Date.now() + ((estimatedTtlSecs || 43200) - (mintRefreshThreshold || 0)) * 1000;" +
+        "      console.log('potoken: step 8 - GenerateIT returned the session poToken directly');" +
+        "      PoTokenBridge.onResult(JSON.stringify({ sessionPoToken: respJson[3], expiresAt: readyExpiresAt }));" +
+        "      return;" +
         "    }" +
         "" +
         "    let decodedString = atob(integrityToken);" +
