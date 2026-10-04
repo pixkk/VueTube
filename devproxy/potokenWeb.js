@@ -158,7 +158,9 @@ async function mintInPage(livingRoomToken, authToken) {
         const tokenMinter = poOutput[2][0];
         const contentBindingBytes = new TextEncoder().encode(livingRoomToken);
         const createdToken = tokenMinter(tokenMinterParam)(contentBindingBytes);
-        const sessionPoToken = createdToken.toBase64({ alphabet: "base64url" });
+        let createdTokenBin = "";
+        for (let i = 0; i < createdToken.length; i++) createdTokenBin += String.fromCharCode(createdToken[i]);
+        const sessionPoToken = btoa(createdTokenBin).replace(/\+/g, "-").replace(/\//g, "_");
 
         return {
           sessionPoToken,
