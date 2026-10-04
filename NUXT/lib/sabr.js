@@ -1463,6 +1463,12 @@ const SABR_CLIENT_NAME_IDS = {
               await new Promise(r => setTimeout(r, 250));
             }
           }
+          // Older WebViews (e.g. 134) can keep the buffer busy with an internal async
+          // operation (such as a range removal after a duration change)
+          while (sb.updating) {
+            if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+            await new Promise(r => setTimeout(r, 10));
+          }
           // Evict old buffered data behind playback to prevent QuotaExceededError
           const el2 = component.$refs.player;
           if (el2 && !sb.updating) {
@@ -1479,12 +1485,14 @@ const SABR_CLIENT_NAME_IDS = {
           }
           return new Promise((resolve, reject) => {
             if (signal?.aborted) { reject(new DOMException('Aborted', 'AbortError')); return; }
-            sb.timestampOffset = 0;
             const onEnd = () => { sb.removeEventListener('updateend', onEnd); resolve(); };
             const onErr = () => { sb.removeEventListener('error', onErr); reject(new Error('SourceBuffer append error')); };
             sb.addEventListener('updateend', onEnd);
             sb.addEventListener('error', onErr);
-            try { sb.appendBuffer(data); }
+            try {
+              if (sb.timestampOffset !== 0) sb.timestampOffset = 0;
+              sb.appendBuffer(data);
+            }
             catch (e) { sb.removeEventListener('updateend', onEnd); sb.removeEventListener('error', onErr); reject(e); }
           });
         });
@@ -1500,7 +1508,13 @@ const SABR_CLIENT_NAME_IDS = {
       ...streamParams,
       signal,
       onTotalDuration: (ms) => {
-        if (mediaSource.readyState === 'open') mediaSource.duration = ms / 1000;
+        // Skip when it barely differs from the duration already set from lengthSeconds:
+        // changing duration makes some WebViews start an async range removal, which
+        // leaves the SourceBuffers "updating" while we try to append.
+        if (mediaSource.readyState !== 'open' || videoSB.updating || audioSB.updating) return;
+        const sec = ms / 1000;
+        if (!(Math.abs(mediaSource.duration - sec) > 1)) return;
+        try { mediaSource.duration = sec; } catch (e) { console.warn('[SABR combined] Failed to set duration:', e?.name, e?.message); }
       },
       onVideoChunk: (data) => { videoChunks++; return appendVideo(data); },
       onAudioChunk: (data) => { audioChunks++; return appendAudio(data); },
@@ -1519,7 +1533,7 @@ const SABR_CLIENT_NAME_IDS = {
         // get stuck needing a manual quality reselect — so just stop, no fallback.
         console.log('[SABR combined] Stream aborted (superseded by a newer load)');
       } else {
-        console.warn('[SABR combined] Stream error:', e);
+        console.warn('[SABR combined] Stream error:', e?.name, e?.message, e?.stack);
         if (videoChunks === 0 && audioChunks === 0 && !signal?.aborted) {
           _sabrFallbackFromCombined(component, streamParams);
         }
