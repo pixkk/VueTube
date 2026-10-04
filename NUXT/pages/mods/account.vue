@@ -83,6 +83,17 @@
     <v-alert v-if="success" type="success" class="mt-4" closable v-model="successOpen">
       {{ success }}
     </v-alert>
+
+    <!-- Sign-in debug log -->
+    <v-card v-if="logLines.length" class="mt-4 pa-2" variant="outlined">
+      <div class="d-flex align-center">
+        <span class="text-caption font-weight-bold">Sign-in log</span>
+        <v-spacer />
+        <v-btn elevation="0" size="small" variant="text" @click="copyLog">Copy</v-btn>
+        <v-btn elevation="0" size="small" variant="text" @click="logLines = []">Clear</v-btn>
+      </div>
+      <pre class="auth-log">{{ logLines.join("\n") }}</pre>
+    </v-card>
   </div>
 </template>
 
@@ -95,6 +106,7 @@ export default {
       signingIn: false,
       deviceCodeData: null,
       pollAborted: false,
+      logLines: [],
       error: null,
       success: null,
       errorOpen: true,
@@ -126,11 +138,15 @@ export default {
       this.deviceCodeData = null;
       this.pollAborted = false;
       this.error = null;
+      this.logLines = [];
 
       try {
-        await this.$auth.signIn((codeData) => {
-          this.deviceCodeData = codeData;
-        });
+        await this.$auth.signIn(
+          (codeData) => {
+            this.deviceCodeData = codeData;
+          },
+          (line) => this.logLines.push(line)
+        );
         this.success = "Signed in successfully!";
         this.successOpen = true;
       } catch (e) {
@@ -140,13 +156,17 @@ export default {
               ? "Authorization was denied."
               : e.message === "timeout"
               ? "Code expired. Please try again."
-              : "Sign-in failed. Please try again.\n" + (e.stack || e.name + ": " + e.message);
+              : "Sign-in failed. Please try again.\n" + e.name + ": " + e.message + (e.code ? "\ncode: " + e.code : "") + (e.data ? "\n" + JSON.stringify(e.data) : "")
           this.errorOpen = true;
         }
       } finally {
         this.signingIn = false;
         this.deviceCodeData = null;
       }
+    },
+
+    copyLog() {
+      navigator.clipboard?.writeText(this.logLines.join("\n")).catch(() => {});
     },
 
     cancelSignIn() {
@@ -171,6 +191,14 @@ export default {
 </script>
 
 <style scoped>
+.auth-log {
+  font-size: 0.65rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 50vh;
+  overflow: auto;
+  user-select: text;
+}
 .verification-url {
   color: rgb(var(--v-theme-primary));
 }

@@ -37,15 +37,63 @@ function getCredentials() {
   return { clientId: CLIENT_ID, clientSecret: CLIENT_SECRET };
 }
 
+// Optional sink for the sign-in debug log (set per signIn call, shown in the UI)
+let logSink = null;
+
+function mask(value) {
+  if (typeof value !== "string") return value;
+  return value.length > 12 ? `${value.slice(0, 6)}…${value.slice(-4)} (len ${value.length})` : value;
+}
+
+function redact(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  const out = Array.isArray(obj) ? [] : {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (/secret|token|code$/i.test(k) && typeof v === "string" && k !== "token_type" && k !== "user_code") out[k] = mask(v);
+    else out[k] = v && typeof v === "object" ? redact(v) : v;
+  }
+  return out;
+}
+
+function authLog(step, payload) {
+  const line = payload === undefined ? step : `${step}: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`;
+  console.log("[auth]", line);
+  if (logSink) logSink(`${new Date().toISOString().slice(11, 23)} ${line}`);
+}
+
 async function postJson(url, body) {
-  const resp = await Http.post({
-    url,
-    headers: { "Content-Type": "application/json" },
-    data: JSON.stringify(body),
+  authLog(`POST ${url}`, redact(body));
+  const started = Date.now();
+  let resp;
+  try {
+    resp = await Http.post({
+      url,
+      headers: { "Content-Type": "application/json" },
+      data: JSON.stringify(body),
+    });
+  } catch (e) {
+    authLog("NETWORK ERROR", { name: e?.name, message: e?.message, code: e?.code });
+    throw e;
+  }
+  const raw = typeof resp.data === "string" ? resp.data : JSON.stringify(resp.data);
+  authLog(`RESPONSE ${resp.status} (${Date.now() - started}ms)`, {
+    contentType: resp.headers?.["Content-Type"] || resp.headers?.["content-type"],
+    body: redact(typeof resp.data === "string" ? (() => { try { return JSON.parse(resp.data); } catch { return raw.slice(0, 500); } })() : resp.data),
   });
-  const data = typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+
+  let data;
+  try {
+    data = typeof resp.data === "string" ? JSON.parse(resp.data) : resp.data;
+  } catch (e) {
+    const err = new Error(`Non-JSON response (HTTP ${resp.status}): ${raw.slice(0, 300)}`);
+    err.code = resp.status;
+    throw err;
+  }
   if (resp.status >= 400 && !["authorization_pending", "slow_down", "access_denied"].includes(data?.error)) {
-    throw new Error(JSON.stringify({ status: resp.status, data: resp.data, headers: resp.headers }));
+    const err = new Error(`HTTP ${resp.status} ${url}`);
+    err.code = resp.status;
+    err.data = { body: data, headers: resp.headers };
+    throw err;
   }
   return data;
 }
@@ -61,7 +109,11 @@ export async function requestDeviceCode() {
     device_model: "ytlr:sony:bravia 8k ur2",
   });
 
-  if (data.error) throw new Error(data.error);
+  if (data.error) {
+    const err = new Error(data.error);
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 
@@ -78,7 +130,13 @@ export async function pollForToken(deviceCode, intervalSec = 5, maxAttempts = 12
       grant_type: GRANT_TYPE_DEVICE,
     });
 
+    authLog(`poll #${i + 1}`, { error: data.error, hasAccessToken: !!data.access_token, hasRefreshToken: !!data.refresh_token });
     if (data.access_token) return data;
+    if (data.error && data.error !== "authorization_pending" && data.error !== "slow_down" && data.error !== "access_denied") {
+      const err = new Error(data.error);
+      err.data = data;
+      throw err;
+    }
     if (data.error === "access_denied") throw new Error("access_denied");
     if (data.error === "slow_down") intervalSec = Math.min(intervalSec + 5, 30);
     // "authorization_pending" — keep polling
@@ -180,26 +238,37 @@ export default defineNuxtPlugin(() => {
           return !!clientId;
         },
 
-        async signIn(onCode) {
-          const codeData = await requestDeviceCode();
-          if (onCode) onCode(codeData);
+        async signIn(onCode, onLog) {
+          logSink = onLog || null;
+          try {
+            authLog("sign-in started", { clientId: CLIENT_ID, deviceId: getDeviceId() });
+            const codeData = await requestDeviceCode();
+            if (onCode) onCode(codeData);
 
-          const tokenData = await pollForToken(
-            codeData.device_code,
-            codeData.interval || 5
-          );
+            const tokenData = await pollForToken(
+              codeData.device_code,
+              codeData.interval || 5
+            );
 
-          const accountInfo = await getAccountInfoFromGuide(tokenData.access_token);
+            const accountInfo = await getAccountInfoFromGuide(tokenData.access_token);
+            authLog("account info", accountInfo);
 
-          authStore.addAccount({
-            refreshToken: tokenData.refresh_token,
-            accessToken: tokenData.access_token,
-            expiresIn: tokenData.expires_in,
-            name: accountInfo?.name,
-            avatar: accountInfo?.avatar,
-          });
+            authStore.addAccount({
+              refreshToken: tokenData.refresh_token,
+              accessToken: tokenData.access_token,
+              expiresIn: tokenData.expires_in,
+              name: accountInfo?.name,
+              avatar: accountInfo?.avatar,
+            });
 
-          return authStore.activeAccount;
+            authLog("sign-in done");
+            return authStore.activeAccount;
+          } catch (e) {
+            authLog("sign-in FAILED", { name: e?.name, message: e?.message, code: e?.code, data: e?.data, stack: e?.stack?.split("\n").slice(0, 3) });
+            throw e;
+          } finally {
+            logSink = null;
+          }
         },
 
         async signOut(id) {
