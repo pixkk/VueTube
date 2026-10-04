@@ -120,15 +120,28 @@ export async function requestDeviceCode() {
 export async function pollForToken(deviceCode, intervalSec = 5, maxAttempts = 120) {
   const { clientId, clientSecret } = getCredentials();
 
+  const maxNetworkFailures = 6;
+  let networkFailures = 0;
+
   for (let i = 0; i < maxAttempts; i++) {
     await delay(intervalSec * 1000);
 
-    const data = await postJson(TOKEN_URL, {
-      code: deviceCode,
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: GRANT_TYPE_DEVICE,
-    });
+    let data;
+    try {
+      data = await postJson(TOKEN_URL, {
+        code: deviceCode,
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: GRANT_TYPE_DEVICE,
+      });
+      networkFailures = 0;
+    } catch (e) {
+      // HTTP/parse errors carry a numeric code; anything else is a transport failure (DNS, timeout) worth retrying
+      const isTransport = typeof e?.code !== "number" && !e?.data;
+      if (!isTransport || ++networkFailures > maxNetworkFailures) throw e;
+      authLog(`poll #${i + 1} transient network error, retrying`, { message: e?.message, attempt: networkFailures });
+      continue;
+    }
 
     authLog(`poll #${i + 1}`, { error: data.error, hasAccessToken: !!data.access_token, hasRefreshToken: !!data.refresh_token });
     if (data.access_token) return data;
