@@ -50,6 +50,8 @@ async function mintInPage(livingRoomToken, authToken) {
     });
 
     const page = await context.newPage();
+
+    page.on("console", (msg) => console.log(`[potokenWeb:page] ${msg.text()}`));
     await page.goto("https://www.youtube.com/tv", { waitUntil: "load" });
 
     const result = await page.evaluate(
@@ -65,12 +67,48 @@ async function mintInPage(livingRoomToken, authToken) {
           );
           const tvConfigText = await tvConfigResp.text();
           const ytTvConfig = JSON.parse(tvConfigText.replace(/^[)\]}'\s]+/, ""));
-          const ch = JSON.parse(ytTvConfig.challengeParams.R);
           const requestKey = ytTvConfig.challengeRequestKey;
+          if (!requestKey) {
+            throw new Error("potokenWeb: tv_config doesn't contain challengeRequestKey");
+          }
+
+          // tv_config doesn't always carry the challenge (program). Then take it
+          // from /att/get for the TV client.
+          let ch;
+          const rawChallenge = ytTvConfig.challengeParams?.R;
+          if (rawChallenge) {
+            ch = JSON.parse(rawChallenge);
+          }
+          if (!ch?.bgChallenge?.program) {
+            const attResp = await fetch("https://www.youtube.com/youtubei/v1/att/get?prettyPrint=false", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                context: { client: { clientName: "TVHTML5", clientVersion: "7.20260901.15.00" } },
+                engagementType: "ENGAGEMENT_TYPE_UNBOUND",
+              }),
+            });
+            if (!attResp.ok) {
+              throw new Error(`potokenWeb: /att/get failed with status ${attResp.status}`);
+            }
+            ch = await attResp.json();
+            if (!ch?.bgChallenge?.program) {
+              throw new Error(`potokenWeb: /att/get has no bgChallenge: ${JSON.stringify(ch).slice(0, 200)}`);
+            }
+          }
           const programKey = ch.bgChallenge.program;
           const globalName = ch.bgChallenge.globalName;
 
 
+        // A program starting with "$" is already the ready-made botguard response:
+        // send it to GenerateIT as is, without running the VM.
+        const isReadyProgram = typeof programKey === "string" && programKey.startsWith("$");
+
+        let token;
+        const poOutput = [{}, undefined, [], undefined];
+        if (isReadyProgram) {
+          token = programKey;
+        } else {
         // Wait for the page's own BotGuard VM bootstrap to finish.
         for (let i = 0; i < 2000 && typeof window[globalName]?.a !== "function"; i++) {
           await new Promise((resolve) => setTimeout(resolve, 10));
@@ -78,8 +116,6 @@ async function mintInPage(livingRoomToken, authToken) {
         if (typeof window.trayride?.a !== "function") {
           throw new Error("potokenWeb: window.trayride never became available on /tv");
         }
-
-
 
         const z = [[], []];
         const Z = "";
@@ -116,12 +152,12 @@ async function mintInPage(livingRoomToken, authToken) {
           await new Promise((resolve) => setTimeout(resolve, 10));
         }
 
-        let poOutput = [{}, undefined, [], undefined];
         let tokenPromise = new Promise((resolve, reject) => {
           callbackHolder.minter((response) => resolve(response), poOutput);
         });
 
-        let token = await tokenPromise;
+        token = await tokenPromise;
+        }
 
         const generateITResp = await fetch("https://www.youtube.com/api/jnn/v1/GenerateIT", {
           headers: {
@@ -141,14 +177,20 @@ async function mintInPage(livingRoomToken, authToken) {
         let respJson = await generateITResp.json();
 
         let integrityToken, estimatedTtlSecs, mintRefreshThreshold;
-        if (respJson[0]) {
+        if (respJson[0] != null) {
           integrityToken = respJson[0];
           estimatedTtlSecs = respJson[1];
           mintRefreshThreshold = respJson[2];
         } else {
-          integrityToken = respJson[3];
+          // respJson[3] is already the session poToken,
+          // no tokenMinter step is needed.
           estimatedTtlSecs = respJson[1];
           mintRefreshThreshold = respJson[2];
+          return {
+            sessionPoToken: respJson[3],
+            ttlSecs: estimatedTtlSecs || 43200,
+            refreshThresholdSecs: mintRefreshThreshold || 0,
+          };
         }
 
         let decodedString = atob(integrityToken);
