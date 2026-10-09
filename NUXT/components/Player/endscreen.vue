@@ -1,16 +1,13 @@
 <template>
-  <div ref="rootOfEndscreen" class="d-flex justify-space-between" style="border-radius: 1px; position: absolute; left: 50%; transform: translate(-50%, -60%); " :style="{
-    maxHeight: '50vh',
-    width: isFullscreen ? '100%' : 'fit-content',
-    height: isFullscreen ? '100%' : 'fit-content',
-    top: isFullscreen ? '' : (isLandscape ? '50%' : '0'),
-    transform: isFullscreen ? (isLandscape ? 'translate(-50%, -60%)' : 'translate(-50%, 15%)') : (isLandscape ? 'translate(-50%, -50%)' : 'translate(-50%, 0px)') ,
-
+  <div ref="rootOfEndscreen" style="position: absolute; pointer-events: none;" :style="{
+    left: rect.left + 'px',
+    top: rect.top + 'px',
+    width: rect.width + 'px',
+    height: rect.height + 'px',
   }">
     <div :style="{
-    maxHeight: '50vh',
-    width: getWidth() + 'px',
-    height: getHeight() + 'px',
+    width: rect.width + 'px',
+    height: rect.height + 'px',
   }">
       <template v-if="endscreen?.endscreenRenderer?.elements">
       <div v-for="element in endscreen?.endscreenRenderer?.elements"
@@ -21,6 +18,7 @@
         width: calculateWidth(element),
         height: calculateHeight(element),
         position: 'absolute',
+        pointerEvents: 'auto',
         display: parseFloat(element.endscreenElementRenderer.startMs) <= currentTime * 1000 && parseFloat(element.endscreenElementRenderer.endMs) >= currentTime * 1000 ? 'block' : 'none',
       }" >
           <v-img :src="element.endscreenElementRenderer?.image?.thumbnails[element.endscreenElementRenderer?.image?.thumbnails.length - 1]?.url"
@@ -48,12 +46,6 @@ export default {
     videoHeight: {
       required: true,
     },
-    videoBlockWidth: {
-      required: true,
-    },
-    videoBlockHeight: {
-      required: true,
-    },
     isFullscreen: {
       required: true,
     },
@@ -70,71 +62,74 @@ export default {
         test: "",
       },
     ],
-    isLandscape: false,
-    isEndscreenStarted: false,
-    rootDimensions: {
+    rect: {
+      left: 0,
+      top: 0,
       width: 0,
       height: 0,
     },
+    resizeObserver: null,
   }),
   mounted() {
-    this.updateRootDimensions(screen.orientation.type);
-    window.addEventListener('resize', this.updateRootDimensions);
-    screen.orientation.addEventListener('change', (e)=> {
-
-      this.updateRootDimensions(e.currentTarget.type);
-    })
-
+    this.updateRect();
+    window.addEventListener('resize', this.updateRect);
+    screen.orientation?.addEventListener('change', this.updateRect);
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(this.updateRect);
+      this.resizeObserver.observe(this.playerObject);
+      if (this.$el.parentElement) this.resizeObserver.observe(this.$el.parentElement);
+    }
   },
   beforeUnmount() {
-    window.removeEventListener('resize', this.updateRootDimensions);
+    window.removeEventListener('resize', this.updateRect);
+    screen.orientation?.removeEventListener('change', this.updateRect);
+    this.resizeObserver?.disconnect();
+  },
+  watch: {
+    isFullscreen() {
+      this.$nextTick(this.updateRect);
+    },
+    videoWidth() {
+      this.updateRect();
+    },
+    videoHeight() {
+      this.updateRect();
+    },
   },
   methods: {
-    updateRootDimensions(type) {
-
-      if (type === 'landscape-primary') {
-        this.isLandscape = true;
-      } else if (type === 'portrait-primary') {
-        this.isLandscape = false;
-      }
-      const root = this.$refs.rootOfEndscreen;
-      // if ((this.videoWidth / this.videoHeight).toFixed(2) === (root.offsetWidth / root.offsetHeight).toFixed(2)) {
-        if (root) {
-          if (this.isFullscreen && this.isLandscape) {
-            this.rootDimensions.width = window.screen.width;
-            this.rootDimensions.height = window.screen.height;
-          }
-          else {
-            this.rootDimensions.width = this.videoBlockWidth;
-            this.rootDimensions.height = this.videoBlockHeight;
-          }
-        }
-      // }
+    // Rect of the actually rendered video picture (without letterbox bars),
+    // relative to the overlay's offset parent.
+    updateRect() {
+      const video = this.playerObject;
+      const parent = this.$el?.parentElement;
+      if (!video || !parent || !this.videoWidth || !this.videoHeight) return;
+      const box = video.getBoundingClientRect();
+      const parentBox = parent.getBoundingClientRect();
+      const fit = getComputedStyle(video).objectFit;
+      const scaleX = box.width / this.videoWidth;
+      const scaleY = box.height / this.videoHeight;
+      const scale = fit === 'cover' ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
+      const width = this.videoWidth * scale;
+      const height = this.videoHeight * scale;
+      this.rect = {
+        left: box.left - parentBox.left + (box.width - width) / 2,
+        top: box.top - parentBox.top + (box.height - height) / 2,
+        width,
+        height,
+      };
     },
     getWidth() {
-      if (this.isFullscreen) {
-        if (this.isLandscape) {
-          return window.screen.width;
-        }
-        return this.videoWidth * this.rootDimensions.height / this.videoHeight;
-      }
-      return this.videoWidth * this.rootDimensions.height / this.videoHeight;
+      return this.rect.width;
     },
     getHeight() {
-      if (this.isFullscreen) {
-        if (this.isLandscape) {
-          return window.screen.height;
-        }
-        return this.rootDimensions.height;
-      }
-      return this.rootDimensions.height;
+      return this.rect.height;
     },
     calculatePosition(element) {
       if (!element.endscreenElementRenderer) return {};
       const { left, top } = element.endscreenElementRenderer;
       return {
-        marginLeft: `${left * this.getWidth()}px`,
-        marginTop: `${top * this.getHeight()}px`,
+        left: `${left * this.getWidth()}px`,
+        top: `${top * this.getHeight()}px`,
       };
     },
     calculateWidth(element) {

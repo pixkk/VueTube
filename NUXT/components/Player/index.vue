@@ -100,7 +100,6 @@
         :isFullscreen="isFullscreen"
         :video-height="$refs.player.videoHeight"
         :video-width="$refs.player.videoWidth"
-        :video-block-height="$refs.player.height || $refs.vidcontainer.offsetHeight" :video-block-width="$refs.player.width === 100 ? $refs.vidcontainer.offsetWidth : $refs.player.width"
         :current-time="$refs.player.currentTime"
       :player-object="$refs.player"
       />
