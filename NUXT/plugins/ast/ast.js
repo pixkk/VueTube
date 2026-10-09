@@ -85,6 +85,14 @@ export function findGlobalArray(parsedBaseJs) {
         }
       }
     }
+    // Newer players declare names first and assign the table later: `var e,x0,...; e='a;b'.split(";")`
+    else if (node?.type === "ExpressionStatement" && node.expression.type === "AssignmentExpression" &&
+      node.expression.left.type === "Identifier" && node.expression.right.callee?.object?.type === "Literal") {
+      let call = node.expression.right;
+      globalArrayName = node.expression.left.name;
+      globalArrayData = call.callee.object.value.split(call.arguments[0].value.toString());
+      globalArrayFound = true;
+    }
   }
   return {globalArrayName: globalArrayName, globalArrayData: globalArrayData};
 }
