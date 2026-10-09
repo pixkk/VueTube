@@ -97,8 +97,6 @@ export default {
     },
   },
   methods: {
-    // Rect of the actually rendered video picture (without letterbox bars),
-    // relative to the overlay's offset parent.
     updateRect() {
       const video = this.playerObject;
       const parent = this.$el?.parentElement;
