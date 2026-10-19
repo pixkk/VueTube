@@ -51,8 +51,9 @@
                     </v-avatar>
                     <div class="w-100">
                       <v-list-item-title>
-                        {{ src.qualityLabel ? src.qualityLabel : "Auto" }} ({{ src.quality }})
-                        {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
+                        {{ src.qualityLabel ? src.qualityLabel : "Auto" }}
+<!--                        ({{ src.quality }})-->
+                        ({{ (src.bitrate / 1000000).toFixed(2) }}Mbps)
                       </v-list-item-title>
                       <v-list-item-subtitle>
                         {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
@@ -86,8 +87,11 @@
                       </v-avatar>
                       <div class="w-100">
                         <v-list-item-title>
-                          {{ src?.audioTrack?.displayName ? src?.audioTrack?.displayName : "" }} ({{ src.quality }})
-                          {{ (src.bitrate / 1000000).toFixed(2) }}Mbps
+                          {{ src?.audioTrack?.displayName ? src?.audioTrack?.displayName : "" }}
+<!--                          {{ !src?.audioTrack ? (src.quality) : ""}}-->
+                          ({{ (src.bitrate / 1000000).toFixed(2) }}Mbps)
+                          {{src.isVb ? ' - Voice Boost' : ''}}
+                          {{src.isDrc ? ' - Stable Volume / DRC' : ''}}
                         </v-list-item-title>
                         <v-list-item-subtitle>
                           {{ src.mimeType.replaceAll("; codecs=", ". Codecs: ") }}.
