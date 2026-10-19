@@ -934,6 +934,7 @@ class Innertube {
       id: details.videoId,
       title: details.title,
       isLive: details.isLiveContent,
+      isLiveDvrEnabled: details.isLiveDvrEnabled,
       channelName,
       channelSubs,
       channelUrl,

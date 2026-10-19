@@ -25,7 +25,7 @@
       <!-- Played progress (drawn here so it sits below segments; v-slider fill is hidden via CSS) -->
       <div
         style="position: absolute; bottom: 13px; left: 0; height: 4px; border-radius: 2px; pointer-events: none; transition: width 0.05s linear;"
-        :style="{ width: `${duration > 0 ? ((isScrubbing ? scrubValue : currentTime) / duration) * 100 : 0}%`, background: 'rgb(var(--v-theme-primary))' }"
+        :style="{ width: `${duration > minTime ? (((isScrubbing ? scrubValue : currentTime) - minTime) / (duration - minTime)) * 100 : 0}%`, background: 'rgb(var(--v-theme-primary))' }"
       />
       <!-- Sponsorblock segments — above played bar, below thumb (DOM order ensures thumb wins) -->
       <div
@@ -45,6 +45,7 @@
       track-color="transparent"
       style="width: 100%; position: absolute; bottom: 0; pointer-events: auto;"
       :thumb-size="isScrubbing ? 16 : 12"
+      :min="minTime"
       :max="duration"
       :model-value="isScrubbing ? scrubValue : currentTime"
       @start="startScrubbing"
@@ -112,6 +113,11 @@ export default {
     seeking: {
       type: Boolean,
       required: true,
+    },
+    // Start of the rewindable range; non-zero for live streams that only keep a limited history.
+    minTime: {
+      type: Number,
+      default: 0,
     },
     disabled: {
       type: Boolean,

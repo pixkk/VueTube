@@ -359,10 +359,11 @@
 
     <progressbar
       v-if="$refs.player"
-      :current-time="$refs.player.currentTime"
+      :current-time="liveNoDvr ? $refs.player.duration : $refs.player.currentTime"
       :duration="$refs.player.duration"
       :fullscreen="isFullscreen"
       :controls="controls"
+      :min-time="liveWindow && !liveNoDvr ? liveWindow.minSec : 0"
       :buffered="buffered"
       :seeking="seeking"
       :blocks="sponsorBlocks.videoID ? sponsorBlocks : null"
@@ -372,13 +373,14 @@
       v-if="$refs.player"
       v-show="!isFullscreen || controls"
       :duration="$refs.player.duration"
+      :min-time="liveWindow && !liveNoDvr ? liveWindow.minSec : 0"
       :fullscreen="isFullscreen"
-      :current-time="progress"
+      :current-time="liveNoDvr ? $refs.player.duration : progress"
       :video="$refs.player"
       :controls="controls"
       :sources="sources"
       :seeking="seeking"
-      :disabled="disabled"
+      :disabled="disabled || liveNoDvr"
       :storyboards="storyboards"
       :buffered="buffered"
       :blocks="sponsorBlocks.videoID ? sponsorBlocks : null"
@@ -496,6 +498,8 @@ export default {
       hls: null,
       dash: null,
       isLive: null,
+      liveWindow: null, // { minSec, maxSec, headSequenceNumber, videoId } from SABR LiveMetadata
+      liveNoDvr: false, // live stream without rewindable history: seekbar pinned to the end
       hlsStream: null,
       dashStream: null,
       isVerticalVideo: false, // maybe rename(refactor everywhere used) to isShort
@@ -806,6 +810,7 @@ export default {
     this.$refs.player.addEventListener("playing", this.playingEvent);
     this.$refs.player.addEventListener("ended", this.endedEvent);
     this.isLive = this.video.isLive;
+    this.liveNoDvr = !!this.video.isLive && this.video.isLiveDvrEnabled === false;
 
     if (this.isLive) {
       this.hls = this.video.hls;
@@ -1009,6 +1014,7 @@ export default {
       return false;
     },
     userSeek(time) {
+      if (this.liveNoDvr) return;
       console.log("[PLAYER] userSeek to", time);
       this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
       this.isUserSeeking = true;
@@ -1016,8 +1022,9 @@ export default {
       if (duration && !isNaN(duration) && time >= duration) {
         time = duration - 0.2;
       }
-      if (time < 0) {
-        time = 0;
+      const minTime = this.liveWindow ? this.liveWindow.minSec : 0;
+      if (time < minTime) {
+        time = minTime;
       }
       this.$refs.player.currentTime = time;
 

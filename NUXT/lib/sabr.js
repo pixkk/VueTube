@@ -367,6 +367,12 @@ const SABR_CLIENT_NAME_IDS = {
       }
     }
 
+    // Live headers carry no field 12 / timeRange duration; field 21 holds it in field 7 (microseconds).
+    if (!durationMs && f[21] instanceof Uint8Array) {
+      const durationUs = sabrParseProtoVarintFields(f[21])[7];
+      if (durationUs > 0) durationMs = Math.round(durationUs / 1000);
+    }
+
     // Fallback for media segments to prevent infinite looping if duration is still missing
     if (!isInitSeg && !durationMs) {
       durationMs = 5000;
@@ -421,6 +427,21 @@ const SABR_CLIENT_NAME_IDS = {
   function sabrParseStreamProtectionStatus(data) {
     const f = sabrParseProtoVarintFields(data);
     return { status: f[1] || 0, maxRetries: f[2] || 0 };
+  }
+
+  // LiveMetadata (UMP part 31). Present only on live streams; the seekable window
+  // [minSeekableMs, maxSeekableMs] is the DVR "history" the user can rewind through.
+  //   field 3: head_sequence_number, field 4: head_time_ms, field 5: wall_clock_ms
+  //   field 12/13: min seekable ticks / timescale, field 14/15: max seekable ticks / timescale
+  function sabrParseLiveMetadata(data) {
+    const f = sabrParseProtoVarintFields(data);
+    const toMs = (ticks, scale) => (ticks > 0 && scale > 0 ? Math.round(ticks / (scale / 1000)) : 0);
+    return {
+      headSequenceNumber: f[3] || 0,
+      headTimeMs: f[4] || 0,
+      minSeekableMs: toMs(f[12], f[13]),
+      maxSeekableMs: toMs(f[14], f[15]) || f[4] || 0,
+    };
   }
 
   // Reacts to a StreamProtectionStatus part (id 58) inside a parsed UMP response.
@@ -622,6 +643,7 @@ const SABR_CLIENT_NAME_IDS = {
     let totalDurationMs = videoDurationMs || 0;
     let totalDurationFromFim = false;
     let initAppended = false;
+    let isLive = false;
     let lastSequenceNumber = -1;
     const spsState = { poTokenAttempted: false };
     const sabrContextState = _sabrCreateContextState();
@@ -698,6 +720,21 @@ const SABR_CLIENT_NAME_IDS = {
         if (policy.playbackCookie) playbackCookieBytes = policy.playbackCookie;
         if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
       }
+      const liveMetaPart = parts.find(p => p.partId === 31);
+      if (liveMetaPart) {
+        const live = sabrParseLiveMetadata(liveMetaPart.data);
+        isLive = true;
+        totalDurationFromFim = true;
+        if (component) {
+          component.liveWindow = {
+            minSec: live.minSeekableMs / 1000,
+            maxSec: live.maxSeekableMs / 1000,
+            headSequenceNumber: live.headSequenceNumber,
+          };
+          if (live.maxSeekableMs - live.minSeekableMs < 1000) component.liveNoDvr = true;
+        }
+        onTotalDuration?.(live.maxSeekableMs);
+      }
       const segments = sabrExtractMedia(parts, itag);
       const relevant = segments.filter(s => s.itag === itag);
       let newMediaAppended = false;
@@ -724,7 +761,7 @@ const SABR_CLIENT_NAME_IDS = {
       } else {
         emptyCount = 0;
       }
-      if (totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) {
+      if (!isLive && totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) {
         console.log('[SABR] itag', itag, 'done: currentPlayerTimeMs', currentPlayerTimeMs, '>= totalDurationMs', totalDurationMs);
         break;
       }
@@ -1284,7 +1321,7 @@ const SABR_CLIENT_NAME_IDS = {
     }
   }
 
-  async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
+  async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, onLiveStart, startAtLive = false, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = _getYoutubePlugin(component);
     const innertube = yt ? await yt.getAPI() : null;
     const clientName = innertube?.context?.client?.clientName || 'WEB';
@@ -1303,6 +1340,9 @@ const SABR_CLIENT_NAME_IDS = {
     let totalDurationFromFim = false;
     let audioInitAppended = false;
     let videoInitAppended = false;
+    let isLive = false;
+    let liveStartPending = startAtLive;
+    let liveSnapChecked = false;
     let lastAudioSeq = -1;
     let lastVideoSeq = -1;
     const spsState = { poTokenAttempted: false };
@@ -1397,6 +1437,34 @@ const SABR_CLIENT_NAME_IDS = {
         if (policy.backoffTimeMs > 0) await new Promise(r => setTimeout(r, policy.backoffTimeMs));
       }
 
+      const liveMetaPart = parts.find(p => p.partId === 31);
+      if (liveMetaPart) {
+        const live = sabrParseLiveMetadata(liveMetaPart.data);
+        isLive = true;
+        totalDurationFromFim = true;
+        if (component) {
+          component.liveWindow = {
+            minSec: live.minSeekableMs / 1000,
+            maxSec: live.maxSeekableMs / 1000,
+            headSequenceNumber: live.headSequenceNumber,
+            videoId,
+          };
+          if (live.maxSeekableMs - live.minSeekableMs < 1000) component.liveNoDvr = true;
+        }
+        onTotalDuration?.(live.maxSeekableMs);
+        if (liveStartPending) {
+          // The stream was opened at 0, which is the start of the broadcast. The head is only
+          // known from this response, so drop its media and re-request from just behind the head.
+          liveStartPending = false;
+          currentPlayerTimeMs = Math.max(live.minSeekableMs, live.maxSeekableMs - 10000);
+          onLiveStart?.(currentPlayerTimeMs);
+          continue;
+        }
+      }
+
+      // A live stream has no end, so it must not run into the request cap; abort ends it.
+      if (isLive) i--;
+
       const segments = sabrExtractMedia(parts);
       let newMediaAppended = false;
 
@@ -1419,6 +1487,15 @@ const SABR_CLIENT_NAME_IDS = {
             if (seg.sequenceNumber !== undefined && seg.sequenceNumber <= lastVideoSeq) continue;
             if (seg.sequenceNumber !== undefined) lastVideoSeq = seg.sequenceNumber;
           }
+          // Live streams without a DVR window ignore player_time_ms and always answer with
+          // the live edge. Follow the server: move the player to where the media really is.
+          if (isLive && !liveSnapChecked && !seg.isInitSeg) {
+            liveSnapChecked = true;
+            if (Math.abs(seg.startMs - currentPlayerTimeMs) > 15000) {
+              currentPlayerTimeMs = seg.startMs;
+              onLiveStart?.(seg.startMs);
+            }
+          }
           currentPlayerTimeMs += seg.durationMs;
           await onVideoChunk(seg.data, seg.durationMs);
           newMediaAppended = true;
@@ -1426,12 +1503,15 @@ const SABR_CLIENT_NAME_IDS = {
       }
 
       if (!newMediaAppended) {
-        if (++emptyCount >= 5) break;
+        if (isLive) {
+          // At the live edge there is simply nothing new yet; wait for the next segment.
+          await new Promise(r => setTimeout(r, 1000));
+        } else if (++emptyCount >= 5) break;
       } else {
         emptyCount = 0;
       }
 
-      if (totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) break;
+      if (!isLive && totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) break;
     }
   }
 
@@ -1500,6 +1580,24 @@ const SABR_CLIENT_NAME_IDS = {
       };
     };
 
+    // Skip when it barely differs from the duration already set from lengthSeconds. A skipped value is
+    // kept and retried once both buffers go idle, so a growing live duration isn't lost.
+    let pendingDurationSec = null;
+    const applyPendingDuration = () => {
+      if (pendingDurationSec === null || mediaSource.readyState !== 'open' || videoSB.updating || audioSB.updating) return;
+      let sec = pendingDurationSec;
+      pendingDurationSec = null;
+      // A live head segment ends past the reported seekable edge; MSE rejects a duration
+      // below the highest buffered timestamp.
+      for (const sb of [videoSB, audioSB]) {
+        if (sb.buffered.length) sec = Math.max(sec, sb.buffered.end(sb.buffered.length - 1));
+      }
+      if (!(Math.abs(mediaSource.duration - sec) > 1)) return;
+      try { mediaSource.duration = sec; } catch (e) { console.warn('[SABR combined] Failed to set duration:', e?.name, e?.message); }
+    };
+    videoSB.addEventListener('updateend', applyPendingDuration);
+    audioSB.addEventListener('updateend', applyPendingDuration);
+
     const appendVideo = makeAppendQueue(videoSB);
     const appendAudio = makeAppendQueue(audioSB);
     let videoChunks = 0, audioChunks = 0;
@@ -1508,13 +1606,14 @@ const SABR_CLIENT_NAME_IDS = {
       ...streamParams,
       signal,
       onTotalDuration: (ms) => {
-        // Skip when it barely differs from the duration already set from lengthSeconds:
-        // changing duration makes some WebViews start an async range removal, which
-        // leaves the SourceBuffers "updating" while we try to append.
-        if (mediaSource.readyState !== 'open' || videoSB.updating || audioSB.updating) return;
-        const sec = ms / 1000;
-        if (!(Math.abs(mediaSource.duration - sec) > 1)) return;
-        try { mediaSource.duration = sec; } catch (e) { console.warn('[SABR combined] Failed to set duration:', e?.name, e?.message); }
+        pendingDurationSec = ms / 1000;
+        applyPendingDuration();
+      },
+      onLiveStart: (ms) => {
+        const el = component.$refs.player;
+        if (!el) return;
+        component.isInternalSeek = true;
+        el.currentTime = ms / 1000;
       },
       onVideoChunk: (data) => { videoChunks++; return appendVideo(data); },
       onAudioChunk: (data) => { audioChunks++; return appendAudio(data); },
@@ -1652,12 +1751,21 @@ const SABR_CLIENT_NAME_IDS = {
         try { mediaSource.duration = durationSec; } catch (e) {}
       }
 
+      // Live: the window from the previous session is the best duration known until the
+      // new session's own LiveMetadata arrives, and a seek target must fit inside it.
+      const knownLive = component.liveWindow?.videoId === component.video.id ? component.liveWindow : null;
+      if (knownLive) {
+        try { mediaSource.duration = knownLive.maxSec; } catch (e) {}
+      }
+      const startAtLive = !!component.video.isLive && !knownLive && startTimeSec === 0;
+
       if (component.$refs.player && component.$refs.player.currentTime !== startTimeSec) {
         component.isInternalSeek = true;
         component.$refs.player.currentTime = startTimeSec;
       }
 
       _sabrStartMseCombined(component, mediaSource, videoMimeType, audioMimeType, {
+        startAtLive,
         serverAbrStreamingUrl: component.video.metadata.serverAbrStreamingUrl,
         videoPlaybackUstreamerConfig: component.video.metadata.ustreamerConfig,
         audioItag: bestAudio.itag,

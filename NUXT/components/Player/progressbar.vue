@@ -10,7 +10,7 @@
       background-opacity="0.5"
       background-color="white"
       :buffer-value="buffered"
-      :model-value="(currentTime / duration) * 100"
+      :model-value="duration > minTime ? ((currentTime - minTime) / (duration - minTime)) * 100 : 0"
       color="primary"
       bg-color="none"
       buffer-opacity="0.28"
@@ -48,6 +48,10 @@ export default {
       required: true,
     },
     controls: {},
+    minTime: {
+      type: Number,
+      default: 0,
+    },
     buffered: {
       type: Number,
       required: true,
