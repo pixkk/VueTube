@@ -17,6 +17,11 @@
           : 'width: 100%; left: 0; bottom: -0.875rem; height: 3rem;'
       "
     >
+      <!-- Full-length track -->
+      <div
+        id="seekbar-track"
+        style="position: absolute; bottom: 13px; left: 0; right: 0; height: 4px; border-radius: 2px; pointer-events: none; background: #ffffff22;"
+      />
       <!-- Buffer indicator -->
       <div
         style="position: absolute; bottom: 13px; left: 0; height: 4px; border-radius: 2px; pointer-events: none; background: rgba(255,255,255,0.28); transition: width 0.3s linear;"
