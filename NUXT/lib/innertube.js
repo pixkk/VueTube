@@ -370,7 +370,17 @@ class Innertube {
   }
 
   async getCaptions(id) {
-    const response = await this.playerRequest(id);
+    const clientConfig = this.getYTConfig();
+    const response = await Http.post({
+      url: `${constants.URLS.YT_URL}/youtubei/v1/player?key=${this.key}&prettyPrint=false`,
+      data: constants.WEB_CLIENT(clientConfig, id, this.signatureTimestamp),
+      headers: {
+        ...constants.CLIENT_HEADER(clientConfig),
+        "user-agent": clientConfigs.webApiVal.USER_AGENT,
+        "x-youtube-client-name": String(clientConfigs.webApiVal.CLIENT_ID),
+        "x-youtube-client-version": clientConfigs.webApiVal.VERSION_WEB,
+      },
+    });
     return response.data;
   }
 

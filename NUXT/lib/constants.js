@@ -47,6 +47,18 @@ const webEmbeddedApiVal = {
   CLIENT_WEB_M: 2,
   CLIENT_WEB_D: 1,
 };
+const webApiVal = {
+  CLIENTNAME: "WEB",
+  CLIENT_ID: 1,
+  clientScreen: "WATCH",
+  VERSION_WEB: webVersion,
+  USER_AGENT: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  browserName: "Chrome",
+  browserVersion: "155.0.0.0",
+  osName: "Windows",
+  osVersion: "10.0",
+  platform: "DESKTOP",
+};
 const MWEB = {
   CLIENTNAME: "MWEB",
   clientScreen: "WATCH",
@@ -89,6 +101,7 @@ export const clientConfigs = {
   webEmbeddedApiVal,
   tvApiVal,
   androidVrApiVal,
+  webApiVal,
   MWEB
 };
 const filesystem = {
@@ -325,6 +338,51 @@ export default {
       },
       cpn: getCpn(),
       captionParams: {}
+    }
+  },
+  WEB_CLIENT: (config, videoId, signatureTimestamp) => {
+    return {
+      videoId: videoId,
+      context: {
+        client: {
+          hl: localStorage.getItem("language") || config.INNERTUBE_CONTEXT.client.hl,
+          gl: config.INNERTUBE_CONTEXT.client.gl,
+          remoteHost: config.INNERTUBE_CONTEXT.client.remoteHost,
+          visitorData: config.INNERTUBE_CONTEXT.client.visitorData,
+          userAgent: webApiVal.USER_AGENT,
+          clientName: webApiVal.CLIENTNAME,
+          clientVersion: webApiVal.VERSION_WEB,
+          osName: webApiVal.osName,
+          osVersion: webApiVal.osVersion,
+          platform: webApiVal.platform,
+          clientFormFactor: "UNKNOWN_FORM_FACTOR",
+          browserName: webApiVal.browserName,
+          browserVersion: webApiVal.browserVersion,
+          originalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+          configInfo: config.INNERTUBE_CONTEXT.client.configInfo,
+          utcOffsetMinutes: -Math.floor((new Date).getTimezoneOffset()),
+          timeZone: (new Intl.DateTimeFormat).resolvedOptions().timeZone,
+          playerType: "UNIPLAYER",
+          clientScreen: webApiVal.clientScreen,
+        },
+        user: {
+          lockedSafetyMode: false
+        },
+        request: {
+          useSsl: true
+        },
+      },
+      playbackContext: {
+        contentPlaybackContext: {
+          html5Preference: "HTML5_PREF_WANTS",
+          lactMilliseconds: "-1",
+          referer: `https://www.youtube.com/watch?v=${videoId}`,
+          signatureTimestamp: signatureTimestamp,
+        },
+      },
+      contentCheckOk: true,
+      racyCheckOk: true,
+      cpn: getCpn(),
     }
   },
   CLIENT_HEADER: (config, isAuthed = false) => {

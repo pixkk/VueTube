@@ -64,31 +64,11 @@
         @loadedmetadata="checkDimensions()"
         @click="controlsHandler()"
         @error="videoErrorHandler"
-      >
-        <track default kind="captions" id="captions" src=""/>
-      </video>
+      ></video>
 
-      <!-- Custom captions overlay -->
       <div
         v-if="customCaptionHtml"
         class="custom-captions-overlay"
-        style="
-          position: absolute;
-          left: 50%;
-          top: auto;
-          bottom: 20%;
-          transform: translateX(-50%);
-          z-index: 10;
-          width: max-content;
-          text-align: center;
-          white-space: nowrap;
-          pointer-events: none;
-          color: white;
-          background-color: rgba(0, 0, 0, 0.7);
-          padding: 0.1rem 0.4rem;
-          font-size: 1rem;
-          line-height: 1.4;
-        "
         v-html="customCaptionHtml"
       ></div>
       </div>
@@ -232,7 +212,7 @@
         <captions
           v-if="$refs.player"
           class="mx-2"
-          :captions="video.captions"
+          :captions="webCaptionList || video.captions"
           @captionsHandler="captionsHandler($event)"
         />
         <loop
@@ -431,6 +411,7 @@ import $youtube from "~/lib/innertube";
 import sabr from "~/lib/sabr";
 import Endscreen from "./endscreen.vue";
 import {convertTranscriptToVTT} from "../../lib/utils";
+import {loadCaptions, activeCues, renderCues} from "../../lib/captions";
 
 export default {
   components: {
@@ -488,6 +469,7 @@ export default {
       controls: false,
       seeking: false,
       customCaptionHtml: "",
+      webCaptionList: null,
       contain: true,
       skipping: 0,
       progress: 0,
@@ -544,6 +526,7 @@ export default {
 
     this.isSegment = false;
     this.poster = await $youtube.getThumbnail(this.$route.query.v, '', []);
+    this.loadWebCaptions();
 
     console.log("SPSR BLCK" + this.sponsorBlocks);
     if (
@@ -927,6 +910,7 @@ export default {
     }
   },
   beforeUnmount() {
+    this.stopCaptions();
     this.cleanup();
     if (this._motionOrientationHandler) {
       window.removeEventListener("devicemotion", this._motionOrientationHandler);
@@ -1342,87 +1326,57 @@ export default {
       this.hlsStream = null;
     },
     async captionsHandler(q) {
+      this.stopCaptions();
       if (q.baseUrl != null) {
-        let html = await Http.get({
-          url: (constants.URLS.YT_MOBILE + q.baseUrl + "&fmt=vtt").replace("https://www.youtube.com", ""),
-          params: {},
-          headers: {},
-        }).catch((error) => error);
-
-        let captions;
-        if (html.data !== "") {
-          // captions = convertTranscriptToVTT(html.data);
-          captions = html.data;
-        }
-        else {
-          let r = await this.$youtube.getCaptions(this.video.id);
-          this.video.captions = r.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-          console.warn(r)
-          for (let i =0; i< this.video.captions.length; i++) {
-            if (this.video.captions[i].languageCode === q.languageCode) {
-              html = await Http.get({
-                url: (constants.URLS.YT_MOBILE + this.video.captions[i].baseUrl).replace("https://www.youtube.com", ""),
-                params: {},
-                headers: {},
-              }).catch((error) => error);
-
-              // captions = convertTranscriptToVTT(html.data);
-              captions = html.data;
-            }
-          }
-        }
-
-        function textToDataURL(text) {
-          const blob = new Blob([text], { type: 'text/plain' });
-          const reader = new FileReader();
-          return new Promise((resolve, reject) => {
-            reader.onloadend = () => {
-              resolve(reader.result);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
+        const fetcher = (track) => async (format) => {
+          const res = await Http.get({
+            url: (track.baseUrl + "&fmt=" + format).replace("https://www.youtube.com", constants.URLS.YT_MOBILE),
+            params: {},
+            headers: {},
           });
-        }
-        textToDataURL(captions).then((dataurl) => {
-          document.getElementById("captions").src = dataurl;
-          this.setupCustomCaptionsTrack();
-        })
+          return res.data;
+        };
+
+        const cues = await loadCaptions(fetcher(q));
+        if (cues) this.startCaptions(cues);
       }
       else {
-        document.getElementById("captions").src = "";
         this.customCaptionHtml = "";
       }
       const rootElement = document.getElementById('__nuxt');
       rootElement.className += "web chrome";
     },
-    setupCustomCaptionsTrack() {
-      const trackEl = document.getElementById("captions");
-      const textTrack = trackEl?.track;
-      if (!textTrack) return;
-
-      // Hide the browser's own cue rendering — we render cues ourselves in a
-      // custom, statically-positioned overlay instead of relying on native
-      // track placement (which YouTube's own cue position/align/line
-      // settings can push off-center or under the controls).
-      textTrack.mode = "hidden";
-
-      if (this._captionsCueChangeHandler) {
-        textTrack.removeEventListener("cuechange", this._captionsCueChangeHandler);
-      }
-      this._captionsCueChangeHandler = () => {
-        const activeCues = textTrack.activeCues;
-        this.customCaptionHtml = activeCues && activeCues.length
-          ? Array.from(activeCues)
-              // getCueAsHTML() is the browser's own WebVTT cue-payload parser
-              .map((cue) => {
-                const container = document.createElement("div");
-                container.appendChild(cue.getCueAsHTML());
-                return container.innerHTML;
-              })
-              .join("<br>")
-          : "";
+    async loadWebCaptions() {
+      const id = this.video.id;
+      this.webCaptionList = null;
+      const r = await this.$youtube.getCaptions(id).catch(() => null);
+      const tracks = r?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+      if (id !== this.video.id || !tracks?.length) return;
+      this.webCaptionList = [
+        { baseUrl: null, name: { runs: [{ text: "Disable captions" }] } },
+        ...tracks,
+      ];
+    },
+    startCaptions(cues) {
+      let lastKey = null;
+      const tick = () => {
+        const player = this.$refs.player;
+        if (player) {
+          const indexes = activeCues(cues, player.currentTime * 1000);
+          const key = indexes.join(",");
+          if (key !== lastKey) {
+            lastKey = key;
+            this.customCaptionHtml = renderCues(cues, indexes);
+          }
+        }
+        this._captionsFrame = requestAnimationFrame(tick);
       };
-      textTrack.addEventListener("cuechange", this._captionsCueChangeHandler);
+      this._captionsFrame = requestAnimationFrame(tick);
+    },
+    stopCaptions() {
+      if (this._captionsFrame) cancelAnimationFrame(this._captionsFrame);
+      this._captionsFrame = null;
+      this.customCaptionHtml = "";
     },
     volumeHandler(q) {
 
@@ -1653,9 +1607,34 @@ export default {
   color: white !important;
 }
 
-/* Native cue rendering is disabled (track.mode = "hidden") in favor of the
-   custom-captions-overlay div, which is always centered and statically
-   positioned relative to the controls/seekbar. */
+.custom-captions-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  color: white;
+  font-size: 1rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.custom-captions-overlay .yt-cue-flow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.custom-captions-overlay .yt-cue {
+  text-align: center;
+  padding: 0.1rem 0.4rem;
+}
+.custom-captions-overlay .yt-cue-placed {
+  position: absolute;
+  width: max-content;
+  max-width: 96%;
+}
 .skip-button {
   background-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-on-primary));
