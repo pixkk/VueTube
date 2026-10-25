@@ -57,7 +57,7 @@ function redact(obj) {
 
 function authLog(step, payload) {
   const line = payload === undefined ? step : `${step}: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`;
-  console.log("[auth]", line);
+  //console.log("[auth]", line);
   if (logSink) logSink(`${new Date().toISOString().slice(11, 23)} ${line}`);
 }
 
