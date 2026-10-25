@@ -2,7 +2,7 @@
   <!-- Fills its parent container — the parent decides position and size -->
   <div
     class="sponsorblock-segments"
-    style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none; overflow: hidden;"
+    style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; pointer-events: none;"
   >
     <div
       v-for="(block, i) in (blocks && blocks.segments) || []"
@@ -10,7 +10,7 @@
       style="position: absolute; top: 0; bottom: 0; pointer-events: none; opacity: 0.95;"
       :style="{
         left: clampPercent((block.segment[0] / duration) * 100) + '%',
-        width: segmentWidth(block) + '%',
+        width: clampPercent(((Math.min(block.segment[1], duration) - block.segment[0]) / duration) * 100) + '%',
         background: colors[block.category] || 'gray',
       }"
     />
@@ -46,11 +46,6 @@ export default {
     clampPercent(v) {
       if (!isFinite(v) || isNaN(v)) return 0;
       return Math.max(0, Math.min(100, v));
-    },
-    segmentWidth(block) {
-      const start = this.clampPercent((block.segment[0] / this.duration) * 100);
-      const end = this.clampPercent((block.segment[1] / this.duration) * 100);
-      return Math.max(0, end - start);
     },
   },
 };
