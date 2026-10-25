@@ -69,6 +69,9 @@
       <div
         v-if="customCaptionHtml"
         class="custom-captions-overlay"
+        ref="captionsOverlay"
+        :class="{ 'with-seekbar': controls || seeking }"
+        :style="{ '--seekbar-reserve': captionsReserve + 'px' }"
         v-html="customCaptionHtml"
       ></div>
       </div>
@@ -470,6 +473,7 @@ export default {
       seeking: false,
       customCaptionHtml: "",
       webCaptionList: null,
+      captionsReserve: 0,
       contain: true,
       skipping: 0,
       progress: 0,
@@ -916,7 +920,33 @@ export default {
       window.removeEventListener("devicemotion", this._motionOrientationHandler);
     }
   },
+  watch: {
+    controls() {
+      this.scheduleCaptionsReserve();
+    },
+    seeking() {
+      this.scheduleCaptionsReserve();
+    },
+    isFullscreen() {
+      this.scheduleCaptionsReserve();
+    },
+    customCaptionHtml(value, oldValue) {
+      if (value && !oldValue) this.scheduleCaptionsReserve();
+    },
+  },
   methods: {
+    scheduleCaptionsReserve() {
+      requestAnimationFrame(() => this.updateCaptionsReserve());
+    },
+    updateCaptionsReserve() {
+      const overlay = this.$refs.captionsOverlay;
+      const track = document.getElementById("seekbar-track");
+      const container = overlay?.parentElement;
+      if (!container || !track) return;
+      const trackRect = track.getBoundingClientRect();
+      if (!trackRect.width) return;
+      this.captionsReserve = Math.max(0, container.getBoundingClientRect().bottom - trackRect.top);
+    },
     loadedAudioEvent() {
       this.$refs.player.addEventListener("loadeddata", this.loadedDataEvent);
       this.loadedDataEvent();
@@ -1616,6 +1646,12 @@ export default {
   font-size: 1rem;
   line-height: 1.4;
   white-space: pre-wrap;
+}
+.custom-captions-overlay.with-seekbar {
+  bottom: calc(var(--seekbar-reserve) + 1rem);
+}
+.custom-captions-overlay.with-seekbar .yt-cue-flow {
+  bottom: 0;
 }
 .custom-captions-overlay .yt-cue-flow {
   position: absolute;
