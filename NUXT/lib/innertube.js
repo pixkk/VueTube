@@ -915,7 +915,7 @@ class Innertube {
 
     });
     const channelName = isTVResponse
-      ? (tvOwner?.title?.simpleText || "")
+      ? (tvOwner?.title?.simpleText || tvOwner?.title?.runs.map(r => r.text).join('') || "")
       : (ownerData?.title?.runs?.[0]?.text || "");
     const channelSubs = isTVResponse
       ? (tvOwner?.subscriberCountText?.simpleText || "")
@@ -926,6 +926,25 @@ class Innertube {
     const channelImg = isTVResponse
       ? (tvOwner?.thumbnail?.thumbnails?.[0]?.url || "")
       : (ownerData?.thumbnail?.thumbnails?.[0]?.url || "");
+
+    const collaborators = (() => {
+      const panels = [...(responseNext.engagementPanels || []), ...(mobileNext.engagementPanels || [])]
+        .map((p) => p.engagementPanelSectionListRenderer);
+      const list = panels.find((p) => p?.identifier?.tag === "channel-actions-panel")
+        ?.content?.itemSectionRenderer?.contents || [];
+      return list
+        .map((c) => c.compactLinkRenderer)
+        .filter(Boolean)
+        .map((link) => {
+          const panelTag = link.navigationEndpoint?.showEngagementPanelEndpoint?.identifier?.tag || "";
+          const channelId = panelTag.replace("channel-actions-panel-", "");
+          return {
+            name: link.title?.simpleText || "",
+            img: link.thumbnail?.thumbnails?.[1]?.url || link.thumbnail?.thumbnails?.[0]?.url || "",
+            channelUrl: channelId,
+          };
+        });
+    })();
 
     const descPanel = mobileNext.engagementPanels
       ?.find(
@@ -949,6 +968,7 @@ class Innertube {
       channelSubs,
       channelUrl,
       channelImg,
+      collaborators: collaborators.length > 1 ? collaborators : [],
       captions: captions,
       endscreen: responseInfo.endscreen,
       storyboards: responseInfo.storyboards?.playerStoryboardSpecRenderer?.spec || null,

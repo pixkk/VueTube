@@ -137,7 +137,21 @@
         >
           <div class="d-flex flex-column" style="flex: 3;">
             <div id="details" class="w-100" style="flex-direction: row !important">
+              <div
+                v-if="video.collaborators?.length"
+                class="avatar-link d-flex"
+                @click="collabSheet = true"
+              >
+                <v-img
+                  v-for="(person, i) in video.collaborators.slice(0, 2)"
+                  :key="person.channelUrl"
+                  class="avatar-thumbnail"
+                  :style="i ? 'margin-left: -10px' : ''"
+                  :src="person.img"
+                />
+              </div>
               <NuxtLink
+                v-else
                 to="/channel"
                 class="avatar-link"
                 @click="$store.dispatch('channel/fetchChannel', video.channelUrl)"
@@ -245,6 +259,52 @@
             </v-bottom-sheet>
           </div>
         </v-card>
+
+        <v-bottom-sheet v-model="collabSheet" style="z-index: 777777">
+          <v-card class="bg-background">
+            <div
+              class="d-flex align-center px-4 py-2"
+              v-touch="{
+                down: () => (collabSheet = false),
+              }"
+            >
+              <span class="text-subtitle-2">Collaborators</span>
+              <v-spacer />
+              <v-btn
+                elevation="0" icon variant="text" size="small" @click="collabSheet = false">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </div>
+            <v-divider />
+            <v-card-text
+              style="max-height: 50vh; overflow-y: auto; height: 50vh"
+              class="pa-0 d-flex flex-column"
+            >
+              <NuxtLink
+                v-for="person in video.collaborators"
+                :key="person.channelUrl"
+                to="/channel"
+                style="text-decoration: none; color: inherit"
+                @click="collabSheet = false, $store.dispatch('channel/fetchChannel', person.channelUrl)"
+              >
+                <v-list-item>
+                  <template #prepend>
+                    <v-img
+                      class="mr-3"
+                      style="border-radius: 50%; width: 40px; height: 40px; flex: 0 0 40px"
+                      :src="person.img"
+                    />
+                  </template>
+                  <v-list-item-title v-text="person.name" />
+                  <template #append>
+                    <v-icon>mdi-chevron-right</v-icon>
+                  </template>
+                </v-list-item>
+                <v-divider />
+              </NuxtLink>
+            </v-card-text>
+          </v-card>
+        </v-bottom-sheet>
       </div>
 
       <v-divider
@@ -673,6 +733,7 @@ export default {
           },
         ],
         showMore: false,
+        collabSheet: false,
         showComments: false,
         // share: false,
         sources: [],
@@ -805,6 +866,7 @@ export default {
   border-radius: 50%;
   width: 35px;
   height: 35px;
+  flex: 0 0 35px;
 }
 
 .channel-section .channel-name {
