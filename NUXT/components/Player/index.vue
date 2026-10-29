@@ -1624,10 +1624,10 @@ export default {
 
 <style>
 .dim {
-  filter: brightness(33%);
+  filter: brightness(80%);
 }
 .dim-ish {
-  filter: brightness(66%);
+  filter: brightness(80%);
 }
 .invisible {
   opacity: 0;

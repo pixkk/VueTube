@@ -12,7 +12,6 @@
       <template v-if="endscreen?.endscreenRenderer?.elements">
       <div v-for="element in endscreen?.endscreenRenderer?.elements"
       >
-        {{updatePlayerStyles()}}
         <div :style="{
         ...calculatePosition(element),
         width: calculateWidth(element),
@@ -72,6 +71,10 @@ export default {
   }),
   mounted() {
     this.updateRect();
+    this.updatePlayerStyles();
+    this.playerObject.addEventListener('timeupdate', this.updatePlayerStyles);
+    this.playerObject.addEventListener('seeking', this.updatePlayerStyles);
+    this.playerObject.addEventListener('seeked', this.updatePlayerStyles);
     window.addEventListener('resize', this.updateRect);
     screen.orientation?.addEventListener('change', this.updateRect);
     if (typeof ResizeObserver !== 'undefined') {
@@ -84,8 +87,15 @@ export default {
     window.removeEventListener('resize', this.updateRect);
     screen.orientation?.removeEventListener('change', this.updateRect);
     this.resizeObserver?.disconnect();
+    this.playerObject.removeEventListener('timeupdate', this.updatePlayerStyles);
+    this.playerObject.removeEventListener('seeking', this.updatePlayerStyles);
+    this.playerObject.removeEventListener('seeked', this.updatePlayerStyles);
+    this.restoreBrightness();
   },
   watch: {
+    endscreen() {
+      this.updatePlayerStyles();
+    },
     isFullscreen() {
       this.$nextTick(this.updateRect);
     },
@@ -141,14 +151,28 @@ export default {
       const height = width / aspectRatio;
       return `${height * this.getWidth()}px`;
     },
+    isEndscreenActive() {
+      const renderer = this.endscreen?.endscreenRenderer;
+      if (!renderer?.elements?.length) return false;
+      const ms = this.playerObject.currentTime * 1000;
+      const end = Math.max(
+        ...renderer.elements.map((e) => parseFloat(e.endscreenElementRenderer?.endMs) || 0)
+      );
+      return parseFloat(renderer.startMs) <= ms && ms <= end;
+    },
     updatePlayerStyles() {
-      if (this.endscreen.endscreenRenderer.startMs > this.currentTime * 1000) {
-        this.playerObject.style.filter = "brightness(" + parseFloat(localStorage.getItem("brightness")) || 1 + ")";
+      if (!this.playerObject) return;
+      if (this.isEndscreenActive()) {
+        this.playerObject.style.filter = "brightness(50%)";
+      } else {
+        this.restoreBrightness();
       }
-      else {
-        this.playerObject.style.filter = `brightness(50%)`;
-      }
-      return "";
+    },
+    restoreBrightness() {
+      if (!this.playerObject) return;
+      // empty inline filter lets the .dim classes of the player apply again
+      const saved = parseFloat(localStorage.getItem("brightness"));
+      this.playerObject.style.filter = saved >= 0 && saved !== 1 ? `brightness(${saved})` : "";
     },
     getStyleOfEndscreenElement(style) {
       if (!style) return {};
