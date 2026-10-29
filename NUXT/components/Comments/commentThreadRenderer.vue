@@ -10,7 +10,7 @@
       icon
       variant="text"
       to="/channel"
-      class="avatar-link mr-4"
+      class="avatar-link ml-2 mr-4"
       style="height: 35px; width: 35px"
       @click.prevent="
         $store.dispatch(
@@ -126,6 +126,7 @@
   padding: 10px 0;
 
   .avatar-thumbnail {
+    margin: 0;
     border-radius: 50%;
     width: 35px;
     height: 35px;

@@ -863,6 +863,7 @@ export default {
 }
 
 .channel-section .avatar-thumbnail {
+  margin-top: 0;
   border-radius: 50%;
   width: 35px;
   height: 35px;

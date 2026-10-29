@@ -53,7 +53,7 @@ export default {
 }
 
 .avatar-thumbnail {
-  margin-right: 1rem;
+  margin: 0 1rem 0 0.5rem;
   border-radius: 50%;
   width: 48px;
   height: 48px;
