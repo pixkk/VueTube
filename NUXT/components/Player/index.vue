@@ -1155,6 +1155,9 @@ export default {
     },
     endedEvent() {
       this.videoEnded = true;
+      if (this.$refs.player.loop) return;
+      clearTimeout(this.controls);
+      this.controls = true;
     },
     progressEvent() {
       // audio sync not needed — single MediaSource
