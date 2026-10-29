@@ -17,7 +17,7 @@
           : '0',
     }"
   >
-      <div style="position: relative; width: 100%;">
+      <div style="position: relative; width: 100%;" :style="{ height: '100%' }">
       <video
         :autoplay="true"
         playsinline
@@ -35,7 +35,7 @@
         mediagroup="vuetubecute"
         width="100%"
         :src="hls || dash ? '' : vidSrc"
-        style="transition: filter 0.15s ease-in-out, transform 0.15s linear"
+        style="transition: filter 0.15s ease-in-out, transform 0.15s linear; vertical-align: middled;"
         :height="isFullscreen ? '100%' : 'auto'"
         :class="
         controls ||
@@ -84,7 +84,8 @@
         :video-height="$refs.player.videoHeight"
         :video-width="$refs.player.videoWidth"
         :current-time="$refs.player.currentTime"
-      :player-object="$refs.player"
+        :player-object="$refs.player"
+        @exit-fullscreen="exitFullscreen"
       />
 
 

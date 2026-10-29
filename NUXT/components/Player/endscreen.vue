@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootOfEndscreen" style="position: absolute; pointer-events: none;" :style="{
+  <div ref="rootOfEndscreen" style="position: absolute; pointer-events: none; z-index: 21;" :style="{
     left: rect.left + 'px',
     top: rect.top + 'px',
     width: rect.width + 'px',
@@ -18,8 +18,9 @@
         height: calculateHeight(element),
         position: 'absolute',
         pointerEvents: 'auto',
+        cursor: 'pointer',
         display: parseFloat(element.endscreenElementRenderer.startMs) <= currentTime * 1000 && parseFloat(element.endscreenElementRenderer.endMs) >= currentTime * 1000 ? 'block' : 'none',
-      }" >
+      }" @click.stop="openElement(element.endscreenElementRenderer)">
           <v-img :src="element.endscreenElementRenderer?.image?.thumbnails[element.endscreenElementRenderer?.image?.thumbnails.length - 1]?.url"
                  :style="getStyleOfEndscreenElement(element.endscreenElementRenderer?.style)"
 
@@ -55,6 +56,7 @@ export default {
       required: true,
     }
   },
+  emits: ["exit-fullscreen"],
   data: () => ({
     temp: [
       {
@@ -150,6 +152,22 @@ export default {
       const { width, aspectRatio } = element.endscreenElementRenderer;
       const height = width / aspectRatio;
       return `${height * this.getWidth()}px`;
+    },
+    openElement(renderer) {
+      const endpoint = renderer?.endpoint;
+      const watch = endpoint?.watchEndpoint;
+      const channelId = endpoint?.browseEndpoint?.browseId;
+      const url = endpoint?.urlEndpoint?.url;
+      if (watch?.videoId) {
+        const list = watch.playlistId ? `&list=${watch.playlistId}` : "";
+        this.$router.push(`/watch?v=${watch.videoId}${list}`);
+      } else if (channelId) {
+        this.$emit("exit-fullscreen");
+        this.$store.dispatch("channel/fetchChannel", channelId);
+        this.$router.push("/channel");
+      } else if (url) {
+        window.open(url, "_blank");
+      }
     },
     isEndscreenActive() {
       const renderer = this.endscreen?.endscreenRenderer;
