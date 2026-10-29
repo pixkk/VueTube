@@ -166,27 +166,18 @@ export default {
     });
 
     // ---   Import Twemoji   ---///
-    const plugin = document.createElement("script");
-    plugin.setAttribute(
-      "src",
-      "//unpkg.com/twemoji@latest/dist/twemoji.min.js"
-    );
-    plugin.setAttribute("crossorigin", "anonymous");
-    document.head.appendChild(plugin);
-    const plugin2 = document.createElement("script");
-    plugin2.setAttribute(
-      "src",
-      "https://cdn.jsdelivr.net/npm/hls.js@1"
-    );
-    plugin2.setAttribute("crossorigin", "anonymous");
-    document.head.appendChild(plugin2);
-    const plugin3 = document.createElement("script");
-    plugin3.setAttribute(
-      "src",
-      "https://cdn.dashjs.org/latest/dash.all.min.js"
-    );
-    plugin3.setAttribute("crossorigin", "anonymous");
-    document.head.appendChild(plugin3);
+    [
+      "//unpkg.com/twemoji@latest/dist/twemoji.min.js",
+      "https://cdn.jsdelivr.net/npm/hls.js@1",
+      "https://cdn.dashjs.org/latest/dash.all.min.js",
+    ].forEach((src) => {
+      // the layout can be mounted again, don't stack duplicate tags in <head>
+      if (document.querySelector(`script[src="${src}"]`)) return;
+      const plugin = document.createElement("script");
+      plugin.setAttribute("src", src);
+      plugin.setAttribute("crossorigin", "anonymous");
+      document.head.appendChild(plugin);
+    });
   },
 
   beforeUnmount() {
