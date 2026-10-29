@@ -35,7 +35,7 @@
         mediagroup="vuetubecute"
         width="100%"
         :src="hls || dash ? '' : vidSrc"
-        style="transition: filter 0.15s ease-in-out, transform 0.15s linear; vertical-align: middled;"
+        style="transition: filter 0.15s ease-in-out, transform 0.15s linear; vertical-align: middle;"
         :height="isFullscreen ? '100%' : 'auto'"
         :class="
         controls ||
