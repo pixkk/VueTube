@@ -257,6 +257,7 @@
           v-if="$refs.player"
           :video="$refs.player"
           :buffering="bufferingDetected || false"
+          :ended="videoEnded && !$refs.player.loop"
           @play="playHandler"
           @pause="pauseHandler"
         />
@@ -995,7 +996,6 @@ export default {
 
         this.$refs.player.loop = this.$store.state.player.loop || false;
         this.$refs.player.addEventListener("timeupdate", this.timeUpdateEvent);
-        // TODO: handle video ending with a "replay" button instead of <playpause /> if not on loop
         // TODO: split buffering into multiple sections as it should be for back/forth scrubbing
         this.$refs.player.addEventListener("progress", this.progressEvent);
         this.$refs.player.addEventListener("seeking", this.seekingEvent);

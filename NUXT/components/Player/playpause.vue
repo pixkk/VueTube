@@ -11,7 +11,7 @@
     "
   >
     <v-icon size="3.5rem">
-      {{ paused ? "mdi-play" : "mdi-pause" }}
+      {{ ended ? "mdi-replay" : paused ? "mdi-play" : "mdi-pause" }}
     </v-icon>
   </v-btn>
 </template>
@@ -22,6 +22,10 @@ export default {
     video: {},
     buffering: {
       required: false,
+    },
+    ended: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ["play", "pause"],
