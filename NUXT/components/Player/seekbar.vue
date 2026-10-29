@@ -42,6 +42,7 @@
     <!-- Scrubber — last in DOM so the thumb paints above segments -->
     <v-slider
       id="scrubber"
+      class="seekbar-slider"
       hide-details
       density="compact"
       :disabled="disabled"
@@ -49,6 +50,7 @@
       thumb-color="primary"
       track-color="transparent"
       style="width: 100%; position: absolute; bottom: 0; pointer-events: auto;"
+      :thumb-label="isScrubbing ? 'always' : false"
       :thumb-size="isScrubbing ? 16 : 12"
       :min="minTime"
       :max="duration"
@@ -58,8 +60,8 @@
       @update:modelValue="onScrubMove"
     >
       <!--    Fast preview-->
-      <template #thumb-label="{ value }">
-        <div style="transform: translateY(-50%)">
+      <template #thumb-label="{ modelValue }">
+        <div style="transform: translateY(-35%)">
           <canvas
             ref="preview"
             class="white"
@@ -73,7 +75,7 @@
             }"
           ></canvas>
           <div class="text-center pb-4" style="font-size: 0.8rem">
-            <b v-if="seeking">{{ $vuetube.humanTime(value) }}</b>
+            <b v-if="seeking">{{ $vuetube.humanTime(modelValue) }}</b>
           </div>
         </div>
       </template>
@@ -85,6 +87,16 @@
 
 .v-input__control {
   margin: 0 !important;
+}
+
+/* The preview canvas is the label; the bubble takes its colour from thumb-color, so clear it here */
+.seekbar-slider .v-slider-thumb__label {
+  background: transparent !important;
+  padding: 0;
+}
+
+.seekbar-slider .v-slider-thumb__label-wedge {
+  display: none;
 }
 
 /* Hide v-slider's built-in fill — we draw our own below the segments */
@@ -317,7 +329,6 @@ export default {
     seek(e) {
       if (!this.storyboards) return;
       console.log(`scrubbing ${e}`);
-      console.warn(this.storyboards)
       // let vid = this.$refs.playerfake;
       let vid = this.fastPreviewGetFrame2("url", this.storyboards, true, this.duration)
       // getTimeline({ storyboards, quality: 'medium', quantity: 5 }),
@@ -419,31 +430,18 @@ export default {
       // }
     // let vid = this.fastPreviewGetFrame("url", this.storyboards, this.video.duration)
       console.error(vid)
-      let partSize = this.duration / vid.length;
-      // console.warn(partSize)
-      // console.warn(e / partSize)
-      let index = Math.ceil(e / partSize);
-      console.warn(index)
-
-      // console.warn(vid)
-      let img = new Image;
-      // img.src = vid[index !== 0 ? index-1 : 0];
+      // seconds covered by one frame, matches the board count in fastPreviewGetFrame2
+      const interval = this.duration < 250 ? 2 : this.duration < 1000 ? 4 : 10;
+      const frameNo = Math.floor(e / interval);
+      const board = Math.min(Math.floor(frameNo / 25), vid.length - 1);
 
       let canvas = this.$refs.preview;
-      this.$refs.playerfake.currentTime = e;
-      this.extractFrame(vid[index !== 0 ? index - 1 : 0], Math.floor((e / 25) % 25)).then((r) => {
-        img.src = r;
-        // console.warn(img)
-        canvas
-          .getContext("2d")
-          .drawImage(
-            img,
-            0,
-            0,
-            this.video.clientWidth / 3,
-            this.video.clientHeight / 3
-          );
-      });
+      if (!canvas) return;
+      this.extractFrame(vid[board], frameNo % 25).then((frame) => {
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      }).catch((err) => console.error(err));
 
 
     },
@@ -464,7 +462,7 @@ export default {
           canvas.height = frameH;
           canvas.getContext("2d").drawImage(img, sx, sy, frameW, frameH, 0, 0, frameW, frameH);
 
-          resolve(canvas.toDataURL("image/jpeg"));
+          resolve(canvas);
         };
         img.onerror = reject;
         img.src = spriteUrl;
