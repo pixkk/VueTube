@@ -1334,6 +1334,7 @@ const SABR_CLIENT_NAME_IDS = {
     let rn = 1;
     let redirectCount = 0;
     let emptyCount = 0;
+    let stoppedEmpty = false;
     let playbackCookieBytes = null;
     let currentPlayerTimeMs = playerTimeMs;
     let totalDurationMs = videoDurationMs || 0;
@@ -1496,7 +1497,10 @@ const SABR_CLIENT_NAME_IDS = {
               onLiveStart?.(seg.startMs);
             }
           }
-          currentPlayerTimeMs += seg.durationMs;
+          // Prefer the real timeline position over summing durations: a missing/default
+          // duration or a re-sent segment would otherwise push the counter past the video end.
+          if (!isLive && !seg.isInitSeg && seg.startMs > 0) currentPlayerTimeMs = seg.startMs + seg.durationMs;
+          else currentPlayerTimeMs += seg.durationMs;
           await onVideoChunk(seg.data, seg.durationMs);
           newMediaAppended = true;
         }
@@ -1506,13 +1510,19 @@ const SABR_CLIENT_NAME_IDS = {
         if (isLive) {
           // At the live edge there is simply nothing new yet; wait for the next segment.
           await new Promise(r => setTimeout(r, 1000));
-        } else if (++emptyCount >= 5) break;
+        } else if (++emptyCount >= 5) {
+          console.warn('[SABR combined] 5 empty responses in a row at', currentPlayerTimeMs, 'ms of', totalDurationMs);
+          stoppedEmpty = true;
+          break;
+        }
       } else {
         emptyCount = 0;
       }
 
       if (!isLive && totalDurationMs > 0 && currentPlayerTimeMs >= totalDurationMs) break;
     }
+    console.log('[SABR combined] loop exit. stoppedEmpty:', stoppedEmpty, 'playerTimeMs:', currentPlayerTimeMs, 'totalDurationMs:', totalDurationMs);
+    return { stoppedEmpty, isLive, totalDurationMs };
   }
 
   function _sabrStartMseCombined(component, mediaSource, videoMimeType, audioMimeType, streamParams, signal) {
@@ -1602,8 +1612,8 @@ const SABR_CLIENT_NAME_IDS = {
     const appendAudio = makeAppendQueue(audioSB);
     let videoChunks = 0, audioChunks = 0;
 
-    streamSabrCombined({
-      ...streamParams,
+    const runStream = (params) => streamSabrCombined({
+      ...params,
       signal,
       onTotalDuration: (ms) => {
         pendingDurationSec = ms / 1000;
@@ -1617,7 +1627,29 @@ const SABR_CLIENT_NAME_IDS = {
       },
       onVideoChunk: (data) => { videoChunks++; return appendVideo(data); },
       onAudioChunk: (data) => { audioChunks++; return appendAudio(data); },
-    }).then(async () => {
+    });
+
+    // The server can answer with nothing new (e.g. after a seek/skip its idea of the playhead
+    // drifts from ours). That is not the end of the video: resume from the end of what is
+    // buffered around the playhead instead of closing the stream early.
+    const streamWithResume = async () => {
+      let params = streamParams;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const result = await runStream(params);
+        const el = component.$refs.player;
+        if (result?.isLive || signal?.aborted || !el) return;
+        let resumeSec = el.currentTime;
+        const buf = el.buffered;
+        for (let i = 0; i < buf.length; i++) {
+          if (el.currentTime >= buf.start(i) - 0.5 && el.currentTime <= buf.end(i)) { resumeSec = buf.end(i); break; }
+        }
+        if (!(result.totalDurationMs > 0) || resumeSec * 1000 >= result.totalDurationMs - 1500) return;
+        console.warn('[SABR combined] Stream stopped early, resuming from', resumeSec);
+        params = { ...streamParams, playerTimeMs: Math.round(resumeSec * 1000) };
+      }
+    };
+
+    streamWithResume().then(async () => {
       console.log('[SABR combined] Stream done. video chunks:', videoChunks, 'audio chunks:', audioChunks);
       if (videoChunks === 0 && audioChunks === 0 && !signal?.aborted) {
         _sabrFallbackFromCombined(component, streamParams);
