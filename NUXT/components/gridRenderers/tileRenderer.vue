@@ -32,7 +32,7 @@ export default {
     thumbnailOverlayText() {
       const overlays = this.video.header?.tileHeaderRenderer?.thumbnailOverlays || [];
       const overlay = overlays.find((o) => o.thumbnailOverlayTimeStatusRenderer);
-      return overlay?.thumbnailOverlayTimeStatusRenderer?.text?.simpleText || "-";
+      return overlay?.thumbnailOverlayTimeStatusRenderer?.text?.simpleText || overlay?.thumbnailOverlayTimeStatusRenderer?.text?.runs?.map(r => r.text).join('') || "-";
     },
 
     thumbnailOverlayStyle() {
@@ -51,7 +51,7 @@ export default {
         .map((line) =>
           (line.lineRenderer?.items || [])
             .map((i) =>
-              i.lineItemRenderer?.text?.runs?.[0]?.text ||
+              i.lineItemRenderer?.text?.runs?.map(r => r.text).join('') ||
               i.lineItemRenderer?.text?.simpleText ||
               ""
             )
