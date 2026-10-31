@@ -96,13 +96,18 @@
 
 <script>
 import {useTheme} from "vuetify";
+import {useAuthStore} from "~/stores/auth";
 
 export default {
   setup() {
     const theme = useTheme()
 
+    const authStore = useAuthStore()
+    const isAuthed = computed(() => authStore.isSignedIn)
+
     return {
-      theme
+      theme,
+      isAuthed
     }
   },
   props: {
@@ -119,7 +124,6 @@ export default {
   data: () => ({
     text: "",
     presettings: false,
-    isAuthed: !!localStorage.getItem("vt_active_access_token")
   }),
   watch: {
     $route(next, prev) {

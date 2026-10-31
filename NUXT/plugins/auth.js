@@ -239,6 +239,13 @@ export async function refreshAccountInfo() {
   }
 }
 
+async function resetSessionIfModeChanged(wasAuthed) {
+  if (wasAuthed === useAuthStore().isSignedIn) return;
+  const { $youtube, $store } = useNuxtApp();
+  $store.commit("updateRecommendedVideos", []);
+  await $youtube.resetAPI();
+}
+
 export default defineNuxtPlugin(() => {
   const authStore = useAuthStore();
   authStore.init();
@@ -253,6 +260,7 @@ export default defineNuxtPlugin(() => {
 
         async signIn(onCode, onLog) {
           logSink = onLog || null;
+          const wasAuthed = authStore.isSignedIn;
           try {
             authLog("sign-in started", { clientId: CLIENT_ID, deviceId: getDeviceId() });
             const codeData = await requestDeviceCode();
@@ -274,6 +282,7 @@ export default defineNuxtPlugin(() => {
               avatar: accountInfo?.avatar,
             });
 
+            await resetSessionIfModeChanged(wasAuthed);
             authLog("sign-in done");
             return authStore.activeAccount;
           } catch (e) {
@@ -286,6 +295,7 @@ export default defineNuxtPlugin(() => {
 
         async signOut(id) {
           const account = authStore.accounts.find((a) => a.id === id);
+          const wasAuthed = authStore.isSignedIn;
           if (account?.refreshToken) {
             try {
               await Http.post({
@@ -298,12 +308,18 @@ export default defineNuxtPlugin(() => {
             }
           }
           authStore.removeAccount(id);
+          await resetSessionIfModeChanged(wasAuthed);
         },
 
         async switchAccount(id) {
+          const wasAuthed = authStore.isSignedIn;
           authStore.switchAccount(id);
           // the stored access token of the newly active account may have expired while it was inactive
-          await this.ensureFreshToken();
+          try {
+            await this.ensureFreshToken();
+          } finally {
+            await resetSessionIfModeChanged(wasAuthed);
+          }
         },
 
         async refreshAccountInfo(id) {

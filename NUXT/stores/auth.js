@@ -46,8 +46,8 @@ export const useAuthStore = defineStore("auth", {
   actions: {
     init() {
       this.accounts = loadAccounts();
-      this.activeAccountId =
-        localStorage.getItem(ACTIVE_KEY) || this.accounts[0]?.id || null;
+      const saved = localStorage.getItem(ACTIVE_KEY);
+      this.activeAccountId = saved === null ? this.accounts[0]?.id || null : saved || null;
       syncActiveToken(this.accounts, this.activeAccountId);
     },
 
@@ -78,8 +78,8 @@ export const useAuthStore = defineStore("auth", {
     },
 
     switchAccount(id) {
-      this.activeAccountId = id;
-      localStorage.setItem(ACTIVE_KEY, id);
+      this.activeAccountId = id || null;
+      localStorage.setItem(ACTIVE_KEY, id || "");
       syncActiveToken(this.accounts, id);
     },
 

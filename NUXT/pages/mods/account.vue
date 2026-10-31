@@ -4,6 +4,18 @@
     <template v-if="accounts.length > 0">
       <v-list-subheader>Accounts</v-list-subheader>
       <v-list>
+        <v-list-item :active="!activeAccountId" @click="switchAccount(null)">
+          <template #prepend>
+            <v-avatar>
+              <v-icon size="40">mdi-incognito</v-icon>
+            </v-avatar>
+          </template>
+          <v-list-item-title>Anonymous</v-list-item-title>
+          <v-list-item-subtitle>Watch without signing in</v-list-item-subtitle>
+          <template #append>
+            <v-icon v-if="!activeAccountId" color="primary" class="mr-2">mdi-check-circle</v-icon>
+          </template>
+        </v-list-item>
         <v-list-item
           v-for="account in accounts"
           :key="account.id"

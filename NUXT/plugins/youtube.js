@@ -175,6 +175,12 @@ const innertubeModule = {
     return InnertubeAPI;
   },
 
+  // Drops the cached Innertube session so the next getAPI() rebuilds it (TV session when signed in, web session when anonymous)
+  async resetAPI() {
+    InnertubeAPI = undefined;
+    return await this.getAPI();
+  },
+
   async getVid(id, playlistID = null, tvParams = null) {
     try {
       return await InnertubeAPI.VidInfoAsync(id, playlistID, tvParams);
