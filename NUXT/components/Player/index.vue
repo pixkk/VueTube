@@ -1042,6 +1042,7 @@ export default {
         time = minTime;
       }
       this.$refs.player.currentTime = time;
+      this.progress = time;
 
       // The browser only fires the "seeked" event once the target position is
       // buffered. For a forward seek into an unbuffered region that never
@@ -1074,6 +1075,7 @@ export default {
     },
     seekedEvent() {
       console.log("seeked", this.$refs.player?.currentTime);
+      if (this.$refs.player && !this.seeking) this.progress = this.$refs.player.currentTime;
       if (this.isInternalSeek) {
         this.isInternalSeek = false;
         return;
