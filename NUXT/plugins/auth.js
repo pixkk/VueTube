@@ -300,8 +300,10 @@ export default defineNuxtPlugin(() => {
           authStore.removeAccount(id);
         },
 
-        switchAccount(id) {
+        async switchAccount(id) {
           authStore.switchAccount(id);
+          // the stored access token of the newly active account may have expired while it was inactive
+          await this.ensureFreshToken();
         },
 
         async refreshAccountInfo(id) {

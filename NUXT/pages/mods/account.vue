@@ -175,8 +175,13 @@ export default {
       this.deviceCodeData = null;
     },
 
-    switchAccount(id) {
-      this.$auth.switchAccount(id);
+    async switchAccount(id) {
+      try {
+        await this.$auth.switchAccount(id);
+      } catch (e) {
+        this.error = "Failed to refresh the token for this account. Try signing in again.\n" + e.message;
+        this.errorOpen = true;
+      }
     },
 
     async signOut(id) {
