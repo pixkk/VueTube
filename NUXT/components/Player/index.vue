@@ -1031,7 +1031,7 @@ export default {
     userSeek(time) {
       if (this.liveNoDvr) return;
       console.log("[PLAYER] userSeek to", time);
-      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused : false;
+      this.wasPlayingBeforeSeek = this.$refs.player ? !this.$refs.player.paused || this.videoEnded : false;
       this.isUserSeeking = true;
       const duration = this.$refs.player?.duration;
       if (duration && !isNaN(duration) && time >= duration) {
@@ -1619,6 +1619,11 @@ export default {
       this.bufferingDetected = false;
     },
     playHandler() {
+      if (this.videoEnded && !this.$refs.player.loop) {
+        this.userSeek(0);
+        this.videoEnded = false;
+        return;
+      }
       this.$refs.player.play().catch(() => {});
     },
   },

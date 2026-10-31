@@ -20,6 +20,7 @@
       <v-img
         :aspect-ratio="16 / 9"
         :src="thumbnailUrl"
+        cover
         :style="{
           borderRadius: roundThumb ? `${roundTweak / 12}rem` : '0',
         }"
