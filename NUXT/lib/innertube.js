@@ -5,7 +5,7 @@
 // Code specific to working with the innertube API
 // https://www.youtube.com/youtubei/v1
 
-import {CapacitorHttp as Http} from "@capacitor/core";
+import {Capacitor, CapacitorHttp as Http} from "@capacitor/core";
 import {delay, getBetweenStrings, getCpn, getThumbnailUtil, httpGetText} from "./utils";
 import rendererUtils from "./renderers";
 import constants, {clientConfigs} from "./constants";
@@ -389,7 +389,7 @@ class Innertube {
     let url = `${constants.URLS.YT_BASE_API}/player?key=${this.key}`;
     let clientConfig = this.getYTConfig();
     let oldYTConfig = clientConfig;
-    let clientName = this.isAuthedUser() ? "TVHTML5" : "WEB_EMBEDDED_PLAYER";
+    let clientName = this.isAuthedUser() ? "TVHTML5" : (!Capacitor.isNativePlatform() ? "VISION_OS" : "WEB_EMBEDDED_PLAYER");
     let postData = {};
     let poToken;
     try {
