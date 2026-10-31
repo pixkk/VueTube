@@ -679,22 +679,66 @@ class Innertube {
     }
   }
 
+  extractRecommendations(responseNext) {
+    const columnUI = responseNext?.contents?.singleColumnWatchNextResults?.results?.results;
+    const isTVResponse = !!columnUI?.contents?.[0]?.itemSectionRenderer?.contents?.find(
+      (c) => c.videoMetadataRenderer
+    );
+    if (isTVResponse) {
+      const shelves = responseNext.contents.singleColumnWatchNextResults.pivot?.sectionListRenderer?.contents || [];
+      const items = shelves
+        .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
+        .flatMap((s) =>
+          (s.shelfRenderer.content.horizontalListRenderer.items || [])
+            .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
+            .map((i) => ({ tileRenderer: i.tileRenderer }))
+        );
+      return { contents: items.slice(1) };
+    }
+    return {
+      contents: columnUI?.contents
+        ?.filter((c) => c.itemSectionRenderer?.contents)
+        ?.flatMap((c) =>
+          c.itemSectionRenderer.contents.filter(
+            (item) =>
+              !item.videoMetadataCarouselViewModel &&
+              !item.compactRadioRenderer
+          )
+        ),
+    };
+  }
+
   async VidInfoAsync(id, playlistID = null, tvParams = null) {
     // TODO: OPTIMIZE IT !!!
     let response = await this.getVidAsync(id, null, playlistID, tvParams);
 
+    const playability = response.data?.output?.playabilityStatus;
     if (
       response.success == false ||
-      response.data.output?.playabilityStatus?.status == ("ERROR" || "LOGIN_REQUIRED" || "UNPLAYABLE" || undefined)
-    )
-      throw new Error(
+      ["ERROR", "LOGIN_REQUIRED", "UNPLAYABLE", undefined].includes(playability?.status)
+    ) {
+      const interstitial = playability?.errorScreen?.playerInterstitialRenderer?.content?.interstitialViewModel;
+      const error = new Error(
         `Could not get information for video: ${
-          response.status_code ||
-          response.data.output?.playabilityStatus?.status
-        } - ${
-          response.message || response.data.output?.playabilityStatus?.reason
-        }`
+          response.status_code || playability?.status
+        } - ${response.message || playability?.reason}`
       );
+      error.playability = {
+        status: playability?.status || null,
+        code: playability?.errorCode || null,
+        title: interstitial?.title?.content || playability?.reason || response.message || null,
+        description: interstitial?.description?.content || interstitial?.errorCode?.content || null,
+        buttonTitle: interstitial?.primaryButton?.buttonViewModel?.title || null,
+        buttonUrl: interstitial?.primaryButton?.buttonViewModel?.onTap?.innertubeCommand?.urlEndpoint?.url || null,
+        recommendations: null,
+      };
+      try {
+        error.playability.recommendations = this.extractRecommendations(response.data?.outputNext);
+      } catch (e) {
+        console.warn("Could not extract recommendations for unavailable video", e);
+      }
+      throw error;
+    }
 
     const responseInfo = response.data.output;
     const responseNext = response.data.outputNext;
@@ -780,29 +824,7 @@ class Innertube {
       )?.slimVideoMetadataSectionRenderer;
 
     const tvPivotSectionList = responseNext.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer;
-    const recommendations = isTVResponse
-      ? (() => {
-        const shelves = tvPivotSectionList?.contents || [];
-        const items = shelves
-          .filter((s) => s.shelfRenderer?.content?.horizontalListRenderer)
-          .flatMap((s) =>
-            (s.shelfRenderer.content.horizontalListRenderer.items || [])
-              .filter((i) => i.tileRenderer?.contentType === "TILE_CONTENT_TYPE_VIDEO")
-              .map((i) => ({ tileRenderer: i.tileRenderer }))
-          );
-        return { contents: items.slice(1) };
-      })()
-      : {
-        contents: columnUI?.contents
-          ?.filter((c) => c.itemSectionRenderer?.contents)
-          ?.flatMap((c) =>
-            c.itemSectionRenderer.contents.filter(
-              (item) =>
-                !item.videoMetadataCarouselViewModel &&
-                !item.compactRadioRenderer
-            )
-          ),
-      };
+    const recommendations = this.extractRecommendations(responseNext);
 
     // console.warn(recommendations);
 

@@ -179,6 +179,7 @@ const innertubeModule = {
     try {
       return await InnertubeAPI.VidInfoAsync(id, playlistID, tvParams);
     } catch (error) {
+      if (error.playability) throw error;
       await this.getAPI();
       return await InnertubeAPI.VidInfoAsync(id, playlistID, tvParams);
     }

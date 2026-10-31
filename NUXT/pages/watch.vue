@@ -13,6 +13,46 @@
         :disabled="saveDialog"
         @ready="startWatchTime"
       />
+      <div
+        v-if="videoError"
+        class="bg-black d-flex flex-column align-center justify-center text-center pa-4 w-100"
+        style="position: relative; aspect-ratio: 16 / 9; gap: 8px"
+      >
+        <v-btn
+          icon
+          variant="text"
+          size="small"
+          style="position: absolute; top: 4px; left: 4px; color: #fff"
+          @click="$router.go(-1)"
+        >
+          <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+        <v-btn
+          icon
+          variant="text"
+          size="small"
+          style="position: absolute; top: 4px; right: 4px; color: #fff"
+          @click="$router.go(-1)"
+        >
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+        <v-icon size="40">mdi-alert-circle-outline</v-icon>
+        <div style="font-weight: bold" v-text="videoError.title" />
+        <div
+          v-if="videoError.description"
+          class="caption"
+          style="opacity: 0.7"
+          v-text="videoError.description"
+        />
+<!--        <v-btn-->
+<!--          v-if="videoError.buttonUrl"-->
+<!--          variant="outlined"-->
+<!--          size="small"-->
+<!--          :href="videoError.buttonUrl"-->
+<!--          target="_blank"-->
+<!--          v-text="videoError.buttonTitle || 'Open'"-->
+<!--        />-->
+      </div>
     </div>
 
     <div
@@ -409,14 +449,14 @@
     ></swipeable-bottom-sheet> -->
 
       <!-- Related Videos -->
-      <div v-if="!loaded">
+      <div v-if="!loaded && !videoError">
         <v-skeleton-loader
           type="list-item-two-line, actions, divider, list-item-avatar, divider, list-item-three-line"
         />
         <vid-load-renderer :count="5" />
       </div>
       <item-section-renderer
-        v-else
+        v-else-if="recommends"
         :render="recommends"
         :style="{
           marginTop: $store.state.tweaks.roundTweak > 0 ? '1rem' : '0',
@@ -542,6 +582,7 @@ export default {
   methods: {
     getVideo() {
       this.loaded = false;
+      this.videoError = null;
 
       const tvParams = this.$store.state.pendingTvParams;
       this.$youtube.getVid(this.$route.query.v,this.$route.query.list, tvParams).then((result) => {
@@ -592,6 +633,13 @@ export default {
           this.playbackTracking = result.playbackTracking;
           this.cpn = getCpn();
         }
+      }).catch((error) => {
+        console.error("Video load error", error);
+        this.videoError = error.playability || {
+          title: "Could not load video",
+          description: error.message,
+        };
+        this.recommends = this.videoError.recommendations || null;
       });
 
 
@@ -741,6 +789,7 @@ export default {
         captions: [],
         recommends: null,
         loaded: false,
+        videoError: null,
         interval: null,
         video: null,
         backHierarchy: [],
