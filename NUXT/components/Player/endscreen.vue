@@ -21,10 +21,14 @@
         cursor: 'pointer',
         display: parseFloat(element.endscreenElementRenderer.startMs) <= currentTime * 1000 && parseFloat(element.endscreenElementRenderer.endMs) >= currentTime * 1000 ? 'block' : 'none',
       }" @click.stop="openElement(element.endscreenElementRenderer)">
-          <v-img :src="element.endscreenElementRenderer?.image?.thumbnails[element.endscreenElementRenderer?.image?.thumbnails.length - 1]?.url"
+          <v-img cover :src="element.endscreenElementRenderer?.image?.thumbnails[element.endscreenElementRenderer?.image?.thumbnails.length - 1]?.url"
                  :style="getStyleOfEndscreenElement(element.endscreenElementRenderer?.style)"
 
           />
+          <div v-if="getDuration(element.endscreenElementRenderer)"
+               style="position: absolute; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 4px; background: rgba(0, 0, 0, 0.8); color: #fff; font-size: 12px; line-height: 1.3; font-weight: 500;">
+            {{ getDuration(element.endscreenElementRenderer) }}
+          </div>
         </div>
         <!--      </div>-->
       </div>
@@ -191,6 +195,9 @@ export default {
       // empty inline filter lets the .dim classes of the player apply again
       const saved = parseFloat(localStorage.getItem("brightness"));
       this.playerObject.style.filter = saved >= 0 && saved !== 1 ? `brightness(${saved})` : "";
+    },
+    getDuration(renderer) {
+      return renderer?.thumbnailOverlays?.[0]?.thumbnailOverlayTimeStatusRenderer?.text?.simpleText || "";
     },
     getStyleOfEndscreenElement(style) {
       if (!style) return {};
