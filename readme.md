@@ -33,13 +33,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube"></img></a>
-  <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://github.com/pixkk/VueTube/actions/workflows/ci.yml/badge.svg"></img></a>
-  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/Vuetube"></img></a>
-  <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube"></img></a>
-  <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&style=flat&logo=discord&logoColor=white"></img></a>
-  <a href="https://x.com/VueTubeApp" alt="Twitter"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/twitter/follow/VueTubeApp"></img></a>
-
+  <a href="https://github.com/pixkk/VueTube/blob/main/LICENSE" alt="License"><img src="https://img.shields.io/github/license/pixkk/VueTube?style=flat-square"></img></a>
+  <a href="https://github.com/pixkk/VueTube/actions/workflows/ci.yml" alt="CI"><img src="https://img.shields.io/github/actions/workflow/status/pixkk/VueTube/ci.yml?style=flat-square"></img></a>
+</p>
+<p align="center">
+  <a href="https://reddit.com/r/vuetube" alt="Reddit"><img alt="Subreddit subscribers" src="https://img.shields.io/reddit/subreddit-subscribers/vuetube?style=flat-square&logo=reddit"></img></a>
+  <a href="https://t.me/VueTube" alt="Telegram"><img src="https://img.shields.io/endpoint?label=VueTube&url=https://tg.sumanjay.workers.dev/VueTube&logo=telegram&style=flat-square"></img></a>
+  <a href="https://discord.gg/7P8KJrdd5W" alt="Discord"><img src="https://img.shields.io/discord/946587366242533377?label=Discord&logo=discord&logoColor=white&style=flat-square"></img></a>
+  <a href="https://x.com/VueTubeApp" alt="X"><img alt="X (formerly Twitter) Follow" src="https://img.shields.io/badge/follow-%40VueTubeApp-000000?style=flat-square&logo=x&logoColor=white"></img></a>
 </p>
 <p align="center">
   <a href="https://ko-fi.com/W7W216PASY" target="_blank">
@@ -93,6 +94,8 @@ Features
   info_](https://returnyoutubedislike.com)
 - 💰 **SponsorBlock** - Skip automatically sponsors and annoying segments in videos. [_More
   info_](https://sponsor.ajay.app)
+- 🧑 **Signing in with your Google account**: Login to have a full experience by voting and commenting on videos and
+  subscribing to channels.
 
 <h2 align="left">
 <sub>
@@ -151,8 +154,6 @@ Plans
 
 - 🔍 **Advanced search:** Sort results by date, duration, likes or any other factor.
 - ✂️ **YouTube Shorts:** Small vertical videos that last anywhere from 15 seconds to 3 minutes.
-- 🧑 **Signing in with your Google account**: Login to have a full experience by voting and commenting on videos and
-  subscribing to channels.
 - 🖼️ **Picture-in-Picture mode (PiP):** Allows you to watch videos in a floating window when using another app.
 - 🧩 **Plugins:** Install third party plugins made by community with useful features!
 - And more!
@@ -210,15 +211,15 @@ Progress
 |                   **General**                    |              **Player**               | [**Extractor**](https://github.com/pixkk/VueTube-Extractor) |
 | :----------------------------------------------: | :-----------------------------------: | :--------------------------------------------------------------: |
 |                🟡 Comments (95%)                |        🟢 Play / Pause (100%)         |                  🟢 Search Autocomplete (100%)                   |
-|              🟢 Description (100%)               | 🟢 Tap to show / hide controls (100%) |                       🟢 Home page (100%)                        |
-|               🟢 Home Page (100%)                |      🟠 Seekbar / Scrubber (80%)      |                         🟢 Search (100%)                         |
-|            🟢 RYD Integration (100%)             |          🟠 Fullscreen (85%)          |                    🟠 Video Information (60%)                    |
-|                 🟢 Themes (100%)                 |      🟡 Resolution Picker (95%)       |                         🔴 Channels (0%)                         |
+|              🟡 Description (90%)               | 🟢 Tap to show / hide controls (100%) |                       🟢 Home page (100%)                        |
+|               🟡 Home Page (90%)                |      🟢 Seekbar / Scrubber (100%)      |                         🟢 Search (100%)                         |
+|            🟢 RYD Integration (100%)             |          🟢 Fullscreen (100%)          |                    🟠 Video Information (60%)                    |
+|                 🟡 Themes (85%)                 |      🟡 Resolution Picker (95%)       |                         🔴 Channels (0%)                         |
 |               🟢 Watch Page (100%)               |          🔴 Miniplayer (0%)           |                         🔴 Comments (0%)                         |
 |        🟡 Sponsorblock Integration (90%)         |        🔴 Background Play (0%)        |                        🔴 Live Chat (0%)                         |
 |               🟠 Auto Update (50%)               |      🔴 Picture in Picture (0%)       |                     🔴 Trending content (0%)                     |
-|              🟡 Channel Page (60%)               |           🟡 Captions (95%)            |                       🔴 Interactions (0%)                       |
-|             🟡 Community Posts (90%)             |             🟠 Cards (10%)             |                        🔴 Playlists (0%)                         |
+|              🟡 Channel Page (60%)               |           🟢 Captions (100%)            |                       🔴 Interactions (0%)                       |
+|             🟡 Community Posts (90%)             |             🟡 Cards (95%)             |                        🔴 Playlists (0%)                         |
 |         🟠 Customizable Shorts UI (10%)          |                                       |                      🔴 Notifications (0%)                       |
 |        🟠 Customizable YT Music UI (10%)         |                                       |                          🔴 Login (0%)                           |
 |             🟠 Customizable UI (30%)             |                                       |                                                                  |
@@ -227,7 +228,7 @@ Progress
 |           🟠 Third Party Plugins (40%)           |                                       |                                                                  |
 |  🟠 VueTube Player (See progress to the right)   |                                       |                                                                  |
 | 🟠 VueTube Extractor (See progress to the right) |                                       |                                                                  |
-|           🟢 Local Watch History (100%)            |                                       |                                                                  |
+|           🟢 Local Watch History (99%)            |                                       |                                                                  |
 |            🔴 Subscriptions Page (0%)            |                                       |                                                                  |
 |          🔴 Other Platform Support (0%)          |                                       |                                                                  |
 
