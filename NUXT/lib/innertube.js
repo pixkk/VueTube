@@ -441,6 +441,7 @@ class Innertube {
         }
         break;
     }
+    this.sabrClient = postData.data?.context?.client || null;
     this.ytConfig = oldYTConfig;
     // console.warn(this.nfunction);
     return Http.post({
@@ -517,7 +518,7 @@ class Innertube {
         headers: constants.INNERTUBE_HEADER(this.context.client),
       }).catch((error) => error);
 
-      response = await this.playerRequest(id, reloadPlaybackContext);
+      response = await this.playerRequest(id, playlistID, reloadPlaybackContext);
     }
 
     if (response.error) {
@@ -708,9 +709,9 @@ class Innertube {
     };
   }
 
-  async VidInfoAsync(id, playlistID = null, tvParams = null) {
+  async VidInfoAsync(id, playlistID = null, tvParams = null, reloadPlaybackContext = null) {
     // TODO: OPTIMIZE IT !!!
-    let response = await this.getVidAsync(id, null, playlistID, tvParams);
+    let response = await this.getVidAsync(id, reloadPlaybackContext, playlistID, tvParams);
 
     const playability = response.data?.output?.playabilityStatus;
     if (

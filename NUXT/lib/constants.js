@@ -235,6 +235,7 @@ export default {
         }
       },
       playbackContext: {
+        ...(reloadPlaybackContext ? { reloadPlaybackContext } : {}),
         contentPlaybackContext: {
           html5Preference: "HTML5_PREF_WANTS",
           lactMilliseconds: "-1",

@@ -7,7 +7,7 @@ import {Capacitor, CapacitorHttp} from "@capacitor/core";
 const SABR_CLIENT_NAME_IDS = {
     WEB: 1, MWEB: 2, ANDROID: 3, IOS: 5, TVHTML5: 7,
     ANDROID_MUSIC: 21, WEB_MUSIC_EMBEDDED_PLAYER: 39,
-    WEB_EMBEDDED_PLAYER: 56, WEB_CREATOR: 62, ANDROID_VR: 28,
+    WEB_EMBEDDED_PLAYER: 56, VISIONOS: 101, WEB_CREATOR: 62, ANDROID_VR: 28,
   };
 
   // --- SABR module-level helpers ---
@@ -628,15 +628,16 @@ const SABR_CLIENT_NAME_IDS = {
   async function streamSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, isAudio = false, videoItag = null, audioItag = null, playerTimeMs = 0, videoDurationMs = 0, maxRequests = 1, signal, onChunk, onTotalDuration, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = _getYoutubePlugin(component);
     const innertube = yt ? await yt.getAPI() : null;
-    const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
+    const clientName = innertube?.sabrClient?.clientName || innertube?.context?.client?.clientName || 'WEB';
+    const clientVersion = innertube?.sabrClient?.clientVersion || innertube?.context?.client?.clientVersion ||'2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
-    const clientOsName = innertube?.context?.client?.osName || 'Windows';
-    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
+    const clientOsName = innertube?.sabrClient?.osName || innertube?.context?.client?.osName ||'Windows';
+    const clientOsVersion = innertube?.sabrClient?.osVersion || innertube?.context?.client?.osVersion ||'10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
     let redirectCount = 0;
+    let reloadCount = 0;
     let emptyCount = 0;
     let playbackCookieBytes = null;
     let currentPlayerTimeMs = playerTimeMs;
@@ -674,11 +675,12 @@ const SABR_CLIENT_NAME_IDS = {
 
       const reloadPart = parts.find(p => p.partId === 46);
       if (reloadPart) {
+        if (++reloadCount > 3) throw new Error('SABR_TOO_MANY_RELOADS');
         const reloadContext = sabrParseReloadPlaybackContext(reloadPart.data);
         if (reloadContext && innertube && videoId) {
           console.log('[SABR] Reload player response requested by server.');
           try {
-            const reloadedVidData = await innertube.getVidAsync(videoId, reloadContext);
+            const reloadedVidData = await innertube.VidInfoAsync(videoId, null, null, reloadContext);
             if (reloadedVidData && reloadedVidData.metadata) {
               const newUrl = reloadedVidData.metadata.serverAbrStreamingUrl;
               const newConfig = reloadedVidData.metadata.ustreamerConfig;
@@ -771,11 +773,11 @@ const SABR_CLIENT_NAME_IDS = {
   async function downloadSabrFormat({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, itag, maxRequests = 20, videoId = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = _getYoutubePlugin(null);
     const innertube = yt ? await yt.getAPI() : null;
-    const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
+    const clientName = innertube?.sabrClient?.clientName || innertube?.context?.client?.clientName || 'WEB';
+    const clientVersion = innertube?.sabrClient?.clientVersion || innertube?.context?.client?.clientVersion ||'2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
-    const clientOsName = innertube?.context?.client?.osName || 'Windows';
-    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
+    const clientOsName = innertube?.sabrClient?.osName || innertube?.context?.client?.osName ||'Windows';
+    const clientOsVersion = innertube?.sabrClient?.osVersion || innertube?.context?.client?.osVersion ||'10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
@@ -1324,15 +1326,16 @@ const SABR_CLIENT_NAME_IDS = {
   async function streamSabrCombined({ serverAbrStreamingUrl, videoPlaybackUstreamerConfig, audioItag, videoItag, audioXtags = '', videoXtags = '', playerTimeMs = 0, videoDurationMs = 0, maxRequests = 500, signal, onAudioChunk, onVideoChunk, onTotalDuration, onLiveStart, startAtLive = false, videoId = null, component = null, allAudioFormats = null, allVideoFormats = null }) {
     const yt = _getYoutubePlugin(component);
     const innertube = yt ? await yt.getAPI() : null;
-    const clientName = innertube?.context?.client?.clientName || 'WEB';
-    const clientVersion = innertube?.context?.client?.clientVersion || '2.20260715.04.00';
+    const clientName = innertube?.sabrClient?.clientName || innertube?.context?.client?.clientName || 'WEB';
+    const clientVersion = innertube?.sabrClient?.clientVersion || innertube?.context?.client?.clientVersion ||'2.20260715.04.00';
     const clientHl = innertube?.context?.client?.hl || 'en';
-    const clientOsName = innertube?.context?.client?.osName || 'Windows';
-    const clientOsVersion = innertube?.context?.client?.osVersion || '10.0';
+    const clientOsName = innertube?.sabrClient?.osName || innertube?.context?.client?.osName ||'Windows';
+    const clientOsVersion = innertube?.sabrClient?.osVersion || innertube?.context?.client?.osVersion ||'10.0';
 
     let url = serverAbrStreamingUrl;
     let rn = 1;
     let redirectCount = 0;
+    let reloadCount = 0;
     let emptyCount = 0;
     let stoppedEmpty = false;
     let playbackCookieBytes = null;
@@ -1393,14 +1396,17 @@ const SABR_CLIENT_NAME_IDS = {
 
       const reloadPart = parts.find(p => p.partId === 46);
       if (reloadPart) {
+        if (++reloadCount > 3) throw new Error('SABR_TOO_MANY_RELOADS');
         const reloadContext = sabrParseReloadPlaybackContext(reloadPart.data);
         if (reloadContext && innertube && videoId) {
           try {
-            const reloadedVidData = await innertube.getVidAsync(videoId, reloadContext);
+            const reloadedVidData = await innertube.VidInfoAsync(videoId, null, null, reloadContext);
             if (reloadedVidData?.metadata) {
               const newUrl = reloadedVidData.metadata.serverAbrStreamingUrl;
               const newConfig = reloadedVidData.metadata.ustreamerConfig;
               if (newUrl) {
+                const reloadedItags = (reloadedVidData.availableResolutionsAdaptive || []).map(f => f.itag);
+                console.log('[SABR combined] Reloaded formats:', reloadedItags.join(','), '| requested video', videoItag, reloadedItags.includes(videoItag), 'audio', audioItag, reloadedItags.includes(audioItag));
                 url = newUrl;
                 if (newConfig) videoPlaybackUstreamerConfig = newConfig;
                 rn = 1;
