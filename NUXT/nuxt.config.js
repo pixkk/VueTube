@@ -69,6 +69,9 @@ export default defineNuxtConfig({
   },
   modules: ["@pinia/nuxt", "vuetify-nuxt-module"],
   vuetify: {
+    moduleOptions: {
+      importComposables: false,
+    },
     vuetifyOptions: {
       theme: {
         defaultTheme: "dark",
